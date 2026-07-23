@@ -1,0 +1,232 @@
+/* ============================================================
+   PRINT.CSS — Stylesheet untuk dokumen resmi SPK/BAST
+   Layout mendekati template Word A4 resmi
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400;700&display=swap');
+
+/* Untuk screen preview di dalam .doc-preview-wrapper */
+.doc-preview-wrapper {
+  background: var(--gray-100, #f1f5f9);
+  padding: 24px;
+  min-height: 500px;
+}
+
+/* ─── Kertas A4 ─────────────────────────────────────────────── */
+.doc-page {
+  background: #fff;
+  width: 794px;              /* A4 px at 96dpi */
+  min-height: 1123px;
+  margin: 0 auto 24px;
+  padding: 60px 72px 60px 90px;  /* margin atas 2,5cm, kanan 2cm, bawah 2,5cm, kiri 3cm */
+  box-shadow: 0 4px 24px rgba(0,0,0,.12);
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #000;
+  position: relative;
+  border-radius: 2px;
+}
+
+/* ─── Tipografi dokumen ─────────────────────────────────────── */
+.doc-center  { text-align: center; }
+.doc-bold    { font-weight: bold; }
+.doc-underline { text-decoration: underline; }
+.doc-italic  { font-style: italic; }
+.doc-upper   { text-transform: uppercase; }
+.doc-small   { font-size: 10pt; }
+
+.doc-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 13pt;
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.doc-subtitle {
+  text-align: center;
+  font-size: 12pt;
+  margin-bottom: 2px;
+}
+
+.doc-instansi {
+  text-align: center;
+  font-size: 12pt;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.doc-nomor {
+  text-align: center;
+  font-size: 12pt;
+  margin-bottom: 16px;
+}
+
+.doc-divider {
+  border: none;
+  border-top: 2.5px solid #000;
+  margin: 8px 0 14px;
+}
+
+.doc-divider-thin {
+  border: none;
+  border-top: 1px solid #000;
+  margin: 6px 0 10px;
+}
+
+/* ─── Paragraf ─────────────────────────────────────────────── */
+.doc-para {
+  margin-bottom: 10px;
+  text-align: justify;
+}
+
+.doc-para-indent {
+  margin-bottom: 10px;
+  text-align: justify;
+  text-indent: 0;
+  padding-left: 20px;
+}
+
+/* ─── Identitas pihak ───────────────────────────────────────── */
+.doc-identity {
+  margin: 10px 0 12px;
+}
+
+.doc-identity .id-row {
+  display: flex;
+  gap: 0;
+  line-height: 1.65;
+  font-size: 12pt;
+}
+
+.doc-identity .id-label {
+  min-width: 130px;
+  flex-shrink: 0;
+}
+
+.doc-identity .id-colon {
+  min-width: 14px;
+  flex-shrink: 0;
+}
+
+.doc-identity .id-value {
+  flex: 1;
+}
+
+/* ─── Pihak label ───────────────────────────────────────────── */
+.doc-pihak-label {
+  font-weight: bold;
+  margin: 12px 0 6px;
+  text-indent: 0;
+}
+
+/* ─── Pasal ─────────────────────────────────────────────────── */
+.doc-pasal {
+  font-weight: bold;
+  text-align: center;
+  margin: 14px 0 6px;
+  font-size: 12pt;
+}
+
+.doc-ayat {
+  margin-bottom: 8px;
+  padding-left: 20px;
+  text-align: justify;
+}
+
+/* ─── Tabel Lampiran SPK ─────────────────────────────────────── */
+.doc-table-wrapper {
+  margin: 10px 0;
+  overflow-x: auto;
+}
+
+table.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 10.5pt;
+}
+
+table.doc-table th {
+  border: 1px solid #000;
+  padding: 5px 6px;
+  text-align: center;
+  font-weight: bold;
+  background: #f0f0f0;
+  font-size: 10pt;
+}
+
+table.doc-table td {
+  border: 1px solid #000;
+  padding: 5px 6px;
+  vertical-align: top;
+}
+
+table.doc-table td.tc { text-align: center; }
+table.doc-table td.tr { text-align: right; }
+
+/* ─── Tabel Tanda Tangan ─────────────────────────────────────── */
+.doc-ttd-table {
+  width: 100%;
+  margin-top: 28px;
+  border-collapse: collapse;
+}
+
+.doc-ttd-table td {
+  width: 50%;
+  text-align: center;
+  vertical-align: top;
+  padding: 0 16px;
+  font-size: 12pt;
+}
+
+.doc-ttd-label {
+  font-weight: bold;
+  margin-bottom: 70px; /* space untuk tanda tangan */
+  font-size: 12pt;
+}
+
+.doc-ttd-name {
+  font-weight: bold;
+  text-decoration: underline;
+  font-size: 12pt;
+}
+
+.doc-ttd-nip {
+  font-size: 11.5pt;
+}
+
+/* ─── Terbilang & Total SPK ─────────────────────────────────── */
+.doc-terbilang-row {
+  margin-top: 8px;
+  font-size: 11pt;
+}
+
+/* ─── Lampiran header ───────────────────────────────────────── */
+.doc-lampiran-header {
+  margin-bottom: 14px;
+}
+
+.doc-lampiran-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 11pt;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+/* ─── Print media ───────────────────────────────────────────── */
+@media print {
+  body { background: #fff !important; }
+  .doc-preview-wrapper { background: none; padding: 0; }
+  .doc-page {
+    width: 100%;
+    box-shadow: none;
+    margin: 0;
+    padding: 2cm 2cm 2.5cm 3cm;
+    page-break-after: always;
+    border-radius: 0;
+  }
+}

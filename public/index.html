@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Sistem SPK/BAST BPS Kota Subulussalam</title>
+  <meta name="description" content="Sistem generate dokumen SPK dan BAST untuk petugas lapangan BPS Kota Subulussalam">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .filter-bar { display:flex; gap:6px; flex-wrap:wrap; }
+    .filter-bar .btn.active {
+      background: var(--brand-primary);
+      color: #fff;
+      border-color: var(--brand-primary);
+    }
+    .hero-banner {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 60%, #3b82f6 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      color: #fff;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-banner::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: 80px;
+      width: 160px; height: 160px;
+      background: rgba(255,255,255,.04);
+      border-radius: 50%;
+    }
+    .hero-icon { font-size: 3rem; }
+    .hero-text h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.4rem; font-weight:800; margin-bottom:4px; }
+    .hero-text p  { font-size: .85rem; opacity: .8; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">📋</div>
+      <div class="logo-text">
+        <div class="title">SPK/BAST Generator</div>
+        <div class="sub">BPS Kota Subulussalam</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a href="/index.html" class="nav-item active">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="/form.html" class="nav-item">
+        <span class="nav-icon">➕</span> Buat Dokumen Baru
+      </a>
+      <div class="nav-section-label" style="margin-top:12px;">Data Referensi</div>
+      <a href="#" class="nav-item" onclick="return false;" style="opacity:.5;cursor:default;">
+        <span class="nav-icon">👥</span> Data Mitra
+      </a>
+      <a href="#" class="nav-item" onclick="return false;" style="opacity:.5;cursor:default;">
+        <span class="nav-icon">🏛️</span> Data Pegawai
+      </a>
+      <a href="#" class="nav-item" onclick="return false;" style="opacity:.5;cursor:default;">
+        <span class="nav-icon">📁</span> Master Kegiatan
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      BPS Kota Subulussalam &copy; 2026
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-title">
+        Dashboard
+        <small>Daftar Dokumen SPK &amp; BAST</small>
+      </div>
+      <div class="topbar-actions">
+        <a href="/form.html" class="btn btn-primary">
+          <span>➕</span> Buat Dokumen Baru
+        </a>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-icon">📜</div>
+        <div class="hero-text">
+          <h1>Sistem Generate Surat SPK &amp; BAST</h1>
+          <p>BPS Kota Subulussalam — Generate dokumen resmi dari data terstruktur secara otomatis</p>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">📄</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Total Dokumen</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-sudah">—</div>
+            <div class="stat-label">Sudah Generate</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-belum">—</div>
+            <div class="stat-label">Belum Generate</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">💰</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-honor" style="font-size:1.1rem;">—</div>
+            <div class="stat-label">Total Honor</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Daftar Dokumen</h2>
+
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <button class="btn btn-outline btn-sm active" data-filter="all">Semua</button>
+            <button class="btn btn-outline btn-sm" data-filter="Sudah">Sudah</button>
+            <button class="btn btn-outline btn-sm" data-filter="Belum">Belum</button>
+          </div>
+
+          <!-- Search -->
+          <div class="search-box" style="max-width:220px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" class="form-control" placeholder="Cari dokumen...">
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID Dokumen</th>
+                <th>Judul Pekerjaan</th>
+                <th>Mitra/PPL</th>
+                <th>Bulan/Tahun</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-tbody">
+              <tr>
+                <td colspan="6" class="text-center text-muted" style="padding:40px;">
+                  Memuat data...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+
+</div><!-- /app-layout -->
+
+<!-- Toast & Loading -->
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<script src="/js/data.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/render.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

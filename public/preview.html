@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview Dokumen — Sistem SPK/BAST BPS Kota Subulussalam</title>
+  <meta name="description" content="Preview dan export dokumen SPK dan BAST BPS Kota Subulussalam">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/print.css">
+  <style>
+    /* ── Preview page specific ── */
+    .preview-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ── Control Panel (kiri) ── */
+    .control-panel {
+      position: sticky;
+      top: calc(var(--topbar-height) + 16px);
+    }
+
+    .doc-info-card {
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-dark) 100%);
+      color: #fff;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .doc-info-card .doc-id {
+      font-size: .7rem;
+      opacity: .6;
+      font-family: 'Courier New', monospace;
+      margin-bottom: 6px;
+    }
+
+    .doc-info-card .doc-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .doc-info-card .doc-mitra {
+      font-size: .8rem;
+      opacity: .8;
+    }
+
+    .tab-panel {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-100);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .tab-panel .tab-panel-header {
+      background: var(--gray-50);
+      padding: 12px 16px;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .tab-panel .tab-list {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tab-panel .tab-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+      font-size: .83rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      transition: all var(--transition);
+    }
+
+    .tab-panel .tab-item:hover {
+      background: var(--brand-light);
+      color: var(--brand-primary);
+    }
+
+    .tab-panel .tab-item.active {
+      background: var(--brand-primary);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .tab-panel .tab-item .tab-icon { font-size: 1rem; }
+
+    .tab-panel .tab-item .tab-desc {
+      font-size: .7rem;
+      opacity: .7;
+    }
+
+    .export-section {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-100);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .export-section h3 {
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 10px;
+    }
+
+    /* ── Dokumen preview area ── */
+    #preview-doc-content {
+      min-height: 600px;
+    }
+
+    /* ── Zoom controls ── */
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+    }
+
+    .zoom-btn {
+      width: 28px; height: 28px;
+      border: none;
+      background: var(--gray-100);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: .85rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--transition);
+    }
+
+    .zoom-btn:hover { background: var(--gray-200); }
+
+    #zoom-level {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      min-width: 36px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .preview-layout {
+        grid-template-columns: 1fr;
+      }
+      .control-panel { position: static; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">📋</div>
+      <div class="logo-text">
+        <div class="title">SPK/BAST Generator</div>
+        <div class="sub">BPS Kota Subulussalam</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a href="/index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="/form.html" class="nav-item"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
+    </nav>
+    <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-title">
+        <span id="preview-doc-title">Preview Dokumen</span>
+        <small>
+          <span id="preview-mitra-name">—</span> &nbsp;|&nbsp;
+          <span id="preview-status" class="badge badge-warning">Belum</span>
+        </small>
+      </div>
+      <div class="topbar-actions">
+        <!-- Zoom -->
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="changeZoom(-10)">−</button>
+          <span id="zoom-level">100%</span>
+          <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
+        </div>
+        <a href="/form.html" class="btn btn-outline btn-sm">← Form</a>
+        <a href="/index.html" class="btn btn-outline btn-sm">🏠 Dashboard</a>
+      </div>
+    </header>
+
+    <div class="page-body" style="max-width:1280px;">
+      <div class="preview-layout">
+
+        <!-- ─── CONTROL PANEL (kiri) ─── -->
+        <div class="control-panel">
+
+          <!-- Info dokumen -->
+          <div class="doc-info-card">
+            <div class="doc-id" id="preview-doc-id">—</div>
+            <div class="doc-name" id="preview-doc-title-2">Memuat...</div>
+            <div class="doc-mitra">👤 <span id="preview-mitra-name-2">—</span></div>
+          </div>
+
+          <!-- Tab list -->
+          <div class="tab-panel">
+            <div class="tab-panel-header">📂 Pilih Dokumen</div>
+            <div class="tab-list">
+              <button class="tab-item active" data-tab="spk" onclick="switchTab('spk', this)">
+                <span class="tab-icon">📝</span>
+                <div>
+                  <div>SPK / Perjanjian Kerja</div>
+                  <div class="tab-desc">+ Lampiran Uraian Tugas</div>
+                </div>
+              </button>
+              <button class="tab-item" data-tab="ppl-pml" onclick="switchTab('ppl-pml', this)">
+                <span class="tab-icon">📋</span>
+                <div>
+                  <div>BAST PPL → PML</div>
+                  <div class="tab-desc">Mitra serahkan ke PML</div>
+                </div>
+              </button>
+              <button class="tab-item" data-tab="ppl-sm" onclick="switchTab('ppl-sm', this)">
+                <span class="tab-icon">📋</span>
+                <div>
+                  <div>BAST PPL → SM</div>
+                  <div class="tab-desc">Mitra serahkan ke Ketua Tim</div>
+                </div>
+              </button>
+              <button class="tab-item" data-tab="pml-sm" onclick="switchTab('pml-sm', this)">
+                <span class="tab-icon">📋</span>
+                <div>
+                  <div>BAST PML → SM</div>
+                  <div class="tab-desc">PML serahkan ke Ketua Tim</div>
+                </div>
+              </button>
+              <button class="tab-item" data-tab="sm-ppk" onclick="switchTab('sm-ppk', this)">
+                <span class="tab-icon">📋</span>
+                <div>
+                  <div>BAST SM → PPK</div>
+                  <div class="tab-desc">Closing administratif</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Export section -->
+          <div class="export-section">
+            <h3>📥 Export PDF</h3>
+            <button class="btn btn-success w-full mb-8" id="btn-export-pdf"
+                    onclick="exportCurrentPdf()">
+              ⬇ Download PDF Dokumen Ini
+            </button>
+            <button class="btn btn-outline w-full btn-sm" onclick="window.print()">
+              🖨️ Print
+            </button>
+            <p class="text-xs text-muted mt-8">
+              Export menggunakan html2pdf.js. Pastikan popup tidak diblokir.
+            </p>
+          </div>
+
+        </div><!-- /control-panel -->
+
+        <!-- ─── DOKUMEN PREVIEW (kanan) ─── -->
+        <div>
+          <div class="doc-preview-wrapper" id="preview-container">
+            <div id="preview-doc-content">
+              <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <p>Memuat dokumen...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /preview-layout -->
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<!-- Toast & Loading -->
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- html2pdf.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="/js/data.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/render.js"></script>
+<script src="/js/app.js"></script>
+
+<script>
+  // ── State untuk preview ──
+  let _previewRecord = null;
+  let _previewDetails = [];
+  let _previewCtx = null;
+  let _currentTab = "spk";
+  let _zoomLevel = 100;
+
+  // Override initPreview dari app.js untuk simpan state lokal
+  document.addEventListener("DOMContentLoaded", async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const docId = urlParams.get("id");
+
+    if (docId) {
+      _previewRecord  = spkBast.find(r => r.ID_Dokumen === docId);
+      _previewDetails = detailPekerjaan.filter(d => d.ID_Dokumen === docId);
+    } else {
+      const rStr = sessionStorage.getItem("preview_record");
+      const dStr = sessionStorage.getItem("preview_details");
+      if (rStr) {
+        _previewRecord  = JSON.parse(rStr);
+        _previewDetails = JSON.parse(dStr || "[]");
+        _previewDetails = _previewDetails.map(d => ({ ...d, ID_Dokumen: _previewRecord.ID_Dokumen }));
+      }
+    }
+
+    if (!_previewRecord) {
+      document.getElementById("preview-doc-content").innerHTML =
+        `<div class="empty-state"><div class="empty-icon">❌</div>
+         <p>Dokumen tidak ditemukan.</p>
+         <a href="/form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
+      return;
+    }
+
+    // Bangun context
+    _previewCtx = buildDataContext(_previewRecord, {
+      mitraArr:   mitra,
+      pegawaiArr: pegawai,
+      detailArr:  _previewDetails,
+    });
+
+    // Update info panel
+    const m = cariMitra(_previewRecord.ID_Mitra, mitra);
+    document.getElementById("preview-doc-title").textContent  = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen;
+    document.getElementById("preview-doc-title-2").textContent = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen;
+    document.getElementById("preview-doc-id").textContent      = _previewRecord.ID_Dokumen;
+    document.getElementById("preview-mitra-name").textContent  = m ? m.Nama_Mitra : "—";
+    document.getElementById("preview-mitra-name-2").textContent = m ? m.Nama_Mitra : "—";
+
+    const elStatus = document.getElementById("preview-status");
+    elStatus.textContent = _previewRecord.Status_Generate_SPK || "Belum";
+    elStatus.className = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning"}`;
+
+    // Render SPK pertama
+    await switchTab("spk", document.querySelector('.tab-item[data-tab="spk"]'));
+  });
+
+  // ── Tab switching ──
+  async function switchTab(tabKey, btnEl) {
+    _currentTab = tabKey;
+
+    // Update tab buttons
+    document.querySelectorAll(".tab-item").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+
+    if (!_previewRecord || !_previewCtx) return;
+
+    setLoading(true);
+
+    const content = document.getElementById("preview-doc-content");
+
+    if (tabKey === "sm-ppk") {
+      let bastRecord = bastSmPpk.find(b =>
+        b.Bulan === _previewRecord.Bulan && b.Tahun === _previewRecord.Tahun
+      );
+      if (!bastRecord) {
+        bastRecord = {
+          Judul_Pekerjaan_Dokumen: _previewRecord.Judul_Pekerjaan_Dokumen,
+          No_BAST_SM_PPK:          `BAST-SM-PPK/${_previewRecord.No_SPK || _previewRecord.ID_Dokumen}`,
+          Uraian_Tugas:            _previewRecord.Judul_Pekerjaan_Dokumen,
+          PPK:                     _previewRecord.PPK,
+          Ketua_Tim:               _previewRecord.Ketua_Tim,
+          Tanggal_BAST_SM_PPK:     _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai,
+          Total_Honor:             _previewRecord.Total_Honor,
+        };
+      }
+      const smPpkCtx = buildBastSmPpkContext(bastRecord, pegawai);
+      const tpl = await loadTemplate("template-bast-sm-ppk.html");
+      content.innerHTML = renderTemplate(tpl, smPpkCtx);
+      setLoading(false);
+      return;
+    }
+
+    const templateMap = {
+      "spk":     { tpl: "template-spk.html",          ctx: _previewCtx.spkCtx },
+      "ppl-pml": { tpl: "template-bast-ppl-pml.html", ctx: _previewCtx.bastPplPmlCtx },
+      "ppl-sm":  { tpl: "template-bast-ppl-sm.html",  ctx: _previewCtx.bastPplSmCtx  },
+      "pml-sm":  { tpl: "template-bast-pml-sm.html",  ctx: _previewCtx.bastPmlSmCtx  },
+    };
+
+    const m = templateMap[tabKey];
+    if (!m) { setLoading(false); return; }
+
+    try {
+      const tpl = await loadTemplate(m.tpl);
+      content.innerHTML = renderTemplate(tpl, m.ctx);
+    } catch(e) {
+      content.innerHTML = `<div class="alert alert-danger">Gagal memuat template: ${e.message}</div>`;
+    }
+    setLoading(false);
+  }
+
+  // ── Export PDF ──
+  function exportCurrentPdf() {
+    const content = document.getElementById("preview-doc-content");
+    if (!window.html2pdf) {
+      showToast("html2pdf belum dimuat", "danger");
+      return;
+    }
+
+    const tabLabels = {
+      spk: "SPK", "ppl-pml": "BAST-PPL-PML",
+      "ppl-sm": "BAST-PPL-SM", "pml-sm": "BAST-PML-SM", "sm-ppk": "BAST-SM-PPK"
+    };
+
+    const docId = _previewRecord?.ID_Dokumen || "DOK";
+    const filename = `${docId}_${tabLabels[_currentTab] || _currentTab}.pdf`;
+
+    const opt = {
+      margin:      [0, 0, 0, 0],
+      filename:    filename,
+      image:       { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+      jsPDF:       { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak:   { mode: ["css", "avoid-all"], before: ".doc-page" },
+    };
+
+    setLoading(true);
+    html2pdf().set(opt).from(content).save()
+      .then(() => {
+        setLoading(false);
+        showToast(`PDF "${filename}" berhasil diunduh`, "success");
+      })
+      .catch(err => {
+        setLoading(false);
+        showToast("Gagal export PDF: " + err.message, "danger");
+      });
+  }
+
+  // ── Zoom ──
+  function changeZoom(delta) {
+    _zoomLevel = Math.max(50, Math.min(150, _zoomLevel + delta));
+    const content = document.getElementById("preview-doc-content");
+    content.style.transform = `scale(${_zoomLevel / 100})`;
+    content.style.transformOrigin = "top center";
+    document.getElementById("zoom-level").textContent = _zoomLevel + "%";
+  }
+</script>
+</body>
+</html>
