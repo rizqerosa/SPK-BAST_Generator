@@ -95,24 +95,63 @@ function hitungTotalHonor(detailPekerjaanArray, idDokumen) {
     .reduce((sum, d) => sum + (Number(d.Nilai_Perjanjian) || 0), 0);
 }
 
+// ─── Flexible Property Getters (Mitra, Pegawai, Kegiatan) ───
+function getMitraId(m) {
+  if (!m) return "";
+  return String(m.ID_Mitra || m["ID Mitra"] || m.ID || m.Sobat_ID || m["Sobat ID"] || m["SOBAT ID"] || m.NIK || "").trim();
+}
+
+function getMitraName(m) {
+  if (!m) return "";
+  return String(m.Nama_Mitra || m["Nama Mitra"] || m.Nama || m.Nama_Lengkap || m["Nama Lengkap"] || "").trim();
+}
+
+function getMitraPosisi(m) {
+  if (!m) return "";
+  return String(m.Posisi || m.Kategori || m.Jabatan || "Mitra").trim();
+}
+
+function getMitraAsal(m) {
+  if (!m) return "";
+  return String(m.Asal || m.Kecamatan || m["Kecamatan/Asal"] || m.Alamat_Detail || m.Alamat || "-").trim();
+}
+
+function getPegawaiNip(p) {
+  if (!p) return "";
+  return String(p.NIP || p["NIP"] || p.nip || "").trim();
+}
+
+function getPegawaiName(p) {
+  if (!p) return "";
+  return String(p.Nama_Pegawai || p["Nama Pegawai"] || p.Nama || "").trim();
+}
+
+function getKegiatanId(k) {
+  if (!k) return "";
+  return String(k.ID_Kegiatan || k["ID Kegiatan"] || k.ID || "").trim();
+}
+
 // ─── Lookup helpers ───────────────────────────────────────────
 function cariPegawai(nip, pegawaiArray) {
-  if (!nip) return null;
-  return pegawaiArray.find(p => p.NIP === nip) || null;
+  if (!nip || !pegawaiArray) return null;
+  const targetNip = String(nip).trim();
+  return pegawaiArray.find(p => getPegawaiNip(p) === targetNip) || null;
 }
 
 function cariMitra(idMitra, mitraArray) {
-  if (!idMitra) return null;
-  return mitraArray.find(m => m.ID_Mitra === idMitra) || null;
+  if (!idMitra || !mitraArray) return null;
+  const targetId = String(idMitra).trim();
+  return mitraArray.find(m => getMitraId(m) === targetId || String(m.ID_Mitra || "").trim() === targetId) || null;
 }
 
 function cariKegiatan(idKegiatan, kegiatanArray) {
-  if (!idKegiatan) return null;
-  return kegiatanArray.find(k => k.ID_Kegiatan === idKegiatan) || null;
+  if (!idKegiatan || !kegiatanArray) return null;
+  const targetId = String(idKegiatan).trim();
+  return kegiatanArray.find(k => getKegiatanId(k) === targetId) || null;
 }
 
 function getDetailByDokumen(detailPekerjaanArray, idDokumen) {
-  return detailPekerjaanArray.filter(d => d.ID_Dokumen === idDokumen);
+  return detailPekerjaanArray.filter(d => String(d.ID_Dokumen).trim() === String(idDokumen).trim());
 }
 
 /**
@@ -120,6 +159,8 @@ function getDetailByDokumen(detailPekerjaanArray, idDokumen) {
  */
 function formatTanggal(isoStr) {
   if (!isoStr) return "-";
-  const [y, m, d] = isoStr.split("-");
-  return `${d}-${m}-${y}`;
+  const parts = String(isoStr).split("-");
+  if (parts.length < 3) return isoStr;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
 }
+

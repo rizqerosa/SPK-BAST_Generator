@@ -129,10 +129,16 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="sel-mitra">Mitra / PPL <span class="required">*</span></label>
+                <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                  <input type="text" id="search-mitra" class="form-control" placeholder="🔍 Cari nama/NIK/ID mitra..." style="flex:1; min-width:180px;">
+                  <select id="filter-asal-mitra" class="form-control" style="width:170px;">
+                    <option value="">Semua Kecamatan</option>
+                  </select>
+                </div>
                 <select class="form-control" id="sel-mitra" name="id_mitra" required>
                   <option value="">-- Pilih Mitra --</option>
                 </select>
-                <div class="form-hint">Nama mitra yang mendapat SPK</div>
+                <div class="form-hint" id="mitra-count-hint">Nama mitra yang mendapat SPK</div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="input-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>

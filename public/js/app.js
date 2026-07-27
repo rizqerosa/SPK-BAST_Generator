@@ -94,13 +94,92 @@ async function initForm() {
 function populateMitraDropdown() {
   const sel = document.getElementById("sel-mitra");
   if (!sel) return;
-  sel.innerHTML = `<option value="">-- Pilih Mitra/PPL --</option>`;
-  AppState.mitra.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m.ID_Mitra;
-    opt.textContent = `${m.Nama_Mitra} — ${m.Posisi} (${m.Asal})`;
-    sel.appendChild(opt);
-  });
+
+  const searchInput   = document.getElementById("search-mitra");
+  const filterAsalSel = document.getElementById("filter-asal-mitra");
+  const hintEl        = document.getElementById("mitra-count-hint");
+
+  // 1. Ekstrak daftar unik Asal/Kecamatan jika filterAsalSel belum terisi
+  if (filterAsalSel && filterAsalSel.options.length <= 1) {
+    const asalSet = new Set();
+    AppState.mitra.forEach(m => {
+      const asal = getMitraAsal(m);
+      if (asal && asal !== "-") asalSet.add(asal);
+    });
+    Array.from(asalSet).sort().forEach(asal => {
+      const opt = document.createElement("option");
+      opt.value = asal;
+      opt.textContent = asal;
+      filterAsalSel.appendChild(opt);
+    });
+  }
+
+  // 2. Filter & Render Options
+  const renderOptions = () => {
+    const query = (searchInput?.value || "").toLowerCase().trim();
+    const selectedAsal = filterAsalSel?.value || "";
+
+    const filtered = AppState.mitra.filter(m => {
+      const id      = getMitraId(m);
+      const name    = getMitraName(m);
+      const asal    = getMitraAsal(m);
+      const nik     = String(m.NIK || m.nik || "");
+      const sobatId = String(m.Sobat_ID || m["Sobat ID"] || "");
+
+      // Filter kecamatan/asal
+      if (selectedAsal && asal.toLowerCase() !== selectedAsal.toLowerCase()) {
+        return false;
+      }
+
+      // Filter query pencarian
+      if (query) {
+        const matchName  = name.toLowerCase().includes(query);
+        const matchId    = id.toLowerCase().includes(query);
+        const matchNik   = nik.toLowerCase().includes(query);
+        const matchSobat = sobatId.toLowerCase().includes(query);
+        const matchAsal  = asal.toLowerCase().includes(query);
+        return matchName || matchId || matchNik || matchSobat || matchAsal;
+      }
+
+      return true;
+    });
+
+    // Urutkan secara alfabetis berdasarkan Nama
+    filtered.sort((a, b) => getMitraName(a).localeCompare(getMitraName(b), "id", { sensitivity: "base" }));
+
+    sel.innerHTML = `<option value="">-- Pilih Mitra/PPL (${filtered.length} ditemukan) --</option>`;
+    filtered.forEach(m => {
+      const id     = getMitraId(m);
+      const name   = getMitraName(m);
+      const posisi = getMitraPosisi(m);
+      const asal   = getMitraAsal(m);
+
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${name} — ${posisi} (${asal})`;
+      sel.appendChild(opt);
+    });
+
+    if (hintEl) {
+      if (filtered.length === AppState.mitra.length) {
+        hintEl.textContent = `Total ${AppState.mitra.length} mitra dimuat dari Google Sheets.`;
+      } else {
+        hintEl.textContent = `Menampilkan ${filtered.length} dari ${AppState.mitra.length} mitra.`;
+      }
+    }
+  };
+
+  // Attach listener
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.dataset.bound = "true";
+    searchInput.addEventListener("input", renderOptions);
+  }
+  if (filterAsalSel && !filterAsalSel.dataset.bound) {
+    filterAsalSel.dataset.bound = "true";
+    filterAsalSel.addEventListener("change", renderOptions);
+  }
+
+  renderOptions();
 }
 
 function populatePegawaiDropdowns() {
@@ -116,9 +195,11 @@ function populatePegawaiDropdowns() {
     };
     sel.innerHTML = `<option value="">${labels[id]}</option>`;
     AppState.pegawai.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.NIP;
-      opt.textContent = `${p.Nama_Pegawai} — ${p.Jabatan}`;
+      const nip  = getPegawaiNip(p);
+      const name = getPegawaiName(p);
+      const opt  = document.createElement("option");
+      opt.value = nip;
+      opt.textContent = `${name} — ${p.Jabatan || ""}`;
       sel.appendChild(opt);
     });
   });
@@ -408,7 +489,7 @@ function updatePreviewInfo(record, ctx, mitraArr) {
   if (elMitra) {
     const arr = mitraArr || AppState.mitra;
     const m = cariMitra(record.ID_Mitra, arr);
-    if (m) elMitra.textContent = m.Nama_Mitra;
+    if (m) elMitra.textContent = getMitraName(m);
   }
 
   const elStatus = document.getElementById("preview-status");
@@ -614,12 +695,13 @@ function renderDashboardTable(data, mitraArr) {
 
   tbody.innerHTML = data.map(r => {
     const m = cariMitra(r.ID_Mitra, arr);
+    const mitraName = m ? getMitraName(m) : '<span class="text-muted">-</span>';
     const statusClass = r.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning";
     return `
       <tr>
         <td><span class="monospace text-sm">${r.ID_Dokumen}</span></td>
         <td style="max-width:260px; font-weight:500;">${r.Judul_Pekerjaan_Dokumen}</td>
-        <td>${m ? m.Nama_Mitra : '<span class="text-muted">-</span>'}</td>
+        <td>${mitraName}</td>
         <td>${r.Bulan} ${r.Tahun}</td>
         <td><span class="badge ${statusClass}">${r.Status_Generate_SPK || "Belum"}</span></td>
         <td>
