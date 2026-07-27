@@ -30,7 +30,7 @@ function setLoading(visible) {
 const _templateCache = {};
 async function loadTemplate(name) {
   if (_templateCache[name]) return _templateCache[name];
-  const res = await fetch(`/templates/${name}`);
+  const res = await fetch(`templates/${name}`);
   if (!res.ok) throw new Error(`Template ${name} tidak ditemukan`);
   const html = await res.text();
   _templateCache[name] = html;
@@ -265,7 +265,7 @@ function handleFormSubmit(e) {
   // Simpan ke sessionStorage lalu redirect ke preview
   sessionStorage.setItem("preview_record", JSON.stringify(record));
   sessionStorage.setItem("preview_details", JSON.stringify(details));
-  window.location.href = "/preview.html";
+  window.location.href = "preview.html";
 }
 
 // ============================================================
@@ -289,7 +289,7 @@ async function initPreview() {
     const rStr = sessionStorage.getItem("preview_record");
     const dStr = sessionStorage.getItem("preview_details");
     if (!rStr) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p>Tidak ada dokumen untuk ditampilkan.</p><a href="/form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p>Tidak ada dokumen untuk ditampilkan.</p><a href="form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
       return;
     }
     record  = JSON.parse(rStr);
@@ -493,7 +493,7 @@ function renderDashboardTable(data) {
         <td>${r.Bulan} ${r.Tahun}</td>
         <td><span class="badge ${statusClass}">${r.Status_Generate_SPK || "Belum"}</span></td>
         <td>
-          <a href="/preview.html?id=${r.ID_Dokumen}" class="btn btn-primary btn-sm">
+          <a href="preview.html?id=${r.ID_Dokumen}" class="btn btn-primary btn-sm">
             👁 Lihat
           </a>
         </td>

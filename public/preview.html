@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview Dokumen — Sistem SPK/BAST BPS Kota Subulussalam</title>
   <meta name="description" content="Preview dan export dokumen SPK dan BAST BPS Kota Subulussalam">
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/print.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/print.css">
   <style>
     /* ── Preview page specific ── */
     .preview-layout {
@@ -190,8 +190,8 @@
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Menu Utama</div>
-      <a href="/index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
-      <a href="/form.html" class="nav-item"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="form.html" class="nav-item"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
     </nav>
     <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
   </aside>
@@ -215,8 +215,8 @@
           <span id="zoom-level">100%</span>
           <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
         </div>
-        <a href="/form.html" class="btn btn-outline btn-sm">← Form</a>
-        <a href="/index.html" class="btn btn-outline btn-sm">🏠 Dashboard</a>
+        <a href="form.html" class="btn btn-outline btn-sm">← Form</a>
+        <a href="index.html" class="btn btn-outline btn-sm">🏠 Dashboard</a>
       </div>
     </header>
 
@@ -319,10 +319,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-<script src="/js/data.js"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/render.js"></script>
-<script src="/js/app.js"></script>
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
 
 <script>
   // ── State untuk preview ──
@@ -354,7 +354,7 @@
       document.getElementById("preview-doc-content").innerHTML =
         `<div class="empty-state"><div class="empty-icon">❌</div>
          <p>Dokumen tidak ditemukan.</p>
-         <a href="/form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
+         <a href="form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
       return;
     }
 
