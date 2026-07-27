@@ -18,34 +18,15 @@
     .form-card-header {
       background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
       color: #fff;
-      padding: 14px 24px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: .88rem;
+      padding: 14px 20px;
       font-weight: 700;
+      font-size: 1rem;
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    .form-card-body { padding: 22px 24px; }
-    .detail-empty {
-      text-align: center;
-      padding: 28px;
-      color: var(--gray-400);
-      font-size: .85rem;
-      border: 2px dashed var(--gray-200);
-      border-radius: var(--radius-md);
-    }
-    .kegiatan-picker {
-      display: flex;
       gap: 10px;
-      align-items: flex-end;
-      margin-bottom: 16px;
     }
-    .kegiatan-picker .form-group { flex: 1; margin-bottom: 0; }
     .step-indicator {
       display: flex;
-      gap: 0;
-      margin-bottom: 28px;
       border-radius: var(--radius-md);
       overflow: hidden;
       box-shadow: var(--shadow-sm);
@@ -70,6 +51,49 @@
       font-size: 1rem;
       font-weight: 800;
       margin-bottom: 2px;
+    }
+
+    /* ── Document Type Cards ── */
+    .doc-type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+    .doc-type-card {
+      display: flex;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .doc-type-card:hover {
+      border-color: var(--brand-primary);
+      background: #f0f9ff;
+    }
+    .doc-type-card.active {
+      border-color: var(--brand-primary);
+      background: #eff6ff;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
+    }
+    .doc-type-card input[type="radio"] {
+      margin-top: 3px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .doc-type-card-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--gray-800);
+      line-height: 1.3;
+    }
+    .doc-type-card-desc {
+      display: block;
+      color: var(--gray-500);
+      font-size: 0.75rem;
+      margin-top: 3px;
     }
   </style>
 </head>
@@ -109,48 +133,146 @@
       </div>
     </header>
 
-    <div class="page-body" style="max-width:900px;">
-
-      <!-- Step indicator -->
-      <div class="step-indicator">
-        <div class="step active"><span class="step-num">1</span>Identitas Mitra</div>
-        <div class="step active"><span class="step-num">2</span>Data Pejabat</div>
-        <div class="step active"><span class="step-num">3</span>Nomor & Tanggal</div>
-        <div class="step active"><span class="step-num">4</span>Detail Pekerjaan</div>
-        <div class="step active"><span class="step-num">5</span>Generate</div>
-      </div>
+    <div class="page-body" style="max-width:920px;">
 
       <form id="form-spk-bast" novalidate>
 
-        <!-- ─── SEKSI 1: IDENTITAS MITRA ─── -->
-        <div class="form-card">
+        <!-- ─── DOCUMENT TYPE SELECTOR (PALING ATAS) ─── -->
+        <div class="form-card" style="border: 2px solid var(--brand-primary); background: #f8fafc; margin-bottom: 24px;">
+          <div class="form-card-header" style="background: linear-gradient(135deg, #1e3a8a, #1d4ed8);">
+            📄 Pilih Jenis Dokumen yang Ingin Dibuat
+          </div>
+          <div class="form-card-body" style="padding: 20px;">
+            <p class="text-sm text-muted" style="margin-bottom: 14px;">
+              Pilih template dokumen yang ingin dibuat. Bidang isian di bawah akan otomatis menyesuaikan dengan kebutuhan dokumen tersebut.
+            </p>
+
+            <div class="doc-type-grid">
+
+              <label class="doc-type-card active" data-type="all">
+                <input type="radio" name="target_doc_type" value="all" checked>
+                <div>
+                  <span class="doc-type-card-title">🌟 Paket Lengkap (Semua Dokumen)</span>
+                  <span class="doc-type-card-desc">Generate SPK dan seluruh BAST sekaligus (5 Dokumen)</span>
+                </div>
+              </label>
+
+              <label class="doc-type-card" data-type="spk">
+                <input type="radio" name="target_doc_type" value="spk">
+                <div>
+                  <span class="doc-type-card-title">📄 SPK (Surat Perjanjian Kerja)</span>
+                  <span class="doc-type-card-desc">Template: TEMPLATE_SPK.docx</span>
+                </div>
+              </label>
+
+              <label class="doc-type-card" data-type="ppl-pml">
+                <input type="radio" name="target_doc_type" value="ppl-pml">
+                <div>
+                  <span class="doc-type-card-title">📋 BAST PPL - PML</span>
+                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_PPL-PML.docx</span>
+                </div>
+              </label>
+
+              <label class="doc-type-card" data-type="ppl-sm">
+                <input type="radio" name="target_doc_type" value="ppl-sm">
+                <div>
+                  <span class="doc-type-card-title">📋 BAST PPL - SM</span>
+                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_PPL-SM.docx</span>
+                </div>
+              </label>
+
+              <label class="doc-type-card" data-type="pml-sm">
+                <input type="radio" name="target_doc_type" value="pml-sm">
+                <div>
+                  <span class="doc-type-card-title">📋 BAST PML - SM</span>
+                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_PML-SM.docx</span>
+                </div>
+              </label>
+
+              <label class="doc-type-card" data-type="sm-ppk">
+                <input type="radio" name="target_doc_type" value="sm-ppk">
+                <div>
+                  <span class="doc-type-card-title">🏢 BAST SM - PPK</span>
+                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_SM-PPK.docx (Internal)</span>
+                </div>
+              </label>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SEKSI 1: IDENTITAS MITRA / PPL ─── -->
+        <div class="form-card" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm">
           <div class="form-card-header">👤 1. Identitas Mitra / PPL</div>
           <div class="form-card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="sel-mitra">Mitra / PPL <span class="required">*</span></label>
-                <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                  <input type="text" id="search-mitra" class="form-control" placeholder="🔍 Cari nama/NIK/ID mitra..." style="flex:1; min-width:180px;">
-                  <select id="filter-asal-mitra" class="form-control" style="width:170px;">
-                    <option value="">Semua Kecamatan</option>
-                  </select>
-                </div>
-                <select class="form-control" id="sel-mitra" name="id_mitra" required>
-                  <option value="">-- Pilih Mitra --</option>
+            <div class="form-group">
+              <label class="form-label" for="sel-mitra">Mitra / PPL <span class="required">*</span></label>
+              <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                <input type="text" id="search-mitra" class="form-control" placeholder="🔍 Cari nama/NIK/ID mitra..." style="flex:1; min-width:180px;">
+                <select id="filter-asal-mitra" class="form-control" style="width:170px;">
+                  <option value="">Semua Kecamatan</option>
                 </select>
-                <div class="form-hint" id="mitra-count-hint">Nama mitra yang mendapat SPK</div>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="input-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
-                <input type="text" class="form-control" id="input-judul"
-                       name="judul_pekerjaan" required
-                       placeholder="contoh: PENDATAAN SKTNP TAHAP I 2026"
-                       style="text-transform:uppercase;">
+              <select class="form-control" id="sel-mitra" name="id_mitra" required>
+                <option value="">-- Pilih Mitra --</option>
+              </select>
+              <div class="form-hint" id="mitra-count-hint">Nama mitra yang mendapat SPK/tugas lapangan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SEKSI 2: DATA PEJABAT TERKAIT ─── -->
+        <div class="form-card">
+          <div class="form-card-header">🏛️ 2. Data Pejabat Terkait</div>
+          <div class="form-card-body">
+            <div class="form-row">
+              <div class="form-group" data-show-for="all,spk,sm-ppk">
+                <label class="form-label" for="sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
+                <select class="form-control" id="sel-ppk" name="ppk" required>
+                  <option value="">-- Pilih PPK --</option>
+                </select>
+              </div>
+              <div class="form-group" data-show-for="all,ppl-sm,pml-sm,sm-ppk">
+                <label class="form-label" for="sel-ketua-tim">Ketua Tim / Supervisor Madya (SM) <span class="required">*</span></label>
+                <select class="form-control" id="sel-ketua-tim" name="ketua_tim" required>
+                  <option value="">-- Pilih Ketua Tim --</option>
+                </select>
               </div>
             </div>
             <div class="form-row">
+              <div class="form-group" data-show-for="all,ppl-pml,pml-sm">
+                <label class="form-label" for="sel-pml">PML (Pengawas Lapangan) <span class="required">*</span></label>
+                <select class="form-control" id="sel-pml" name="pml" required>
+                  <option value="">-- Pilih PML --</option>
+                </select>
+              </div>
+              <div class="form-group" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm,sm-ppk">
+                <label class="form-label" for="sel-kepala">Kepala / PLH BPS Kota Subulussalam <span class="required">*</span></label>
+                <select class="form-control" id="sel-kepala" name="kepala_plh" required>
+                  <option value="">-- Pilih Kepala/PLH --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SEKSI 3: NOMOR, TANGGAL & PERIODE DOKUMEN ─── -->
+        <div class="form-card">
+          <div class="form-card-header">📅 3. Informasi &amp; Nomor Dokumen</div>
+          <div class="form-card-body">
+
+            <!-- Judul Pekerjaan, Bulan, Tahun -->
+            <div class="form-group">
+              <label class="form-label" for="input-judul">Judul Pekerjaan / Kegiatan <span class="required">*</span></label>
+              <input type="text" class="form-control" id="input-judul"
+                     name="judul_pekerjaan" required
+                     placeholder="contoh: PENDATAAN SKTNP TAHAP I 2026"
+                     style="text-transform:uppercase;">
+            </div>
+
+            <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="input-bulan">Bulan <span class="required">*</span></label>
+                <label class="form-label" for="input-bulan">Bulan Kegiatan <span class="required">*</span></label>
                 <select class="form-control" id="input-bulan" name="bulan" required>
                   <option value="">-- Pilih Bulan --</option>
                   <option>Januari</option><option>Februari</option><option>Maret</option>
@@ -162,53 +284,12 @@
               <div class="form-group">
                 <label class="form-label" for="input-tahun">Tahun <span class="required">*</span></label>
                 <input type="number" class="form-control" id="input-tahun"
-                       name="tahun" value="2026" min="2024" max="2030">
+                       name="tahun" value="2026" min="2024" max="2030" required>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- ─── SEKSI 2: DATA PEJABAT ─── -->
-        <div class="form-card">
-          <div class="form-card-header">🏛️ 2. Data Pejabat Terkait</div>
-          <div class="form-card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
-                <select class="form-control" id="sel-ppk" name="ppk" required>
-                  <option value="">-- Pilih PPK --</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="sel-ketua-tim">Ketua Tim / Supervisor Madya <span class="required">*</span></label>
-                <select class="form-control" id="sel-ketua-tim" name="ketua_tim" required>
-                  <option value="">-- Pilih Ketua Tim --</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="sel-pml">PML (Pengawas Lapangan) <span class="required">*</span></label>
-                <select class="form-control" id="sel-pml" name="pml" required>
-                  <option value="">-- Pilih PML --</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="sel-kepala">Kepala / PLH <span class="required">*</span></label>
-                <select class="form-control" id="sel-kepala" name="kepala_plh" required>
-                  <option value="">-- Pilih Kepala/PLH --</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ─── SEKSI 3: NOMOR & TANGGAL ─── -->
-        <div class="form-card">
-          <div class="form-card-header">📅 3. Nomor &amp; Tanggal Dokumen</div>
-          <div class="form-card-body">
-
-            <div class="form-row">
+            <!-- SK Kepala / Kepka -->
+            <div class="form-row" data-show-for="all,ppl-pml,ppl-sm,pml-sm">
               <div class="form-group">
                 <label class="form-label" for="input-nomor-kepka">Nomor SK Kepala (Kepka)</label>
                 <input type="text" class="form-control" id="input-nomor-kepka"
@@ -221,7 +302,8 @@
               </div>
             </div>
 
-            <div class="form-row">
+            <!-- SPK -->
+            <div class="form-row" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm">
               <div class="form-group">
                 <label class="form-label" for="input-no-spk">Nomor SPK <span class="required">*</span></label>
                 <input type="text" class="form-control" id="input-no-spk"
@@ -234,68 +316,98 @@
               </div>
             </div>
 
-            <div class="form-row">
+            <!-- Tanggal Pelaksanaan -->
+            <div class="form-row" data-show-for="all,spk">
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai</label>
+                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai SPK</label>
                 <input type="date" class="form-control" id="input-tanggal-mulai"
                        name="tanggal_mulai">
               </div>
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai</label>
+                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai SPK</label>
                 <input type="date" class="form-control" id="input-tanggal-selesai"
                        name="tanggal_selesai">
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="input-batas-penyerahan">Batas Penyerahan</label>
+            <div class="form-group" data-show-for="all,spk">
+              <label class="form-label" for="input-batas-penyerahan">Batas Penyerahan Hasil</label>
               <input type="date" class="form-control" id="input-batas-penyerahan"
                      name="batas_penyerahan">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" data-show-for="all,spk">
               <label class="form-label" for="input-buku-pedoman">Buku Pedoman (untuk Pasal 2 SPK)</label>
               <input type="text" class="form-control" id="input-buku-pedoman"
                      name="buku_pedoman" placeholder="contoh: Buku Pedoman Pewawancara SKTNP 2026">
             </div>
 
-            <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
-            <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST</p>
+            <!-- Nomor & Tanggal BAST Spesifik -->
+            <div data-show-for="all,ppl-pml">
+              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
+              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST PPL - PML</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL-PML</label>
+                  <input type="text" class="form-control" id="input-no-bast-ppl-pml"
+                         name="no_bast_ppl_pml" placeholder="BAST-PPL-PML-001/BPS-1172/I/2026">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML</label>
+                  <input type="date" class="form-control" id="input-tgl-bast-ppl-pml"
+                         name="tanggal_bast_ppl_pml">
+                </div>
+              </div>
+            </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL-PML</label>
-                <input type="text" class="form-control" id="input-no-bast-ppl-pml"
-                       name="no_bast_ppl_pml" placeholder="BAST-PPL-PML-001/...">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML</label>
-                <input type="date" class="form-control" id="input-tgl-bast-ppl-pml"
-                       name="tanggal_bast_ppl_pml">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL-SM</label>
-                <input type="text" class="form-control" id="input-no-bast-ppl-sm"
-                       name="no_bast_ppl_sm" placeholder="BAST-PPL-SM-001/...">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM</label>
-                <input type="date" class="form-control" id="input-tgl-bast-ppl-sm"
-                       name="tanggal_bast_ppl_sm">
+            <div data-show-for="all,ppl-sm">
+              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
+              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST PPL - SM</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL-SM</label>
+                  <input type="text" class="form-control" id="input-no-bast-ppl-sm"
+                         name="no_bast_ppl_sm" placeholder="BAST-PPL-SM-001/BPS-1172/I/2026">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM</label>
+                  <input type="date" class="form-control" id="input-tgl-bast-ppl-sm"
+                         name="tanggal_bast_ppl_sm">
+                </div>
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML-SM</label>
-                <input type="text" class="form-control" id="input-no-bast-pml-sm"
-                       name="no_bast_pml_sm" placeholder="BAST-PML-SM-001/...">
+
+            <div data-show-for="all,pml-sm">
+              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
+              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST PML - SM</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML-SM</label>
+                  <input type="text" class="form-control" id="input-no-bast-pml-sm"
+                         name="no_bast_pml_sm" placeholder="BAST-PML-SM-001/BPS-1172/I/2026">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM</label>
+                  <input type="date" class="form-control" id="input-tgl-bast-pml-sm"
+                         name="tanggal_bast_pml_sm">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM</label>
-                <input type="date" class="form-control" id="input-tgl-bast-pml-sm"
-                       name="tanggal_bast_pml_sm">
+            </div>
+
+            <div data-show-for="all,sm-ppk">
+              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
+              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST SM - PPK</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="input-no-bast-sm-ppk">No. BAST SM-PPK</label>
+                  <input type="text" class="form-control" id="input-no-bast-sm-ppk"
+                         name="no_bast_sm_ppk" placeholder="BAST-SM-PPK-001/BPS-1172/I/2026">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="input-tgl-bast-sm-ppk">Tanggal BAST SM-PPK</label>
+                  <input type="date" class="form-control" id="input-tgl-bast-sm-ppk"
+                         name="tanggal_bast_sm_ppk">
+                </div>
               </div>
             </div>
 
@@ -303,8 +415,8 @@
         </div>
 
         <!-- ─── SEKSI 4: DETAIL PEKERJAAN ─── -->
-        <div class="form-card">
-          <div class="form-card-header">📝 4. Detail Pekerjaan (Lampiran SPK)</div>
+        <div class="form-card" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm">
+          <div class="form-card-header">📝 4. Detail Pekerjaan &amp; Rincian Kegiatan</div>
           <div class="form-card-body">
 
             <!-- Picker kegiatan -->
@@ -320,51 +432,43 @@
               </button>
             </div>
 
-            <!-- Tabel detail -->
-            <div class="detail-table-wrapper">
-              <table class="detail-table" id="detail-table">
+            <!-- Tabel rincian -->
+            <div class="table-wrapper mt-16">
+              <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width:32px;">No</th>
+                    <th style="width:40px;">No</th>
                     <th>Uraian Tugas</th>
-                    <th>Jangka Waktu</th>
-                    <th style="width:60px;">Volume</th>
-                    <th>Satuan</th>
-                    <th>Harga Satuan</th>
-                    <th>Nilai Perjanjian</th>
+                    <th style="width:130px;">Jangka Waktu</th>
+                    <th style="width:70px;">Vol</th>
+                    <th style="width:80px;">Satuan</th>
+                    <th style="width:110px;" class="tr">Harga</th>
+                    <th style="width:110px;" class="tr">Total</th>
                     <th>Beban Anggaran</th>
-                    <th style="width:40px;">Del</th>
+                    <th style="width:40px;">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="detail-tbody">
-                  <tr id="detail-empty-row">
-                    <td colspan="9">
-                      <div class="detail-empty">
-                        📭 Belum ada kegiatan. Pilih kegiatan di atas, lalu klik &ldquo;Tambah&rdquo;.
-                      </div>
-                    </td>
-                  </tr>
+                  <!-- Dynamically populated by JS -->
                 </tbody>
               </table>
             </div>
 
-            <!-- Honor summary -->
-            <div class="honor-summary" id="honor-summary">
-              <div>
-                <div class="honor-label">Total Honor</div>
-                <div class="honor-amount" id="honor-amount">Rp 0,-</div>
-              </div>
-              <div class="honor-terbilang" id="honor-terbilang">Nol Rupiah</div>
+            <!-- Total honor preview -->
+            <div class="honor-preview-box">
+              <div class="honor-preview-label">Total Honor Pekerjaan:</div>
+              <div class="honor-preview-amount" id="honor-amount">Rp 0,-</div>
+              <div class="honor-preview-terbilang" id="honor-terbilang">Nol Rupiah</div>
             </div>
 
           </div>
         </div>
 
-        <!-- ─── SUBMIT ─── -->
-        <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px; margin-bottom:40px;">
+        <!-- Submit Bar -->
+        <div class="flex items-center justify-between mt-24 mb-32">
           <a href="index.html" class="btn btn-outline btn-lg">Batal</a>
           <button type="submit" class="btn btn-primary btn-xl" id="btn-generate">
-            🚀 Generate Semua Dokumen
+            🚀 Generate Dokumen
           </button>
         </div>
 

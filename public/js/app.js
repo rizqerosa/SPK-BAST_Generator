@@ -78,6 +78,12 @@ async function initForm() {
     populatePegawaiDropdowns();
     populateKegiatanOptions();
 
+    // Event handlers untuk pilihan jenis dokumen
+    document.querySelectorAll('input[name="target_doc_type"]').forEach(radio => {
+      radio.addEventListener("change", updateFormVisibility);
+    });
+    updateFormVisibility();
+
     // Event handlers
     document.getElementById("btn-tambah-kegiatan").addEventListener("click", tambahDetailRow);
     document.getElementById("form-spk-bast").addEventListener("submit", handleFormSubmit);
@@ -89,6 +95,42 @@ async function initForm() {
   } finally {
     setLoading(false);
   }
+}
+
+function updateFormVisibility() {
+  const selectedRadio = document.querySelector('input[name="target_doc_type"]:checked');
+  const docType = selectedRadio ? selectedRadio.value : "all";
+
+  // Update styling kartu pilihan
+  document.querySelectorAll(".doc-type-card").forEach(card => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio && radio.checked) {
+      card.classList.add("active");
+    } else {
+      card.classList.remove("active");
+    }
+  });
+
+  // Tampilkan/sembunyikan elemen berdasarkan atribut data-show-for
+  document.querySelectorAll("[data-show-for]").forEach(el => {
+    const allowed = el.dataset.showFor.split(",").map(s => s.trim());
+    const shouldShow = allowed.includes("all") && docType === "all" ? true : allowed.includes(docType);
+
+    if (shouldShow) {
+      el.style.display = "";
+      // Re-enable required jika sebelumnya required
+      el.querySelectorAll("[data-req-orig]").forEach(inp => {
+        inp.required = true;
+      });
+    } else {
+      el.style.display = "none";
+      // Hapus temporary required agar tidak memblokir submit HTML5
+      el.querySelectorAll("[required]").forEach(inp => {
+        inp.dataset.reqOrig = "true";
+        inp.required = false;
+      });
+    }
+  });
 }
 
 function populateMitraDropdown() {
@@ -301,10 +343,19 @@ async function handleFormSubmit(e) {
   e.preventDefault();
   const fd = new FormData(e.target);
 
-  const idMitra = document.getElementById("sel-mitra").value;
-  if (!idMitra) { showToast("Pilih mitra/PPL terlebih dahulu", "danger"); return; }
-  if (document.querySelectorAll("#detail-tbody tr").length === 0) {
-    showToast("Tambahkan minimal 1 kegiatan", "danger"); return;
+  const docType = document.querySelector('input[name="target_doc_type"]:checked')?.value || "all";
+  const idMitra = document.getElementById("sel-mitra")?.value || "";
+
+  // Validasi: Jika bukan BAST SM-PPK, wajib pilih mitra
+  if (docType !== "sm-ppk" && !idMitra) {
+    showToast("Pilih mitra/PPL terlebih dahulu", "danger");
+    return;
+  }
+
+  // Validasi: jika paket lengkap / SPK / BAST yang butuh detail, pastikan ada kegiatan
+  if ((docType === "all" || docType === "spk" || docType.startsWith("ppl") || docType === "pml-sm") && document.querySelectorAll("#detail-tbody tr").length === 0) {
+    showToast("Tambahkan minimal 1 kegiatan", "danger");
+    return;
   }
 
   // Kumpulkan detail pekerjaan dari tabel
@@ -341,10 +392,10 @@ async function handleFormSubmit(e) {
     Bulan:                   fd.get("bulan") || "",
     Jenis_Petugas:           "Mitra",
     ID_Mitra:                idMitra,
-    PML:                     document.getElementById("sel-pml").value,
-    PPK:                     document.getElementById("sel-ppk").value,
-    Ketua_Tim:               document.getElementById("sel-ketua-tim").value,
-    "Kepala/PLH":            document.getElementById("sel-kepala").value,
+    PML:                     document.getElementById("sel-pml")?.value || "",
+    PPK:                     document.getElementById("sel-ppk")?.value || "",
+    Ketua_Tim:               document.getElementById("sel-ketua-tim")?.value || "",
+    "Kepala/PLH":            document.getElementById("sel-kepala")?.value || "",
     Nomor_Kepka:             fd.get("nomor_kepka") || "",
     Tanggal_Kepka:           fd.get("tanggal_kepka") || "",
     No_SPK:                  fd.get("no_spk") || "",
@@ -355,6 +406,8 @@ async function handleFormSubmit(e) {
     Tanggal_BAST_PPL_SM:     fd.get("tanggal_bast_ppl_sm") || "",
     No_BAST_PML_SM:          fd.get("no_bast_pml_sm") || "",
     Tanggal_BAST_PML_SM:     fd.get("tanggal_bast_pml_sm") || "",
+    No_BAST_SM_PPK:          fd.get("no_bast_sm_ppk") || "",
+    Tanggal_BAST_SM_PPK:     fd.get("tanggal_bast_sm_ppk") || "",
     Judul_Pekerjaan_Dokumen: fd.get("judul_pekerjaan") || "",
     Tanggal_Mulai:           fd.get("tanggal_mulai") || "",
     Tanggal_Selesai:         fd.get("tanggal_selesai") || "",
@@ -367,7 +420,10 @@ async function handleFormSubmit(e) {
   // Update ID_Dokumen di detail
   details.forEach(d => { d.ID_Dokumen = newId; });
 
-  // Simpan ke sessionStorage untuk preview (cepat, tidak perlu tunggu Sheets)
+  const targetTab = docType === "all" ? "spk" : docType;
+
+  // Simpan ke sessionStorage untuk preview
+  sessionStorage.setItem("preview_target_tab", targetTab);
   sessionStorage.setItem("preview_record", JSON.stringify(record));
   sessionStorage.setItem("preview_details", JSON.stringify(details));
   sessionStorage.setItem("preview_mitra", JSON.stringify(AppState.mitra));
@@ -377,7 +433,6 @@ async function handleFormSubmit(e) {
   setLoading(true);
   try {
     await appendToSheet("spkBast", record);
-    // Append semua detail
     for (const detail of details) {
       await appendToSheet("detailPekerjaan", detail);
     }
@@ -389,7 +444,7 @@ async function handleFormSubmit(e) {
     setLoading(false);
   }
 
-  window.location.href = "preview.html";
+  window.location.href = `preview.html?tab=${targetTab}`;
 }
 
 // ============================================================

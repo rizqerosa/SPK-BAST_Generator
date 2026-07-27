@@ -407,8 +407,9 @@
       // Fetch bastSmPpk di background
       getBastSmPpk().then(data => { AppState.bastSmPpk = data; });
 
-      // Render tab SPK pertama
-      await switchTab("spk", document.querySelector('.tab-item[data-tab="spk"]'));
+      // Render tab yang dipilih
+      const defaultTab = urlParams.get("tab") || sessionStorage.getItem("preview_target_tab") || "spk";
+      await switchTab(defaultTab, document.querySelector(`.tab-item[data-tab="${defaultTab}"]`));
 
     } catch (err) {
       console.error("Preview init error:", err);
