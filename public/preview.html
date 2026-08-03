@@ -360,6 +360,20 @@
         }
       }
 
+      // Override Nomor SPK & Tanggal SPK dari URL jika diinput dari modal ekspor
+      const customNoSpk  = urlParams.get("no_spk");
+      const customTglSpk = urlParams.get("tgl_spk");
+      if (_previewRecord) {
+        if (customNoSpk) {
+          _previewRecord.Nomor_SPK = customNoSpk;
+          _previewRecord.No_SPK    = customNoSpk;
+        }
+        if (customTglSpk) {
+          _previewRecord["Tanggal SPK"] = customTglSpk;
+          _previewRecord.Tanggal_SPK    = customTglSpk;
+        }
+      }
+
       // Simpan ke AppState agar fungsi lain bisa akses
       AppState.mitra   = mitraArr   || [];
       AppState.pegawai = pegawaiArr || [];

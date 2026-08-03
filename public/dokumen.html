@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daftar Dokumen — Sistem SPK/BAST BPS Kota Subulussalam</title>
   <meta name="description" content="Histori seluruh dokumen SPK dan BAST yang telah dibuat di BPS Kota Subulussalam">
-  <link rel="stylesheet" href="css/style.css?v=3.0">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
   <style>
     .hero-banner {
       background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 55%, #3b82f6 100%);
@@ -45,10 +45,9 @@
     }
     .hero-text p { font-size: .83rem; opacity: .82; }
 
-    /* action col btns */
     .action-btns { display: flex; gap: 6px; align-items: center; }
 
-    /* confirm modal */
+    /* modal overlay */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.45);
@@ -62,8 +61,8 @@
     .modal-box {
       background: #fff;
       border-radius: var(--radius-xl);
-      padding: 32px;
-      max-width: 400px;
+      padding: 28px 32px;
+      max-width: 460px;
       width: 90%;
       box-shadow: 0 20px 60px rgba(0,0,0,.2);
       transform: scale(.95);
@@ -71,8 +70,8 @@
     }
     .modal-overlay.visible .modal-box { transform: scale(1); }
     .modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
-    .modal-desc { font-size: .88rem; color: var(--gray-600); margin-bottom: 24px; line-height: 1.5; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-desc { font-size: .85rem; color: var(--gray-600); margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
     /* filter-bar */
     .list-controls {
@@ -88,13 +87,27 @@
       border-color: var(--brand-primary);
     }
 
-    .doc-table-wrap .topbar-inner {
+    .export-doc-btn {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
+      width: 100%;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: var(--gray-50);
+      font-size: .86rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .export-doc-btn:hover {
+      background: var(--brand-light);
+      border-color: var(--brand-accent);
+      color: var(--brand-primary);
+      transform: translateX(2px);
     }
   </style>
 </head>
@@ -125,7 +138,7 @@
         <div class="hero-icon">📁</div>
         <div class="hero-text">
           <h1>Histori Dokumen SPK &amp; BAST</h1>
-          <p>Lihat, unduh, edit, atau hapus dokumen yang telah dibuat. Klik "Buat Dokumen Baru" untuk menambah dokumen.</p>
+          <p>Lihat, ekspor PDF dengan nomor/tanggal kustom, atau hapus dokumen yang telah dibuat.</p>
         </div>
       </div>
 
@@ -185,7 +198,7 @@
             <thead>
               <tr>
                 <th style="width:40px;">No</th>
-                <th>Nama Mitra / PPL</th>
+                <th>Nama Petugas / PPL</th>
                 <th>Judul Pekerjaan</th>
                 <th style="width:110px;">Bulan / Tahun</th>
                 <th style="width:115px;" class="tr">Total Honor</th>
@@ -207,6 +220,50 @@
 
     </div><!-- /page-body -->
   </div><!-- /main-content -->
+</div>
+
+<!-- ─── Export Modal ─── -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal-box">
+    <div class="modal-title">📤 Ekspor Dokumen SPK / BAST</div>
+    <div class="modal-desc">
+      Atur Nomor Surat dan Tanggal Surat sebelum membuka preview / mengunduh PDF.
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label" for="export-no-surat">Nomor Surat / SPK</label>
+      <input type="text" class="form-control" id="export-no-surat" placeholder="SPK-001/BPS-1172/I/2026">
+    </div>
+
+    <div class="form-group" style="margin-bottom:18px;">
+      <label class="form-label" for="export-tgl-surat">Tanggal Surat (1 Hari Spesifik)</label>
+      <input type="date" class="form-control" id="export-tgl-surat">
+    </div>
+
+    <div class="sec-label" style="margin-bottom:10px;">Pilih Dokumen yang Ingin Diunduh:</div>
+
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <button type="button" class="export-doc-btn" onclick="triggerExport('spk')">
+        <span>📜 Surat Perjanjian Kerja (SPK)</span> <span>›</span>
+      </button>
+      <button type="button" class="export-doc-btn" onclick="triggerExport('ppl-pml')">
+        <span>📄 BAST PPL → PML</span> <span>›</span>
+      </button>
+      <button type="button" class="export-doc-btn" onclick="triggerExport('ppl-sm')">
+        <span>📄 BAST PPL → SM</span> <span>›</span>
+      </button>
+      <button type="button" class="export-doc-btn" onclick="triggerExport('pml-sm')">
+        <span>📄 BAST PML → SM</span> <span>›</span>
+      </button>
+      <button type="button" class="export-doc-btn" onclick="triggerExport('sm-ppk')">
+        <span>📄 BAST SM → PPK</span> <span>›</span>
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeExportModal()">Batal</button>
+    </div>
+  </div>
 </div>
 
 <!-- ─── Delete Confirm Modal ─── -->
@@ -232,5 +289,177 @@
 <script src="js/render.js?v=4.0"></script>
 <script src="js/sidebar.js?v=4.0"></script>
 <script src="js/app.js?v=4.0"></script>
+<script>
+  let _allDocs = [];
+  let _allMitra = [];
+  let _allPegawai = [];
+  let _activeFilter = "all";
+  let _selectedDocId = null;
+  let _deleteDocId = null;
+
+  function renderTable(data) {
+    const tbody = document.getElementById("doc-tbody");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada dokumen</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map((doc, i) => {
+      // Cari nama petugas dari mitra atau pegawai
+      let namaPetugas = "—";
+      if (doc.ID_Mitra) {
+        const m = _allMitra.find(item => String(getMitraId(item)) === String(doc.ID_Mitra));
+        if (m) namaPetugas = getMitraName(m);
+        else {
+          const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(doc.ID_Mitra));
+          if (p) namaPetugas = getPegawaiName(p);
+        }
+      }
+
+      const isSudah = (doc.Status_Generate_SPK || "").toLowerCase() === "sudah";
+      const statusBadge = isSudah
+        ? `<span class="badge badge-success">Sudah</span>`
+        : `<span class="badge badge-warning">Belum</span>`;
+
+      return `
+        <tr>
+          <td class="tc text-muted">${i + 1}</td>
+          <td><div style="font-weight:600; font-size:.88rem;">${namaPetugas}</div></td>
+          <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
+          <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
+          <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="action-btns">
+              <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')">
+                📤 Ekspor
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  function applyFilters() {
+    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const data = _allDocs.filter(d => {
+      const matchStatus = _activeFilter === "all" || (d.Status_Generate_SPK || "").toLowerCase() === _activeFilter.toLowerCase();
+      const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
+        .some(v => String(v || "").toLowerCase().includes(q));
+      return matchStatus && matchQ;
+    });
+    renderTable(data);
+  }
+
+  function openExportModal(docId) {
+    _selectedDocId = docId;
+    const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
+    if (!doc) return;
+
+    const noSurat = doc.Nomor_SPK || doc.No_SPK || "";
+    let tglSurat = doc["Tanggal SPK"] || doc.Tanggal_SPK || doc.Tanggal_Mulai || "";
+    // format tglSurat to YYYY-MM-DD if ISO
+    if (tglSurat && tglSurat.includes("T")) {
+      tglSurat = tglSurat.split("T")[0];
+    }
+
+    document.getElementById("export-no-surat").value = noSurat;
+    document.getElementById("export-tgl-surat").value = tglSurat;
+    document.getElementById("export-modal").classList.add("visible");
+  }
+
+  function closeExportModal() {
+    document.getElementById("export-modal").classList.remove("visible");
+    _selectedDocId = null;
+  }
+
+  function triggerExport(tabKey) {
+    if (!_selectedDocId) return;
+    const noSurat  = document.getElementById("export-no-surat").value.trim();
+    const tglSurat = document.getElementById("export-tgl-surat").value;
+
+    let url = `preview.html?id=${encodeURIComponent(_selectedDocId)}&tab=${encodeURIComponent(tabKey)}`;
+    if (noSurat)  url += `&no_spk=${encodeURIComponent(noSurat)}`;
+    if (tglSurat) url += `&tgl_spk=${encodeURIComponent(tglSurat)}`;
+
+    closeExportModal();
+    window.location.href = url;
+  }
+
+  function confirmDelete(docId) {
+    _deleteDocId = docId;
+    document.getElementById("delete-modal").classList.add("visible");
+  }
+
+  function closeDeleteModal() {
+    document.getElementById("delete-modal").classList.remove("visible");
+    _deleteDocId = null;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    setLoading(true);
+    try {
+      const [spkBastData, mitraData, pegawaiData] = await Promise.all([
+        getSpkBast(),
+        getMitra(),
+        getPegawai(),
+      ]);
+
+      _allDocs    = spkBastData || [];
+      _allMitra   = mitraData   || [];
+      _allPegawai = pegawaiData || [];
+
+      // Stats
+      const total = _allDocs.length;
+      const sudah = _allDocs.filter(d => (d.Status_Generate_SPK || "").toLowerCase() === "sudah").length;
+      const belum = total - sudah;
+      const honor = _allDocs.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
+
+      document.getElementById("stat-total").textContent = total;
+      document.getElementById("stat-sudah").textContent = sudah;
+      document.getElementById("stat-belum").textContent = belum;
+      document.getElementById("stat-honor").textContent = "Rp " + formatRupiah(honor);
+
+      renderTable(_allDocs);
+
+      // Event listeners
+      document.getElementById("search-input").addEventListener("input", applyFilters);
+      document.querySelectorAll("[data-filter]").forEach(btn => {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+          this.classList.add("active");
+          _activeFilter = this.dataset.filter;
+          applyFilters();
+        });
+      });
+
+      // Confirm delete button
+      document.getElementById("btn-confirm-delete").addEventListener("click", async () => {
+        if (!_deleteDocId) return;
+        setLoading(true);
+        try {
+          await deleteFromSheet("spkBast", "ID_Dokumen", _deleteDocId);
+          clearCache("spkBast");
+          showToast("Dokumen berhasil dihapus", "success");
+          _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(_deleteDocId));
+          applyFilters();
+        } catch (err) {
+          showToast("Gagal menghapus dokumen: " + err.message, "danger");
+        } finally {
+          setLoading(false);
+          closeDeleteModal();
+        }
+      });
+
+    } catch (err) {
+      showToast("Gagal memuat dokumen: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
 </body>
 </html>
