@@ -101,23 +101,8 @@
 <body>
 <div class="app-layout">
 
-  <!-- ─── SIDEBAR ─── -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-icon">📋</div>
-      <div class="logo-text">
-        <div class="title">SPK/BAST Generator</div>
-        <div class="sub">BPS Kota Subulussalam</div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu Utama</div>
-      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
-      <a href="dokumen.html" class="nav-item active"><span class="nav-icon">📁</span> Daftar Dokumen</a>
-      <a href="form.html" class="nav-item"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
-    </nav>
-    <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
-  </aside>
+  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
+  <aside class="sidebar" id="app-sidebar"></aside>
 
   <!-- ─── MAIN ─── -->
   <div class="main-content">
@@ -241,10 +226,11 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=3.0"></script>
-<script src="js/data.js?v=3.0"></script>
-<script src="js/utils.js?v=3.0"></script>
-<script src="js/render.js?v=3.0"></script>
-<script src="js/app.js?v=3.0"></script>
+<script src="js/config.js?v=4.0"></script>
+<script src="js/data.js?v=4.0"></script>
+<script src="js/utils.js?v=4.0"></script>
+<script src="js/render.js?v=4.0"></script>
+<script src="js/sidebar.js?v=4.0"></script>
+<script src="js/app.js?v=4.0"></script>
 </body>
 </html>

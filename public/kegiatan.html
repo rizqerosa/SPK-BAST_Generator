@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Kegiatan — SPK/BAST Generator BPS Kota Subulussalam</title>
+  <meta name="description" content="Daftar master kegiatan survei BPS Kota Subulussalam">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, #c2410c 0%, #ea580c 60%, #fb923c 100%);
+      border-radius: var(--radius-xl);
+      padding: 26px 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(194,65,12,.25);
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .page-hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .page-hero p { font-size: .83rem; opacity: .85; }
+    .page-hero .hero-icon { font-size: 2.8rem; position: relative; }
+
+    .list-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .harga-pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 700;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+    .keg-id {
+      font-family: monospace;
+      font-size: .75rem;
+      color: var(--gray-500);
+    }
+    .beban-cell {
+      font-family: monospace;
+      font-size: .7rem;
+      color: var(--gray-500);
+      max-width: 200px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Daftar Kegiatan
+        <small>Master kegiatan survei BPS Kota Subulussalam</small>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" onclick="clearCache('kegiatan'); location.reload();">
+          🔄 Refresh Data
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <div class="page-hero">
+        <div class="hero-icon">📁</div>
+        <div>
+          <h1>Master Daftar Kegiatan</h1>
+          <p>Seluruh kegiatan survei beserta harga satuan dan beban anggaran yang berlaku</p>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fff7ed;color:#c2410c;">📁</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Total Kegiatan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-avg" style="font-size:1rem;">—</div>
+            <div class="stat-label">Rata-rata Harga</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">🔢</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-satuan">—</div>
+            <div class="stat-label">Jenis Satuan</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>📁 Daftar Kegiatan</h2>
+          <div class="list-controls">
+            <select id="filter-satuan" class="form-control" style="width:150px;font-size:.82rem;">
+              <option value="">Semua Satuan</option>
+            </select>
+            <div class="search-box" style="max-width:260px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" class="form-control" placeholder="Cari kegiatan, ID, uraian...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">No</th>
+                <th style="width:80px;">ID</th>
+                <th>Uraian Tugas</th>
+                <th style="width:80px;" class="tc">Satuan</th>
+                <th style="width:110px;" class="tr">Harga Satuan</th>
+                <th>Beban Anggaran</th>
+                <th>Tim Teknis</th>
+              </tr>
+            </thead>
+            <tbody id="kegiatan-tbody">
+              <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:48px;">
+                  <div style="font-size:2rem;margin-bottom:8px;">⏳</div>
+                  Memuat data kegiatan...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-16" style="font-size:.78rem;color:var(--gray-400);" id="keg-count-info"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=4.0"></script>
+<script src="js/data.js?v=4.0"></script>
+<script src="js/utils.js?v=4.0"></script>
+<script src="js/render.js?v=4.0"></script>
+<script src="js/sidebar.js?v=4.0"></script>
+<script src="js/app.js?v=4.0"></script>
+<script>
+  let _allKegiatan = [];
+
+  function renderKegiatanTable(data) {
+    const tbody = document.getElementById("kegiatan-tbody");
+    const info  = document.getElementById("keg-count-info");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada kegiatan</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map((k, i) => `
+      <tr>
+        <td class="tc text-muted">${i + 1}</td>
+        <td><span class="keg-id">${k.ID_Kegiatan || "—"}</span></td>
+        <td style="font-size:.85rem;font-weight:500;">${k.Uraian_Tugas || "—"}</td>
+        <td class="tc" style="font-size:.82rem;">${k.Satuan || "—"}</td>
+        <td class="tr">
+          ${k.Harga_Satuan
+            ? `<span class="harga-pill">Rp ${formatRupiah(k.Harga_Satuan)}</span>`
+            : '<span class="text-muted" style="font-size:.78rem;">—</span>'}
+        </td>
+        <td><div class="beban-cell">${k.Beban_Anggaran || "—"}</div></td>
+        <td style="font-size:.8rem;color:var(--gray-600);">${k.Nama_Tim_Teknis || "—"}</td>
+      </tr>`).join("");
+    if (info) info.textContent = `Menampilkan ${data.length} dari ${_allKegiatan.length} kegiatan`;
+  }
+
+  function applyFilters() {
+    const q       = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const satuan  = (document.getElementById("filter-satuan")?.value || "").toLowerCase();
+    const data = _allKegiatan.filter(k => {
+      const matchSatuan = !satuan || (k.Satuan || "").toLowerCase() === satuan;
+      const matchQ      = !q || [k.ID_Kegiatan, k.Uraian_Tugas, k.Nama_Tim_Teknis, k.Beban_Anggaran]
+        .some(v => String(v || "").toLowerCase().includes(q));
+      return matchSatuan && matchQ;
+    });
+    renderKegiatanTable(data);
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    setLoading(true);
+    try {
+      _allKegiatan = await getKegiatan();
+
+      const withHarga = _allKegiatan.filter(k => k.Harga_Satuan > 0);
+      const avgHarga  = withHarga.length
+        ? withHarga.reduce((s, k) => s + k.Harga_Satuan, 0) / withHarga.length
+        : 0;
+      const satuanSet = new Set(_allKegiatan.map(k => (k.Satuan || "").trim()).filter(Boolean));
+
+      document.getElementById("stat-total").textContent  = _allKegiatan.length;
+      document.getElementById("stat-avg").textContent    = "Rp " + formatRupiah(Math.round(avgHarga));
+      document.getElementById("stat-satuan").textContent = satuanSet.size;
+
+      // Isi filter satuan
+      const satuanSel = document.getElementById("filter-satuan");
+      [...satuanSet].sort().forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.toLowerCase(); opt.textContent = s;
+        satuanSel.appendChild(opt);
+      });
+
+      renderKegiatanTable(_allKegiatan);
+      document.getElementById("search-input").addEventListener("input", applyFilters);
+      document.getElementById("filter-satuan").addEventListener("change", applyFilters);
+    } catch (err) {
+      showToast("Gagal memuat data: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>

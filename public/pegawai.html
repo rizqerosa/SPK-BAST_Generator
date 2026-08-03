@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Pegawai — SPK/BAST Generator BPS Kota Subulussalam</title>
+  <meta name="description" content="Daftar pegawai BPS Kota Subulussalam">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 60%, #a78bfa 100%);
+      border-radius: var(--radius-xl);
+      padding: 26px 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(124,58,237,.25);
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .page-hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .page-hero p { font-size: .83rem; opacity: .85; }
+    .page-hero .hero-icon { font-size: 2.8rem; position: relative; }
+
+    .pangkat-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+    .pppk-badge {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; font-weight: 700;
+      background: #ede9fe; color: #5b21b6;
+      flex-shrink: 0;
+    }
+    .peg-cell { display: flex; align-items: center; gap: 10px; }
+    .peg-name { font-weight: 600; font-size: .88rem; line-height: 1.2; }
+    .peg-nip  { font-family: monospace; font-size: .75rem; color: var(--gray-500); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Daftar Pegawai
+        <small>Data pegawai BPS Kota Subulussalam</small>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" onclick="clearCache('pegawai'); location.reload();">
+          🔄 Refresh Data
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <div class="page-hero">
+        <div class="hero-icon">🏛️</div>
+        <div>
+          <h1>Daftar Pegawai BPS</h1>
+          <p>Data pejabat dan staf BPS Kota Subulussalam yang terlibat dalam penandatanganan SPK &amp; BAST</p>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon purple">🏛️</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Total Pegawai</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-asn">—</div>
+            <div class="stat-label">ASN / PNS</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">📄</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-pppk">—</div>
+            <div class="stat-label">PPPK</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>🏛️ Data Pegawai</h2>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="search-box" style="max-width:240px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" class="form-control" placeholder="Cari nama, NIP, jabatan...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">No</th>
+                <th>Nama Pegawai</th>
+                <th>NIP</th>
+                <th>Jabatan</th>
+                <th>Pangkat</th>
+                <th>Golongan</th>
+              </tr>
+            </thead>
+            <tbody id="pegawai-tbody">
+              <tr>
+                <td colspan="6" class="text-center text-muted" style="padding:48px;">
+                  <div style="font-size:2rem;margin-bottom:8px;">⏳</div>
+                  Memuat data pegawai...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-16" style="font-size:.78rem;color:var(--gray-400);" id="pegawai-count-info"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=4.0"></script>
+<script src="js/data.js?v=4.0"></script>
+<script src="js/utils.js?v=4.0"></script>
+<script src="js/render.js?v=4.0"></script>
+<script src="js/sidebar.js?v=4.0"></script>
+<script src="js/app.js?v=4.0"></script>
+<script>
+  let _allPegawai = [];
+
+  function isPPPK(p) {
+    return (p.Pangkat || "").toUpperCase().includes("PPPK");
+  }
+
+  function renderPegawaiTable(data) {
+    const tbody = document.getElementById("pegawai-tbody");
+    const info  = document.getElementById("pegawai-count-info");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:48px;">Tidak ada data</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map((p, i) => {
+      const inisial = (p.Nama_Pegawai || "?")[0].toUpperCase();
+      const isPppk  = isPPPK(p);
+      return `
+        <tr>
+          <td class="tc text-muted">${i + 1}</td>
+          <td>
+            <div class="peg-cell">
+              <div class="avatar">${inisial}</div>
+              <div>
+                <div class="peg-name">${p.Nama_Pegawai || "—"}</div>
+                <div class="peg-nip">${p.NIP || "—"}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-family:monospace;font-size:.8rem;">${p.NIP || "—"}</td>
+          <td style="font-size:.85rem;">${p.Jabatan || "—"}</td>
+          <td><span class="pangkat-badge ${isPppk ? "pppk-badge" : ""}">${p.Pangkat || "—"}</span></td>
+          <td style="font-size:.85rem;">${p.Golongan || "—"}</td>
+        </tr>`;
+    }).join("");
+    if (info) info.textContent = `Menampilkan ${data.length} pegawai`;
+  }
+
+  function applyFilters() {
+    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const data = _allPegawai.filter(p => {
+      if (!q) return true;
+      return [p.Nama_Pegawai, p.NIP, p.Jabatan, p.Pangkat].some(v => String(v || "").toLowerCase().includes(q));
+    });
+    renderPegawaiTable(data);
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    setLoading(true);
+    try {
+      _allPegawai = await getPegawai();
+
+      const asn  = _allPegawai.filter(p => !isPPPK(p)).length;
+      const pppk = _allPegawai.filter(p => isPPPK(p)).length;
+      document.getElementById("stat-total").textContent = _allPegawai.length;
+      document.getElementById("stat-asn").textContent   = asn;
+      document.getElementById("stat-pppk").textContent  = pppk;
+
+      renderPegawaiTable(_allPegawai);
+      document.getElementById("search-input").addEventListener("input", applyFilters);
+    } catch (err) {
+      showToast("Gagal memuat data: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>

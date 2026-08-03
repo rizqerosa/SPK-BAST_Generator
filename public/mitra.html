@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Mitra — SPK/BAST Generator BPS Kota Subulussalam</title>
+  <meta name="description" content="Daftar seluruh mitra dan PPL BPS Kota Subulussalam">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, #065f46 0%, #059669 60%, #34d399 100%);
+      border-radius: var(--radius-xl);
+      padding: 26px 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(5,150,105,.25);
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .page-hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .page-hero p { font-size: .83rem; opacity: .85; }
+    .page-hero .hero-icon { font-size: 2.8rem; position: relative; }
+
+    .badge-kategori {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .kategori-kepka    { background: #dbeafe; color: #1d4ed8; }
+    .kategori-tambahan { background: #fef3c7; color: #92400e; }
+    .kategori-mahasiswa{ background: #f3e8ff; color: #6b21a8; }
+    .kategori-default  { background: var(--gray-100); color: var(--gray-600); }
+
+    .posisi-badge {
+      font-size: .72rem;
+      color: var(--gray-500);
+      font-style: italic;
+    }
+
+    .list-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter-bar .btn.active {
+      background: var(--brand-primary);
+      color: #fff;
+      border-color: var(--brand-primary);
+    }
+
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .avatar-lk { background: #dbeafe; color: #1d4ed8; }
+    .avatar-pr { background: #fce7f3; color: #9d174d; }
+    .mitra-cell { display: flex; align-items: center; gap: 10px; }
+    .mitra-name { font-weight: 600; font-size: .88rem; line-height: 1.2; }
+    .mitra-meta { font-size: .73rem; color: var(--gray-500); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar diisi otomatis oleh sidebar.js -->
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Daftar Mitra
+        <small>Data seluruh mitra &amp; PPL BPS Kota Subulussalam</small>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" onclick="clearCache('mitra'); location.reload();">
+          🔄 Refresh Data
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Hero -->
+      <div class="page-hero">
+        <div class="hero-icon">👥</div>
+        <div>
+          <h1>Daftar Mitra &amp; PPL</h1>
+          <p>Seluruh mitra pendataan dan pengolahan BPS Kota Subulussalam Tahun 2026</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">👤</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Total Mitra</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">🏛️</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-kepka">—</div>
+            <div class="stat-label">Kepka</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">➕</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-tambahan">—</div>
+            <div class="stat-label">Tambahan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🎓</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-kecamatan">—</div>
+            <div class="stat-label">Kecamatan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2>👥 Data Mitra</h2>
+          <div class="list-controls">
+            <!-- Filter kecamatan -->
+            <select id="filter-kecamatan" class="form-control" style="width:160px; font-size:.82rem;">
+              <option value="">Semua Kecamatan</option>
+            </select>
+            <!-- Filter kategori -->
+            <div class="filter-bar">
+              <button class="btn btn-outline btn-sm active" data-filter="all">Semua</button>
+              <button class="btn btn-outline btn-sm" data-filter="Kepka">Kepka</button>
+              <button class="btn btn-outline btn-sm" data-filter="Tambahan">Tambahan</button>
+            </div>
+            <!-- Search -->
+            <div class="search-box" style="max-width:220px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" class="form-control" placeholder="Cari nama, NIK...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">No</th>
+                <th>Nama Mitra</th>
+                <th>NIK</th>
+                <th>Kecamatan</th>
+                <th>Posisi</th>
+                <th>Kategori</th>
+                <th>No. Telp</th>
+              </tr>
+            </thead>
+            <tbody id="mitra-tbody">
+              <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:48px;">
+                  <div style="font-size:2rem;margin-bottom:8px;">⏳</div>
+                  Memuat data mitra...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-16" style="font-size:.78rem;color:var(--gray-400);" id="mitra-count-info"></div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=4.0"></script>
+<script src="js/data.js?v=4.0"></script>
+<script src="js/utils.js?v=4.0"></script>
+<script src="js/render.js?v=4.0"></script>
+<script src="js/sidebar.js?v=4.0"></script>
+<script src="js/app.js?v=4.0"></script>
+<script>
+  let _allMitra = [];
+  let _activeFilter = "all";
+
+  function getKategoriClass(kat) {
+    if (!kat) return "kategori-default";
+    const k = kat.toLowerCase();
+    if (k === "kepka") return "kategori-kepka";
+    if (k === "tambahan") return "kategori-tambahan";
+    if (k.includes("mahasiswa")) return "kategori-mahasiswa";
+    return "kategori-default";
+  }
+
+  function renderMitraTable(data) {
+    const tbody = document.getElementById("mitra-tbody");
+    const info  = document.getElementById("mitra-count-info");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada data mitra</td></tr>`;
+      if (info) info.textContent = "";
+      return;
+    }
+    tbody.innerHTML = data.map((m, i) => {
+      const jk      = (m.Jenis_Kelamin || "").toLowerCase() === "pr" ? "Pr" : "Lk";
+      const inisial = (m.Nama_Mitra || "?")[0].toUpperCase();
+      const kat     = m.Kategori || "";
+      return `
+        <tr>
+          <td class="tc text-muted">${i + 1}</td>
+          <td>
+            <div class="mitra-cell">
+              <div class="avatar ${jk === "Pr" ? "avatar-pr" : "avatar-lk"}">${inisial}</div>
+              <div>
+                <div class="mitra-name">${m.Nama_Mitra || "—"}</div>
+                <div class="mitra-meta">ID: ${m.ID_Mitra || "—"} · ${m.Sobat_ID ? "Sobat: " + m.Sobat_ID : ""}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-family:monospace;font-size:.8rem;">${m.NIK || "—"}</td>
+          <td>${m.Asal || "—"}</td>
+          <td><span class="posisi-badge">${m.Posisi || "—"}</span></td>
+          <td><span class="badge-kategori ${getKategoriClass(kat)}">${kat || "—"}</span></td>
+          <td style="font-size:.8rem;">${m.No_Telp || "—"}</td>
+        </tr>`;
+    }).join("");
+    if (info) info.textContent = `Menampilkan ${data.length} dari ${_allMitra.length} mitra`;
+  }
+
+  function applyFilters() {
+    const q       = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const kec     = (document.getElementById("filter-kecamatan")?.value || "").toLowerCase();
+    const kat     = _activeFilter;
+
+    let data = _allMitra.filter(m => {
+      const matchKat = kat === "all" || (m.Kategori || "").toLowerCase().includes(kat.toLowerCase());
+      const matchKec = !kec || (m.Asal || "").toLowerCase() === kec;
+      const matchQ   = !q || [m.Nama_Mitra, m.NIK, m.ID_Mitra, m.Sobat_ID, m.Asal]
+        .some(v => String(v || "").toLowerCase().includes(q));
+      return matchKat && matchKec && matchQ;
+    });
+    renderMitraTable(data);
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    setLoading(true);
+    try {
+      _allMitra = await getMitra();
+
+      // Stats
+      const kepka     = _allMitra.filter(m => (m.Kategori || "").toLowerCase() === "kepka").length;
+      const tambahan  = _allMitra.filter(m => (m.Kategori || "").toLowerCase() === "tambahan").length;
+      const kecSet    = new Set(_allMitra.map(m => (m.Asal || "").trim().toUpperCase()).filter(Boolean));
+
+      document.getElementById("stat-total").textContent     = _allMitra.length;
+      document.getElementById("stat-kepka").textContent     = kepka;
+      document.getElementById("stat-tambahan").textContent  = tambahan;
+      document.getElementById("stat-kecamatan").textContent = kecSet.size + " Kec";
+
+      // Isi filter kecamatan
+      const kecSel = document.getElementById("filter-kecamatan");
+      [...kecSet].sort().forEach(k => {
+        const opt = document.createElement("option");
+        opt.value = k; opt.textContent = k;
+        kecSel.appendChild(opt);
+      });
+
+      renderMitraTable(_allMitra);
+
+      // Event listeners
+      document.getElementById("search-input").addEventListener("input", applyFilters);
+      document.getElementById("filter-kecamatan").addEventListener("change", applyFilters);
+      document.querySelectorAll("[data-filter]").forEach(btn => {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+          this.classList.add("active");
+          _activeFilter = this.dataset.filter;
+          applyFilters();
+        });
+      });
+
+    } catch (err) {
+      showToast("Gagal memuat data mitra: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>

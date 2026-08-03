@@ -179,22 +179,8 @@
 <body>
 <div class="app-layout">
 
-  <!-- ─── SIDEBAR ─── -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-icon">📋</div>
-      <div class="logo-text">
-        <div class="title">SPK/BAST Generator</div>
-        <div class="sub">BPS Kota Subulussalam</div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu Utama</div>
-      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
-      <a href="form.html" class="nav-item"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
-    </nav>
-    <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
-  </aside>
+  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
+  <aside class="sidebar" id="app-sidebar"></aside>
 
   <!-- ─── MAIN ─── -->
   <div class="main-content">
@@ -319,11 +305,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-<script src="js/config.js?v=2.0"></script>
-<script src="js/data.js?v=2.0"></script>
-<script src="js/utils.js?v=2.0"></script>
-<script src="js/render.js?v=2.0"></script>
-<script src="js/app.js?v=2.0"></script>
+<script src="js/config.js?v=4.0"></script>
+<script src="js/data.js?v=4.0"></script>
+<script src="js/utils.js?v=4.0"></script>
+<script src="js/render.js?v=4.0"></script>
+<script src="js/sidebar.js?v=4.0"></script>
+<script src="js/app.js?v=4.0"></script>
 
 <script>
   // ── State untuk preview ──
