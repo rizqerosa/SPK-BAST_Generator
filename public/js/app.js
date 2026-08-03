@@ -78,12 +78,6 @@ async function initForm() {
     populatePegawaiDropdowns();
     populateKegiatanOptions();
 
-    // Event handlers untuk pilihan jenis dokumen
-    document.querySelectorAll('input[name="target_doc_type"]').forEach(radio => {
-      radio.addEventListener("change", updateFormVisibility);
-    });
-    updateFormVisibility();
-
     // Event handlers
     document.getElementById("btn-tambah-kegiatan").addEventListener("click", tambahDetailRow);
     document.getElementById("form-spk-bast").addEventListener("submit", handleFormSubmit);
@@ -95,42 +89,6 @@ async function initForm() {
   } finally {
     setLoading(false);
   }
-}
-
-function updateFormVisibility() {
-  const selectedRadio = document.querySelector('input[name="target_doc_type"]:checked');
-  const docType = selectedRadio ? selectedRadio.value : "all";
-
-  // Update styling kartu pilihan
-  document.querySelectorAll(".doc-type-card").forEach(card => {
-    const radio = card.querySelector('input[type="radio"]');
-    if (radio && radio.checked) {
-      card.classList.add("active");
-    } else {
-      card.classList.remove("active");
-    }
-  });
-
-  // Tampilkan/sembunyikan elemen berdasarkan atribut data-show-for
-  document.querySelectorAll("[data-show-for]").forEach(el => {
-    const allowed = el.dataset.showFor.split(",").map(s => s.trim());
-    const shouldShow = allowed.includes("all") && docType === "all" ? true : allowed.includes(docType);
-
-    if (shouldShow) {
-      el.style.display = "";
-      // Re-enable required jika sebelumnya required
-      el.querySelectorAll("[data-req-orig]").forEach(inp => {
-        inp.required = true;
-      });
-    } else {
-      el.style.display = "none";
-      // Hapus temporary required agar tidak memblokir submit HTML5
-      el.querySelectorAll("[required]").forEach(inp => {
-        inp.dataset.reqOrig = "true";
-        inp.required = false;
-      });
-    }
-  });
 }
 
 function populateMitraDropdown() {
@@ -398,8 +356,8 @@ async function handleFormSubmit(e) {
     "Kepala/PLH":            document.getElementById("sel-kepala")?.value || "",
     Nomor_Kepka:             fd.get("nomor_kepka") || "",
     Tanggal_Kepka:           fd.get("tanggal_kepka") || "",
-    No_SPK:                  fd.get("no_spk") || "",
-    Tanggal_SPK:             fd.get("tanggal_spk") || "",
+    Nomor_SPK:               fd.get("no_spk") || "",
+    "Tanggal SPK":           fd.get("tanggal_spk") || "",
     No_BAST_PPL_PML:         fd.get("no_bast_ppl_pml") || "",
     Tanggal_BAST_PPL_PML:    fd.get("tanggal_bast_ppl_pml") || "",
     No_BAST_PPL_SM:          fd.get("no_bast_ppl_sm") || "",

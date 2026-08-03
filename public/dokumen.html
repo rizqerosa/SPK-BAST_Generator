@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Dokumen — Sistem SPK/BAST BPS Kota Subulussalam</title>
+  <meta name="description" content="Histori seluruh dokumen SPK dan BAST yang telah dibuat di BPS Kota Subulussalam">
+  <link rel="stylesheet" href="css/style.css?v=3.0">
+  <style>
+    .hero-banner {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 55%, #3b82f6 100%);
+      border-radius: var(--radius-xl);
+      padding: 26px 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(30,58,138,.18);
+    }
+    .hero-banner::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: 80px;
+      width: 160px; height: 160px;
+      background: rgba(255,255,255,.04);
+      border-radius: 50%;
+    }
+    .hero-icon { font-size: 2.8rem; position: relative; }
+    .hero-text h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .hero-text p { font-size: .83rem; opacity: .82; }
+
+    /* action col btns */
+    .action-btns { display: flex; gap: 6px; align-items: center; }
+
+    /* confirm modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(4px);
+      z-index: 5000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #fff;
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      transform: scale(.95);
+      transition: transform .2s ease;
+    }
+    .modal-overlay.visible .modal-box { transform: scale(1); }
+    .modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+    .modal-desc { font-size: .88rem; color: var(--gray-600); margin-bottom: 24px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* filter-bar */
+    .list-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter-bar .btn.active {
+      background: var(--brand-primary);
+      color: #fff;
+      border-color: var(--brand-primary);
+    }
+
+    .doc-table-wrap .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">📋</div>
+      <div class="logo-text">
+        <div class="title">SPK/BAST Generator</div>
+        <div class="sub">BPS Kota Subulussalam</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="dokumen.html" class="nav-item active"><span class="nav-icon">📁</span> Daftar Dokumen</a>
+      <a href="form.html" class="nav-item"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
+    </nav>
+    <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Daftar Dokumen
+        <small>Histori seluruh dokumen SPK &amp; BAST</small>
+      </div>
+      <div class="topbar-actions">
+        <a href="form.html" class="btn btn-primary">
+          <span>➕</span> Buat Dokumen Baru
+        </a>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-icon">📁</div>
+        <div class="hero-text">
+          <h1>Histori Dokumen SPK &amp; BAST</h1>
+          <p>Lihat, unduh, edit, atau hapus dokumen yang telah dibuat. Klik "Buat Dokumen Baru" untuk menambah dokumen.</p>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">📄</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Total Dokumen</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-sudah">—</div>
+            <div class="stat-label">Sudah Diunduh</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-belum">—</div>
+            <div class="stat-label">Belum Diunduh</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">💰</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-honor" style="font-size:1rem;">—</div>
+            <div class="stat-label">Total Honor</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Daftar Semua Dokumen</h2>
+          <div class="list-controls">
+            <!-- Filter status -->
+            <div class="filter-bar">
+              <button class="btn btn-outline btn-sm active" data-filter="all">Semua</button>
+              <button class="btn btn-outline btn-sm" data-filter="Sudah">Sudah</button>
+              <button class="btn btn-outline btn-sm" data-filter="Belum">Belum</button>
+            </div>
+            <!-- Search -->
+            <div class="search-box" style="max-width:220px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" class="form-control" placeholder="Cari nama / judul...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">No</th>
+                <th>Nama Mitra / PPL</th>
+                <th>Judul Pekerjaan</th>
+                <th style="width:110px;">Bulan / Tahun</th>
+                <th style="width:115px;" class="tr">Total Honor</th>
+                <th style="width:90px;">Status</th>
+                <th style="width:160px;" class="tc">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="doc-tbody">
+              <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:48px;">
+                  <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+                  Memuat data dari Google Sheets...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<!-- ─── Delete Confirm Modal ─── -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box">
+    <div class="modal-title">🗑️ Hapus Dokumen?</div>
+    <div class="modal-desc" id="delete-modal-desc">
+      Dokumen ini akan dihapus permanen dari Google Sheets. Tindakan ini tidak dapat dibatalkan.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeDeleteModal()">Batal</button>
+      <button class="btn btn-danger" id="btn-confirm-delete">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=3.0"></script>
+<script src="js/data.js?v=3.0"></script>
+<script src="js/utils.js?v=3.0"></script>
+<script src="js/render.js?v=3.0"></script>
+<script src="js/app.js?v=3.0"></script>
+</body>
+</html>

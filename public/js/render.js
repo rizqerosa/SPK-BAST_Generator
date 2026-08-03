@@ -53,8 +53,8 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const totalHonor = hitungTotalHonor(detailArr, record.ID_Dokumen) || record.Total_Honor || 0;
   const terbilangHonor = terbilang(totalHonor) + " Rupiah";
 
-  // Tanggal SPK
-  const tSPK = tanggalTerbilang(record.Tanggal_SPK || record.Tanggal_Mulai);
+  // Tanggal SPK — support nama kolom baru ("Tanggal SPK") dan fallback ke lama (Tanggal_SPK)
+  const tSPK = tanggalTerbilang(record["Tanggal SPK"] || record.Tanggal_SPK || record.Tanggal_Mulai);
   // Tanggal BAST PPL-PML
   const tBAST_PPL_PML = tanggalTerbilang(record.Tanggal_BAST_PPL_PML);
   // Tanggal BAST PPL-SM
@@ -71,7 +71,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const spkCtx = {
     // === Header & nomor ===
     JUDUL_PEKERJAAN_DOKUMEN: record.Judul_Pekerjaan_Dokumen || "",
-    NO_SPK:                  record.No_SPK || "",
+    NO_SPK:                  record.Nomor_SPK || record.No_SPK || "",
     URAIAN_PEKERJAAN:        record.Judul_Pekerjaan_Dokumen || "",
 
     // === Tanggal SPK (terbilang) ===

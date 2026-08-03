@@ -3,98 +3,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buat Dokumen Baru — Sistem SPK/BAST BPS Kota Subulussalam</title>
-  <meta name="description" content="Form input untuk generate dokumen SPK dan BAST petugas lapangan BPS Kota Subulussalam">
-  <link rel="stylesheet" href="css/style.css">
+  <title>Buat Dokumen — Sistem SPK/BAST BPS Kota Subulussalam</title>
+  <meta name="description" content="Form input lengkap untuk generate dokumen SPK dan BAST petugas lapangan BPS Kota Subulussalam">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="css/style.css?v=3.0">
   <style>
+    /* ─── Form card components ─── */
     .form-card {
       background: #fff;
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--gray-100);
+      box-shadow: 0 2px 12px rgba(0,0,0,.05);
+      border: 1px solid var(--gray-200);
       margin-bottom: 20px;
       overflow: hidden;
+      transition: box-shadow .2s ease;
     }
+    .form-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.08); }
+
     .form-card-header {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-      color: #fff;
-      padding: 14px 20px;
-      font-weight: 700;
-      font-size: 1rem;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
+      padding: 14px 22px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: .95rem;
+      letter-spacing: -.01em;
     }
-    .step-indicator {
-      display: flex;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-    .step {
-      flex: 1;
-      padding: 12px 10px;
-      background: var(--gray-100);
-      text-align: center;
-      font-size: .75rem;
+    .step-badge {
+      background: rgba(255,255,255,.2);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .72rem;
       font-weight: 600;
-      color: var(--gray-400);
-      border-right: 1px solid var(--gray-200);
-      transition: all var(--transition);
+      letter-spacing: .3px;
+    }
+    .form-card-body { padding: 22px; }
+
+    /* ─── Banner ─── */
+    .form-page-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+      border-radius: var(--radius-xl);
+      padding: 22px 28px;
+      color: #fff;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 8px 30px rgba(30,58,138,.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .form-page-banner::after {
+      content: '';
+      position: absolute;
+      right: -30px; top: -40px;
+      width: 180px; height: 180px;
+      background: rgba(255,255,255,.05);
+      border-radius: 50%;
+    }
+    .form-page-banner h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .form-page-banner p { font-size: .82rem; opacity: .85; }
+
+    /* ─── Mitra search ─── */
+    .mitra-search-wrap {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .mitra-search-wrap .search-input-wrap {
+      flex: 1;
+      min-width: 200px;
       position: relative;
     }
-    .step:last-child { border-right: none; }
-    .step.active { background: var(--brand-primary); color: #fff; }
-    .step.done   { background: var(--success-bg); color: var(--success); }
-    .step .step-num {
-      display: block;
-      font-size: 1rem;
-      font-weight: 800;
-      margin-bottom: 2px;
+    .mitra-search-wrap .search-input-wrap input { padding-left: 34px; }
+    .mitra-search-wrap .search-input-wrap .ico {
+      position: absolute;
+      left: 11px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--gray-400);
     }
 
-    /* ── Document Type Cards ── */
-    .doc-type-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 12px;
+    /* ─── Section divider ─── */
+    .sec-divider {
+      border: none;
+      border-top: 1px dashed var(--gray-300);
+      margin: 20px 0;
     }
-    .doc-type-card {
-      display: flex;
-      align-items: flex-start;
-      padding: 14px 16px;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      background: #fff;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .doc-type-card:hover {
-      border-color: var(--brand-primary);
-      background: #f0f9ff;
-    }
-    .doc-type-card.active {
-      border-color: var(--brand-primary);
-      background: #eff6ff;
-      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
-    }
-    .doc-type-card input[type="radio"] {
-      margin-top: 3px;
-      margin-right: 10px;
-      cursor: pointer;
-    }
-    .doc-type-card-title {
+    .sec-label {
+      font-size: .82rem;
       font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--gray-800);
-      line-height: 1.3;
+      color: var(--brand-dark);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
     }
-    .doc-type-card-desc {
-      display: block;
+
+    /* ─── Honor preview ─── */
+    .honor-box {
+      margin-top: 18px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .honor-box .hb-label { font-size: .78rem; color: var(--gray-600); font-weight: 600; }
+    .honor-box .hb-amount {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--brand-primary);
+    }
+    .honor-box .hb-terb { font-size: .8rem; color: var(--gray-500); font-style: italic; flex: 1; }
+
+    /* ─── Submit bar ─── */
+    .submit-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 28px;
+      margin-bottom: 48px;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #f8fafc, #fff);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .submit-bar .note {
+      font-size: .82rem;
       color: var(--gray-500);
-      font-size: 0.75rem;
-      margin-top: 3px;
     }
+    .btn-xl {
+      padding: 13px 30px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -.01em;
+      box-shadow: 0 4px 16px rgba(26,86,219,.3);
+    }
+    .btn-xl:hover { box-shadow: 0 6px 22px rgba(26,86,219,.45); transform: translateY(-1px); }
   </style>
 </head>
 <body>
@@ -111,12 +170,9 @@
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Menu Utama</div>
-      <a href="index.html" class="nav-item">
-        <span class="nav-icon">🏠</span> Dashboard
-      </a>
-      <a href="form.html" class="nav-item active">
-        <span class="nav-icon">➕</span> Buat Dokumen Baru
-      </a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="dokumen.html" class="nav-item"><span class="nav-icon">📁</span> Daftar Dokumen</a>
+      <a href="form.html" class="nav-item active"><span class="nav-icon">➕</span> Buat Dokumen Baru</a>
     </nav>
     <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
   </aside>
@@ -126,153 +182,66 @@
     <header class="topbar">
       <div class="topbar-title">
         Buat Dokumen Baru
-        <small>Form input SPK &amp; BAST</small>
+        <small>Isi lengkap sekali — ekspor per template di halaman preview</small>
       </div>
       <div class="topbar-actions">
-        <a href="index.html" class="btn btn-outline btn-sm">← Kembali ke Dashboard</a>
+        <a href="dokumen.html" class="btn btn-outline btn-sm">← Daftar Dokumen</a>
       </div>
     </header>
 
-    <div class="page-body" style="max-width:920px;">
+    <div class="page-body" style="max-width: 960px;">
+
+      <!-- Banner -->
+      <div class="form-page-banner">
+        <div style="font-size: 2.4rem;">📜</div>
+        <div>
+          <h1>Form Input Data SPK &amp; BAST</h1>
+          <p>Isi semua data di bawah ini. Di akhir kamu bisa memilih mau ekspor dokumen mana: SPK, BAST PPL-PML, BAST PPL-SM, atau BAST PML-SM.</p>
+        </div>
+      </div>
 
       <form id="form-spk-bast" novalidate>
 
-        <!-- ─── DOCUMENT TYPE SELECTOR (PALING ATAS) ─── -->
-        <div class="form-card" style="border: 2px solid var(--brand-primary); background: #f8fafc; margin-bottom: 24px;">
-          <div class="form-card-header" style="background: linear-gradient(135deg, #1e3a8a, #1d4ed8);">
-            📄 Pilih Jenis Dokumen yang Ingin Dibuat
+        <!-- ══ SEKSI 1: IDENTITAS MITRA ══ -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <span>👤 1. Identitas Mitra / PPL</span>
+            <span class="step-badge">Langkah 1 / 4</span>
           </div>
-          <div class="form-card-body" style="padding: 20px;">
-            <p class="text-sm text-muted" style="margin-bottom: 14px;">
-              Pilih template dokumen yang ingin dibuat. Bidang isian di bawah akan otomatis menyesuaikan dengan kebutuhan dokumen tersebut.
-            </p>
-
-            <div class="doc-type-grid">
-
-              <label class="doc-type-card active" data-type="all">
-                <input type="radio" name="target_doc_type" value="all" checked>
-                <div>
-                  <span class="doc-type-card-title">🌟 Paket Lengkap (Semua Dokumen)</span>
-                  <span class="doc-type-card-desc">Generate SPK dan seluruh BAST sekaligus (5 Dokumen)</span>
-                </div>
-              </label>
-
-              <label class="doc-type-card" data-type="spk">
-                <input type="radio" name="target_doc_type" value="spk">
-                <div>
-                  <span class="doc-type-card-title">📄 SPK (Surat Perjanjian Kerja)</span>
-                  <span class="doc-type-card-desc">Template: TEMPLATE_SPK.docx</span>
-                </div>
-              </label>
-
-              <label class="doc-type-card" data-type="ppl-pml">
-                <input type="radio" name="target_doc_type" value="ppl-pml">
-                <div>
-                  <span class="doc-type-card-title">📋 BAST PPL - PML</span>
-                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_PPL-PML.docx</span>
-                </div>
-              </label>
-
-              <label class="doc-type-card" data-type="ppl-sm">
-                <input type="radio" name="target_doc_type" value="ppl-sm">
-                <div>
-                  <span class="doc-type-card-title">📋 BAST PPL - SM</span>
-                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_PPL-SM.docx</span>
-                </div>
-              </label>
-
-              <label class="doc-type-card" data-type="pml-sm">
-                <input type="radio" name="target_doc_type" value="pml-sm">
-                <div>
-                  <span class="doc-type-card-title">📋 BAST PML - SM</span>
-                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_PML-SM.docx</span>
-                </div>
-              </label>
-
-              <label class="doc-type-card" data-type="sm-ppk">
-                <input type="radio" name="target_doc_type" value="sm-ppk">
-                <div>
-                  <span class="doc-type-card-title">🏢 BAST SM - PPK</span>
-                  <span class="doc-type-card-desc">Template: TEMPLATE_BAST_SM-PPK.docx (Internal)</span>
-                </div>
-              </label>
-
-            </div>
-          </div>
-        </div>
-
-        <!-- ─── SEKSI 1: IDENTITAS MITRA / PPL ─── -->
-        <div class="form-card" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm">
-          <div class="form-card-header">👤 1. Identitas Mitra / PPL</div>
           <div class="form-card-body">
-            <div class="form-group">
-              <label class="form-label" for="sel-mitra">Mitra / PPL <span class="required">*</span></label>
-              <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                <input type="text" id="search-mitra" class="form-control" placeholder="🔍 Cari nama/NIK/ID mitra..." style="flex:1; min-width:180px;">
-                <select id="filter-asal-mitra" class="form-control" style="width:170px;">
-                  <option value="">Semua Kecamatan</option>
-                </select>
+
+            <div class="mitra-search-wrap">
+              <div class="search-input-wrap">
+                <span class="ico">🔍</span>
+                <input type="text" id="search-mitra" class="form-control"
+                       placeholder="Cari nama, NIK, atau Sobat ID mitra...">
               </div>
-              <select class="form-control" id="sel-mitra" name="id_mitra" required>
-                <option value="">-- Pilih Mitra --</option>
+              <select id="filter-asal-mitra" class="form-control" style="width:180px;">
+                <option value="">Semua Kecamatan</option>
               </select>
-              <div class="form-hint" id="mitra-count-hint">Nama mitra yang mendapat SPK/tugas lapangan</div>
             </div>
-          </div>
-        </div>
 
-        <!-- ─── SEKSI 2: DATA PEJABAT TERKAIT ─── -->
-        <div class="form-card">
-          <div class="form-card-header">🏛️ 2. Data Pejabat Terkait</div>
-          <div class="form-card-body">
-            <div class="form-row">
-              <div class="form-group" data-show-for="all,spk,sm-ppk">
-                <label class="form-label" for="sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
-                <select class="form-control" id="sel-ppk" name="ppk" required>
-                  <option value="">-- Pilih PPK --</option>
-                </select>
-              </div>
-              <div class="form-group" data-show-for="all,ppl-sm,pml-sm,sm-ppk">
-                <label class="form-label" for="sel-ketua-tim">Ketua Tim / Supervisor Madya (SM) <span class="required">*</span></label>
-                <select class="form-control" id="sel-ketua-tim" name="ketua_tim" required>
-                  <option value="">-- Pilih Ketua Tim --</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group" data-show-for="all,ppl-pml,pml-sm">
-                <label class="form-label" for="sel-pml">PML (Pengawas Lapangan) <span class="required">*</span></label>
-                <select class="form-control" id="sel-pml" name="pml" required>
-                  <option value="">-- Pilih PML --</option>
-                </select>
-              </div>
-              <div class="form-group" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm,sm-ppk">
-                <label class="form-label" for="sel-kepala">Kepala / PLH BPS Kota Subulussalam <span class="required">*</span></label>
-                <select class="form-control" id="sel-kepala" name="kepala_plh" required>
-                  <option value="">-- Pilih Kepala/PLH --</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ─── SEKSI 3: NOMOR, TANGGAL & PERIODE DOKUMEN ─── -->
-        <div class="form-card">
-          <div class="form-card-header">📅 3. Informasi &amp; Nomor Dokumen</div>
-          <div class="form-card-body">
-
-            <!-- Judul Pekerjaan, Bulan, Tahun -->
             <div class="form-group">
-              <label class="form-label" for="input-judul">Judul Pekerjaan / Kegiatan <span class="required">*</span></label>
-              <input type="text" class="form-control" id="input-judul"
-                     name="judul_pekerjaan" required
-                     placeholder="contoh: PENDATAAN SKTNP TAHAP I 2026"
-                     style="text-transform:uppercase;">
+              <label class="form-label" for="sel-mitra">Pilih Mitra / PPL <span class="required">*</span></label>
+              <select class="form-control" id="sel-mitra" name="id_mitra" required>
+                <option value="">-- Pilih Mitra/PPL --</option>
+              </select>
+              <div class="form-hint" id="mitra-count-hint" style="margin-top:5px; font-size:.78rem; color:var(--gray-500);">
+                Memuat data mitra...
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label" for="input-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
+              <input type="text" class="form-control" id="input-judul" name="judul_pekerjaan" required
+                     placeholder="contoh: PENDATAAN REGSOSEK 2026 TAHAP I"
+                     style="text-transform:uppercase; font-weight:600;">
+              <div style="font-size:.78rem; color:var(--gray-400); margin-top:4px;">Akan menjadi judul utama di SPK dan seluruh BAST</div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="input-bulan">Bulan Kegiatan <span class="required">*</span></label>
+                <label class="form-label" for="input-bulan">Bulan Pelaksanaan <span class="required">*</span></label>
                 <select class="form-control" id="input-bulan" name="bulan" required>
                   <option value="">-- Pilih Bulan --</option>
                   <option>Januari</option><option>Februari</option><option>Maret</option>
@@ -288,8 +257,57 @@
               </div>
             </div>
 
-            <!-- SK Kepala / Kepka -->
-            <div class="form-row" data-show-for="all,ppl-pml,ppl-sm,pml-sm">
+          </div>
+        </div>
+
+        <!-- ══ SEKSI 2: DATA PEJABAT ══ -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <span>🏛️ 2. Data Pejabat Terkait</span>
+            <span class="step-badge">Langkah 2 / 4</span>
+          </div>
+          <div class="form-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
+                <select class="form-control" id="sel-ppk" name="ppk" required>
+                  <option value="">-- Pilih PPK --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="sel-ketua-tim">Ketua Tim / Supervisor Madya (SM) <span class="required">*</span></label>
+                <select class="form-control" id="sel-ketua-tim" name="ketua_tim" required>
+                  <option value="">-- Pilih Ketua Tim/SM --</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="sel-pml">PML (Pengawas Lapangan) <span class="required">*</span></label>
+                <select class="form-control" id="sel-pml" name="pml" required>
+                  <option value="">-- Pilih PML --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="sel-kepala">Kepala / PLH BPS Kota Subulussalam <span class="required">*</span></label>
+                <select class="form-control" id="sel-kepala" name="kepala_plh" required>
+                  <option value="">-- Pilih Kepala/PLH --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ SEKSI 3: NOMOR & TANGGAL ══ -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <span>📅 3. Nomor &amp; Tanggal Dokumen</span>
+            <span class="step-badge">Langkah 3 / 4</span>
+          </div>
+          <div class="form-card-body">
+
+            <div class="sec-label">📜 SK Kepala &amp; SPK</div>
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="input-nomor-kepka">Nomor SK Kepala (Kepka)</label>
                 <input type="text" class="form-control" id="input-nomor-kepka"
@@ -297,13 +315,10 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="input-tanggal-kepka">Tanggal SK Kepala</label>
-                <input type="date" class="form-control" id="input-tanggal-kepka"
-                       name="tanggal_kepka">
+                <input type="date" class="form-control" id="input-tanggal-kepka" name="tanggal_kepka">
               </div>
             </div>
-
-            <!-- SPK -->
-            <div class="form-row" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm">
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="input-no-spk">Nomor SPK <span class="required">*</span></label>
                 <input type="text" class="form-control" id="input-no-spk"
@@ -311,164 +326,138 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="input-tanggal-spk">Tanggal SPK</label>
-                <input type="date" class="form-control" id="input-tanggal-spk"
-                       name="tanggal_spk">
+                <input type="date" class="form-control" id="input-tanggal-spk" name="tanggal_spk">
               </div>
             </div>
-
-            <!-- Tanggal Pelaksanaan -->
-            <div class="form-row" data-show-for="all,spk">
+            <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai SPK</label>
-                <input type="date" class="form-control" id="input-tanggal-mulai"
-                       name="tanggal_mulai">
+                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai</label>
+                <input type="date" class="form-control" id="input-tanggal-mulai" name="tanggal_mulai">
               </div>
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai SPK</label>
-                <input type="date" class="form-control" id="input-tanggal-selesai"
-                       name="tanggal_selesai">
+                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai</label>
+                <input type="date" class="form-control" id="input-tanggal-selesai" name="tanggal_selesai">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-batas-penyerahan">Batas Penyerahan Hasil</label>
+                <input type="date" class="form-control" id="input-batas-penyerahan" name="batas_penyerahan">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-buku-pedoman">Buku Pedoman (Pasal 2 SPK)</label>
+                <input type="text" class="form-control" id="input-buku-pedoman"
+                       name="buku_pedoman" placeholder="Buku Pedoman Pewawancara REGSOSEK 2026">
               </div>
             </div>
 
-            <div class="form-group" data-show-for="all,spk">
-              <label class="form-label" for="input-batas-penyerahan">Batas Penyerahan Hasil</label>
-              <input type="date" class="form-control" id="input-batas-penyerahan"
-                     name="batas_penyerahan">
-            </div>
+            <hr class="sec-divider">
+            <div class="sec-label">📋 Nomor &amp; Tanggal BAST</div>
 
-            <div class="form-group" data-show-for="all,spk">
-              <label class="form-label" for="input-buku-pedoman">Buku Pedoman (untuk Pasal 2 SPK)</label>
-              <input type="text" class="form-control" id="input-buku-pedoman"
-                     name="buku_pedoman" placeholder="contoh: Buku Pedoman Pewawancara SKTNP 2026">
-            </div>
-
-            <!-- Nomor & Tanggal BAST Spesifik -->
-            <div data-show-for="all,ppl-pml">
-              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
-              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST PPL - PML</p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL-PML</label>
-                  <input type="text" class="form-control" id="input-no-bast-ppl-pml"
-                         name="no_bast_ppl_pml" placeholder="BAST-PPL-PML-001/BPS-1172/I/2026">
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML</label>
-                  <input type="date" class="form-control" id="input-tgl-bast-ppl-pml"
-                         name="tanggal_bast_ppl_pml">
-                </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL → PML</label>
+                <input type="text" class="form-control" id="input-no-bast-ppl-pml"
+                       name="no_bast_ppl_pml" placeholder="BAST-PPL-PML-001/BPS-1172/I/2026">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML</label>
+                <input type="date" class="form-control" id="input-tgl-bast-ppl-pml" name="tanggal_bast_ppl_pml">
               </div>
             </div>
-
-            <div data-show-for="all,ppl-sm">
-              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
-              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST PPL - SM</p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL-SM</label>
-                  <input type="text" class="form-control" id="input-no-bast-ppl-sm"
-                         name="no_bast_ppl_sm" placeholder="BAST-PPL-SM-001/BPS-1172/I/2026">
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM</label>
-                  <input type="date" class="form-control" id="input-tgl-bast-ppl-sm"
-                         name="tanggal_bast_ppl_sm">
-                </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL → SM</label>
+                <input type="text" class="form-control" id="input-no-bast-ppl-sm"
+                       name="no_bast_ppl_sm" placeholder="BAST-PPL-SM-001/BPS-1172/I/2026">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM</label>
+                <input type="date" class="form-control" id="input-tgl-bast-ppl-sm" name="tanggal_bast_ppl_sm">
               </div>
             </div>
-
-            <div data-show-for="all,pml-sm">
-              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
-              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST PML - SM</p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML-SM</label>
-                  <input type="text" class="form-control" id="input-no-bast-pml-sm"
-                         name="no_bast_pml_sm" placeholder="BAST-PML-SM-001/BPS-1172/I/2026">
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM</label>
-                  <input type="date" class="form-control" id="input-tgl-bast-pml-sm"
-                         name="tanggal_bast_pml_sm">
-                </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML → SM</label>
+                <input type="text" class="form-control" id="input-no-bast-pml-sm"
+                       name="no_bast_pml_sm" placeholder="BAST-PML-SM-001/BPS-1172/I/2026">
               </div>
-            </div>
-
-            <div data-show-for="all,sm-ppk">
-              <hr style="border:none;border-top:1px solid var(--gray-200);margin:20px 0 16px;">
-              <p class="text-sm fw-600" style="margin-bottom:12px; color:var(--gray-600);">Nomor &amp; Tanggal BAST SM - PPK</p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="input-no-bast-sm-ppk">No. BAST SM-PPK</label>
-                  <input type="text" class="form-control" id="input-no-bast-sm-ppk"
-                         name="no_bast_sm_ppk" placeholder="BAST-SM-PPK-001/BPS-1172/I/2026">
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-sm-ppk">Tanggal BAST SM-PPK</label>
-                  <input type="date" class="form-control" id="input-tgl-bast-sm-ppk"
-                         name="tanggal_bast_sm_ppk">
-                </div>
+              <div class="form-group">
+                <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM</label>
+                <input type="date" class="form-control" id="input-tgl-bast-pml-sm" name="tanggal_bast_pml_sm">
               </div>
             </div>
 
           </div>
         </div>
 
-        <!-- ─── SEKSI 4: DETAIL PEKERJAAN ─── -->
-        <div class="form-card" data-show-for="all,spk,ppl-pml,ppl-sm,pml-sm">
-          <div class="form-card-header">📝 4. Detail Pekerjaan &amp; Rincian Kegiatan</div>
+        <!-- ══ SEKSI 4: DETAIL PEKERJAAN ══ -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <span>📝 4. Detail Pekerjaan (Lampiran SPK)</span>
+            <span class="step-badge">Langkah 4 / 4</span>
+          </div>
           <div class="form-card-body">
 
-            <!-- Picker kegiatan -->
-            <div class="kegiatan-picker">
-              <div class="form-group" style="flex:1;">
-                <label class="form-label" for="sel-kegiatan">Pilih Kegiatan</label>
+            <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:14px;">
+              <div class="form-group" style="flex:1; margin-bottom:0;">
+                <label class="form-label" for="sel-kegiatan">Pilih Master Kegiatan</label>
                 <select class="form-control" id="sel-kegiatan">
                   <option value="">-- Pilih Kegiatan untuk Ditambahkan --</option>
                 </select>
               </div>
-              <button type="button" id="btn-tambah-kegiatan" class="btn btn-primary">
+              <button type="button" id="btn-tambah-kegiatan"
+                      class="btn btn-primary"
+                      style="height:42px; padding:0 20px; white-space:nowrap;">
                 ➕ Tambah
               </button>
             </div>
 
-            <!-- Tabel rincian -->
-            <div class="table-wrapper mt-16">
+            <div class="table-wrapper" style="border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--gray-200);">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width:40px;">No</th>
+                    <th style="width:36px;">No</th>
                     <th>Uraian Tugas</th>
-                    <th style="width:130px;">Jangka Waktu</th>
-                    <th style="width:70px;">Vol</th>
-                    <th style="width:80px;">Satuan</th>
-                    <th style="width:110px;" class="tr">Harga</th>
-                    <th style="width:110px;" class="tr">Total</th>
+                    <th style="width:125px;">Jangka Waktu</th>
+                    <th style="width:64px;">Vol</th>
+                    <th style="width:76px;">Satuan</th>
+                    <th style="width:105px;" class="tr">Harga Satuan</th>
+                    <th style="width:105px;" class="tr">Total</th>
                     <th>Beban Anggaran</th>
-                    <th style="width:40px;">Aksi</th>
+                    <th style="width:38px;"></th>
                   </tr>
                 </thead>
                 <tbody id="detail-tbody">
-                  <!-- Dynamically populated by JS -->
+                  <tr id="empty-detail-row">
+                    <td colspan="9" class="text-center text-muted" style="padding:32px; font-size:.85rem;">
+                      Belum ada kegiatan. Pilih dari daftar di atas lalu klik "➕ Tambah".
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
 
-            <!-- Total honor preview -->
-            <div class="honor-preview-box">
-              <div class="honor-preview-label">Total Honor Pekerjaan:</div>
-              <div class="honor-preview-amount" id="honor-amount">Rp 0,-</div>
-              <div class="honor-preview-terbilang" id="honor-terbilang">Nol Rupiah</div>
+            <!-- Honor Box -->
+            <div class="honor-box">
+              <div>
+                <div class="hb-label">Total Honor Pekerjaan</div>
+                <div class="hb-amount" id="honor-amount">Rp 0,-</div>
+              </div>
+              <div class="hb-terb" id="honor-terbilang">Nol Rupiah</div>
             </div>
 
           </div>
         </div>
 
-        <!-- Submit Bar -->
-        <div class="flex items-center justify-between mt-24 mb-32">
-          <a href="index.html" class="btn btn-outline btn-lg">Batal</a>
+        <!-- ══ SUBMIT BAR ══ -->
+        <div class="submit-bar">
+          <div>
+            <div style="font-weight:600; color:var(--gray-700); margin-bottom:3px;">Siap menyimpan dokumen?</div>
+            <div class="note">Setelah disimpan, kamu bisa pilih ekspor: SPK · BAST PPL-PML · BAST PPL-SM · BAST PML-SM</div>
+          </div>
           <button type="submit" class="btn btn-primary btn-xl" id="btn-generate">
-            🚀 Generate Dokumen
+            💾 Simpan &amp; Lanjut ke Preview →
           </button>
         </div>
 
@@ -477,16 +466,15 @@
   </div><!-- /main-content -->
 </div>
 
-<!-- Toast & Loading -->
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay">
   <div class="spinner"></div>
 </div>
 
-<script src="js/config.js?v=2.0"></script>
-<script src="js/data.js?v=2.0"></script>
-<script src="js/utils.js?v=2.0"></script>
-<script src="js/render.js?v=2.0"></script>
-<script src="js/app.js?v=2.0"></script>
+<script src="js/config.js?v=3.0"></script>
+<script src="js/data.js?v=3.0"></script>
+<script src="js/utils.js?v=3.0"></script>
+<script src="js/render.js?v=3.0"></script>
+<script src="js/app.js?v=3.0"></script>
 </body>
 </html>
