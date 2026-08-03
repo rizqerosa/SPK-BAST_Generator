@@ -5,14 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Sistem SPK/BAST BPS Kota Subulussalam</title>
   <meta name="description" content="Sistem generate dokumen SPK dan BAST untuk petugas lapangan BPS Kota Subulussalam">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
   <style>
-    .filter-bar { display:flex; gap:6px; flex-wrap:wrap; }
-    .filter-bar .btn.active {
-      background: var(--brand-primary);
-      color: #fff;
-      border-color: var(--brand-primary);
-    }
     .hero-banner {
       background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 60%, #3b82f6 100%);
       border-radius: var(--radius-xl);
@@ -24,12 +18,13 @@
       gap: 24px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 8px 32px rgba(26,86,219,.25);
     }
     .hero-banner::before {
       content: '';
       position: absolute;
       top: -40px; right: -40px;
-      width: 200px; height: 200px;
+      width: 220px; height: 220px;
       background: rgba(255,255,255,.06);
       border-radius: 50%;
     }
@@ -41,9 +36,69 @@
       background: rgba(255,255,255,.04);
       border-radius: 50%;
     }
-    .hero-icon { font-size: 3rem; }
-    .hero-text h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.4rem; font-weight:800; margin-bottom:4px; }
-    .hero-text p  { font-size: .85rem; opacity: .8; }
+    .hero-icon { font-size: 3rem; position: relative; }
+    .hero-text h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .hero-text p { font-size: .86rem; opacity: .82; }
+
+    /* ── Quick Action Grid ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .quick-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      padding: 22px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+    .quick-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--brand-accent);
+    }
+    .quick-card .qc-icon {
+      width: 48px; height: 48px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .qc-blue   { background: #dbeafe; }
+    .qc-green  { background: #dcfce7; }
+    .qc-purple { background: #ede9fe; }
+    .qc-orange { background: #ffedd5; }
+    .quick-card .qc-label {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 2px;
+    }
+    .quick-card .qc-desc {
+      font-size: .75rem;
+      color: var(--gray-500);
+    }
+    .quick-card .qc-arrow {
+      margin-left: auto;
+      color: var(--gray-300);
+      font-size: 1rem;
+      transition: transform var(--transition);
+    }
+    .quick-card:hover .qc-arrow { transform: translateX(3px); color: var(--brand-primary); }
   </style>
 </head>
 <body>
@@ -54,11 +109,10 @@
 
   <!-- ─── MAIN ─── -->
   <div class="main-content">
-    <!-- Topbar -->
     <header class="topbar">
       <div class="topbar-title">
         Dashboard
-        <small>Daftar Dokumen SPK &amp; BAST</small>
+        <small>Ringkasan sistem SPK &amp; BAST</small>
       </div>
       <div class="topbar-actions">
         <a href="form.html" class="btn btn-primary">
@@ -83,73 +137,75 @@
         <div class="stat-card">
           <div class="stat-icon blue">📄</div>
           <div class="stat-info">
-            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-num" id="stat-dokumen">—</div>
             <div class="stat-label">Total Dokumen</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon green">✅</div>
+          <div class="stat-icon green">👥</div>
           <div class="stat-info">
-            <div class="stat-num" id="stat-sudah">—</div>
-            <div class="stat-label">Sudah Generate</div>
+            <div class="stat-num" id="stat-mitra">—</div>
+            <div class="stat-label">Total Mitra</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-icon purple">📁</div>
           <div class="stat-info">
-            <div class="stat-num" id="stat-belum">—</div>
-            <div class="stat-label">Belum Generate</div>
+            <div class="stat-num" id="stat-kegiatan">—</div>
+            <div class="stat-label">Total Kegiatan</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon purple">💰</div>
+          <div class="stat-icon yellow">🏛️</div>
           <div class="stat-info">
-            <div class="stat-num" id="stat-honor" style="font-size:1.1rem;">—</div>
-            <div class="stat-label">Total Honor</div>
+            <div class="stat-num" id="stat-pegawai">—</div>
+            <div class="stat-label">Total Pegawai</div>
           </div>
         </div>
       </div>
 
-      <!-- Table Card -->
-      <div class="card">
-        <div class="card-header">
-          <h2>📋 Daftar Dokumen</h2>
-
-          <!-- Filter bar -->
-          <div class="filter-bar">
-            <button class="btn btn-outline btn-sm active" data-filter="all">Semua</button>
-            <button class="btn btn-outline btn-sm" data-filter="Sudah">Sudah</button>
-            <button class="btn btn-outline btn-sm" data-filter="Belum">Belum</button>
+      <!-- Quick Actions -->
+      <div class="quick-grid">
+        <a href="form.html" class="quick-card">
+          <div class="qc-icon qc-blue">➕</div>
+          <div>
+            <div class="qc-label">Buat Dokumen Baru</div>
+            <div class="qc-desc">Generate SPK &amp; BAST baru</div>
           </div>
-
-          <!-- Search -->
-          <div class="search-box" style="max-width:220px;">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="search-input" class="form-control" placeholder="Cari dokumen...">
+          <span class="qc-arrow">›</span>
+        </a>
+        <a href="dokumen.html" class="quick-card">
+          <div class="qc-icon qc-green">📋</div>
+          <div>
+            <div class="qc-label">Daftar Dokumen</div>
+            <div class="qc-desc">Lihat &amp; unduh semua dokumen</div>
           </div>
-        </div>
-
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>ID Dokumen</th>
-                <th>Judul Pekerjaan</th>
-                <th>Mitra/PPL</th>
-                <th>Bulan/Tahun</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="dashboard-tbody">
-              <tr>
-                <td colspan="6" class="text-center text-muted" style="padding:40px;">
-                  Memuat data...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <span class="qc-arrow">›</span>
+        </a>
+        <a href="mitra.html" class="quick-card">
+          <div class="qc-icon qc-purple">👥</div>
+          <div>
+            <div class="qc-label">Daftar Mitra</div>
+            <div class="qc-desc">Data mitra &amp; PPL lapangan</div>
+          </div>
+          <span class="qc-arrow">›</span>
+        </a>
+        <a href="pegawai.html" class="quick-card">
+          <div class="qc-icon qc-orange">🏛️</div>
+          <div>
+            <div class="qc-label">Daftar Pegawai</div>
+            <div class="qc-desc">Data pegawai BPS</div>
+          </div>
+          <span class="qc-arrow">›</span>
+        </a>
+        <a href="kegiatan.html" class="quick-card">
+          <div class="qc-icon" style="background:#fef3c7;">📁</div>
+          <div>
+            <div class="qc-label">Daftar Kegiatan</div>
+            <div class="qc-desc">Master kegiatan &amp; harga satuan</div>
+          </div>
+          <span class="qc-arrow">›</span>
+        </a>
       </div>
 
     </div><!-- /page-body -->
@@ -169,5 +225,24 @@
 <script src="js/render.js?v=4.0"></script>
 <script src="js/sidebar.js?v=4.0"></script>
 <script src="js/app.js?v=4.0"></script>
+<script>
+  // Load stat cards secara paralel
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const [spkBastData, mitraData, kegiatanData, pegawaiData] = await Promise.all([
+        getSpkBast(),
+        getMitra(),
+        getKegiatan(),
+        getPegawai(),
+      ]);
+      document.getElementById("stat-dokumen").textContent  = spkBastData.length;
+      document.getElementById("stat-mitra").textContent    = mitraData.length;
+      document.getElementById("stat-kegiatan").textContent = kegiatanData.length;
+      document.getElementById("stat-pegawai").textContent  = pegawaiData.length;
+    } catch (err) {
+      console.warn("Dashboard stats gagal load:", err.message);
+    }
+  });
+</script>
 </body>
 </html>

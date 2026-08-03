@@ -619,77 +619,8 @@ function exportPdf(filename) {
 }
 
 // ============================================================
-// DASHBOARD LOGIC (index.html)
+// DASHBOARD LOGIC — dipakai dokumen.html (tabel histori)
 // ============================================================
-
-async function initDashboard() {
-  const tbody = document.getElementById("dashboard-tbody");
-  if (!tbody) return;
-
-  setLoading(true);
-
-  try {
-    // Fetch data paralel
-    const [spkBastData, mitraData] = await Promise.all([
-      getSpkBast(),
-      getMitra(),
-    ]);
-
-    AppState.spkBast = spkBastData;
-    AppState.mitra   = mitraData;
-
-    // Stats
-    const total  = spkBastData.length;
-    const sudah  = spkBastData.filter(r => r.Status_Generate_SPK === "Sudah").length;
-    const belum  = total - sudah;
-    const honor  = spkBastData.reduce((s, r) => s + (Number(r.Total_Honor) || 0), 0);
-
-    setStatCard("stat-total", total);
-    setStatCard("stat-sudah", sudah);
-    setStatCard("stat-belum", belum);
-    setStatCard("stat-honor", `Rp ${formatRupiah(honor)}`);
-
-    renderDashboardTable(spkBastData, mitraData);
-
-    // Search
-    const searchInput = document.getElementById("search-input");
-    if (searchInput) {
-      searchInput.addEventListener("input", function() {
-        const q = this.value.toLowerCase();
-        const filtered = AppState.spkBast.filter(r =>
-          (r.ID_Dokumen || "").toLowerCase().includes(q) ||
-          (r.Judul_Pekerjaan_Dokumen || "").toLowerCase().includes(q) ||
-          (r.Bulan || "").toLowerCase().includes(q)
-        );
-        renderDashboardTable(filtered, AppState.mitra);
-      });
-    }
-
-    // Filter status
-    document.querySelectorAll("[data-filter]").forEach(btn => {
-      btn.addEventListener("click", function() {
-        document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
-        this.classList.add("active");
-        const f = this.dataset.filter;
-        const filtered = f === "all"
-          ? AppState.spkBast
-          : AppState.spkBast.filter(r => r.Status_Generate_SPK === f);
-        renderDashboardTable(filtered, AppState.mitra);
-      });
-    });
-
-  } catch (err) {
-    console.error("initDashboard error:", err);
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:40px;color:red;">
-      Gagal memuat data dari Google Sheets.<br>
-      <small>Pastikan APPS_SCRIPT_URL sudah diisi di config.js dan Apps Script sudah di-deploy.</small><br>
-      <small style="color:#666;">${err.message}</small>
-    </td></tr>`;
-    showToast("Gagal memuat data: " + err.message, "danger", 7000);
-  } finally {
-    setLoading(false);
-  }
-}
 
 function setStatCard(id, val) {
   const el = document.getElementById(id);
@@ -713,9 +644,9 @@ function renderDashboardTable(data, mitraArr) {
     return `
       <tr>
         <td><span class="monospace text-sm">${r.ID_Dokumen}</span></td>
-        <td style="max-width:260px; font-weight:500;">${r.Judul_Pekerjaan_Dokumen}</td>
+        <td style="max-width:260px; font-weight:500;">${r.Judul_Pekerjaan_Dokumen || "—"}</td>
         <td>${mitraName}</td>
-        <td>${r.Bulan} ${r.Tahun}</td>
+        <td>${r.Bulan || "—"} ${r.Tahun || ""}</td>
         <td><span class="badge ${statusClass}">${r.Status_Generate_SPK || "Belum"}</span></td>
         <td>
           <a href="preview.html?id=${r.ID_Dokumen}" class="btn btn-primary btn-sm">
