@@ -178,18 +178,31 @@ function populatePetugasDropdown() {
   }
   if (filterAsalSel) filterAsalSel.style.display = isMitra ? "" : "none";
 
-  // Extract daftar unik Asal/Kecamatan jika filterAsalSel belum terisi
-  if (isMitra && filterAsalSel && filterAsalSel.options.length <= 1) {
-    const asalSet = new Set();
+  // Selalu rebuild opsi kecamatan dari data nyata (normalize ke Title Case agar filter konsisten)
+  if (isMitra && filterAsalSel) {
+    const prevAsal = filterAsalSel.value; // simpan pilihan sebelumnya
+    const asalSet  = new Set();
     (AppState.mitra || []).forEach(m => {
-      const asal = getMitraAsal(m);
-      if (asal && asal !== "-") asalSet.add(asal);
+      const raw  = getMitraAsal(m);
+      if (!raw || raw === "-") return;
+      // Normalisasi ke Title Case: "SIMPANG KIRI" → "Simpang Kiri"
+      const norm = raw.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+      asalSet.add(norm);
     });
+
+    // Rebuild opsi (pertahankan "Semua Kecamatan" di atas)
+    filterAsalSel.innerHTML = `<option value="">Semua Kecamatan</option>`;
     Array.from(asalSet).sort().forEach(asal => {
       const opt = document.createElement("option");
-      opt.value = asal; opt.textContent = asal;
+      opt.value = asal;
+      opt.textContent = asal;
       filterAsalSel.appendChild(opt);
     });
+
+    // Restore pilihan sebelumnya jika masih ada dalam daftar
+    if (prevAsal && asalSet.has(prevAsal)) {
+      filterAsalSel.value = prevAsal;
+    }
   }
 
   const query        = (searchInput?.value || "").toLowerCase().trim();
@@ -206,7 +219,10 @@ function populatePetugasDropdown() {
       const nik     = String(item.NIK || item.nik || "");
       const sobatId = String(item.Sobat_ID || item["Sobat ID"] || "");
 
-      if (selectedAsal && asal.toLowerCase() !== selectedAsal.toLowerCase()) return false;
+      if (selectedAsal) {
+        const normalizedAsal = asal.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+        if (normalizedAsal !== selectedAsal) return false;
+      }
       if (query) {
         return name.toLowerCase().includes(query) ||
                id.toLowerCase().includes(query) ||
