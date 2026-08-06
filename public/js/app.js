@@ -918,7 +918,11 @@ function renderDashboardTable(data, mitraArr) {
 
 // ─── Init on DOMContentLoaded ─────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
-  await initDashboard();
-  await initForm();
-  // initPreview() dipanggil dari inline script di preview.html
+  try {
+    if (document.getElementById("form-spk-bast")) {
+      await initForm();
+    }
+  } catch (err) {
+    console.error("[app.js] Error in initForm:", err);
+  }
 });
