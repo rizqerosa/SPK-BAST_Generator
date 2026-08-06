@@ -428,14 +428,6 @@
                 </div>
               </div>
             </div>
-
-            <div class="form-group" style="margin-top:16px;">
-              <label class="form-label" for="input-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
-              <input type="text" class="form-control" id="input-judul" name="judul_pekerjaan" required
-                     placeholder="contoh: PENDATAAN REGSOSEK 2026 TAHAP I"
-                     style="text-transform:uppercase; font-weight:600;">
-              <div style="font-size:.78rem; color:var(--gray-400); margin-top:4px;">Akan menjadi judul utama di SPK dan seluruh BAST</div>
-            </div>
           </div>
         </div>
 
@@ -455,7 +447,7 @@
               <div class="form-group">
                 <label class="form-label" for="input-no-spk">Nomor SPK <span class="required">*</span></label>
                 <input type="text" class="form-control" id="input-no-spk"
-                       name="no_spk" placeholder="SPK-001/BPS-1172/I/2026" required>
+                       name="no_spk" placeholder="Nomor 1 Tahun 2026" required>
               </div>
             </div>
 
@@ -490,14 +482,19 @@
 
             <div class="form-row" style="margin-top:12px;">
               <div class="form-group">
-                <label class="form-label" for="input-batas-penyerahan">Batas Penyerahan Hasil</label>
+                <label class="form-label" for="input-batas-penyerahan">Batas Penyerahan Hasil (Biasa)</label>
                 <input type="date" class="form-control" id="input-batas-penyerahan" name="batas_penyerahan">
               </div>
               <div class="form-group">
-                <label class="form-label" for="input-buku-pedoman">Buku Pedoman (Pasal 2 SPK)</label>
-                <input type="text" class="form-control" id="input-buku-pedoman"
-                       name="buku_pedoman" placeholder="Buku Pedoman Pewawancara REGSOSEK 2026">
+                <label class="form-label" for="input-batas-penyerahan-telat">Batas Penyerahan Hasil (Keterlambatan / Telat)</label>
+                <input type="date" class="form-control" id="input-batas-penyerahan-telat" name="batas_penyerahan_telat">
               </div>
+            </div>
+
+            <div class="form-group" style="margin-top:12px;">
+              <label class="form-label" for="input-buku-pedoman">Buku Pedoman (Pasal 2 SPK)</label>
+              <input type="text" class="form-control" id="input-buku-pedoman"
+                     name="buku_pedoman" placeholder="Buku Pedoman Pewawancara REGSOSEK 2026">
             </div>
           </div>
         </div>
@@ -580,6 +577,15 @@
               <div class="hb-terb" id="honor-terbilang">Nol Rupiah</div>
             </div>
 
+            <!-- Judul Pekerjaan (Otomatis terisi dari Kegiatan) -->
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label" for="input-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
+              <input type="text" class="form-control" id="input-judul" name="judul_pekerjaan" required
+                     placeholder="OTOMATIS DARI URAIAN KEGIATAN DI ATAS"
+                     style="text-transform:uppercase; font-weight:600;">
+              <div style="font-size:.78rem; color:var(--gray-500); margin-top:4px;">Akan otomatis terisi dari uraian tugas kegiatan yang dipilih, tetapi dapat Anda edit jika perlu.</div>
+            </div>
+
             <hr class="sec-divider">
             <div class="sec-label">🏛️ Data Pejabat Terkait</div>
 
@@ -634,7 +640,7 @@
                 <div class="form-group">
                   <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL → PML</label>
                   <input type="text" class="form-control" id="input-no-bast-ppl-pml"
-                         name="no_bast_ppl_pml" placeholder="BAST-PPL-PML-001/BPS-1172/I/2026">
+                         name="no_bast_ppl_pml" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML</label>
@@ -645,7 +651,7 @@
                 <div class="form-group">
                   <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL → SM</label>
                   <input type="text" class="form-control" id="input-no-bast-ppl-sm"
-                         name="no_bast_ppl_sm" placeholder="BAST-PPL-SM-001/BPS-1172/I/2026">
+                         name="no_bast_ppl_sm" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM</label>
@@ -660,7 +666,7 @@
                 <div class="form-group">
                   <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML → SM</label>
                   <input type="text" class="form-control" id="input-no-bast-pml-sm"
-                         name="no_bast_pml_sm" placeholder="BAST-PML-SM-001/BPS-1172/I/2026">
+                         name="no_bast_pml_sm" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM</label>
@@ -675,7 +681,7 @@
                 <div class="form-group">
                   <label class="form-label" for="input-no-bast-sm-ppk">No. BAST SM → PPK</label>
                   <input type="text" class="form-control" id="input-no-bast-sm-ppk"
-                         name="no_bast_sm_ppk" placeholder="BAST-SM-PPK-001/BPS-1172/I/2026">
+                         name="no_bast_sm_ppk" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="input-tgl-bast-sm-ppk">Tanggal BAST SM-PPK</label>

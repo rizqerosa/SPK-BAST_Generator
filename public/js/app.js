@@ -78,7 +78,7 @@ async function initForm() {
     populatePegawaiDropdowns();
     populateKegiatanOptions();
 
-    // 1. Date picker Tanggal SPK (single date) -> Auto-extract Bulan & Tahun
+    // 1. Date picker Tanggal SPK (single date) -> Auto-extract Bulan, Tahun & Nomor Templates
     const tglSpkInput = document.getElementById("input-tanggal-spk");
     if (tglSpkInput) {
       tglSpkInput.addEventListener("change", function() {
@@ -88,8 +88,26 @@ async function initForm() {
         const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
         const selBulan = document.getElementById("input-bulan");
         const inputTahun = document.getElementById("input-tahun");
+        const yr = d.getFullYear();
         if (selBulan) selBulan.value = months[d.getMonth()];
-        if (inputTahun) inputTahun.value = d.getFullYear();
+        if (inputTahun) inputTahun.value = yr;
+
+        const inputNoSpk = document.getElementById("input-no-spk");
+        if (inputNoSpk && (!inputNoSpk.value || inputNoSpk.value.startsWith("Nomor ") || inputNoSpk.value.startsWith("SPK-"))) {
+          inputNoSpk.value = `Nomor 1 Tahun ${yr}`;
+        }
+
+        const bastPplPml = document.getElementById("input-no-bast-ppl-pml");
+        if (bastPplPml && (!bastPplPml.value || bastPplPml.value.startsWith("BAST-"))) bastPplPml.value = `001/BPS/1172/BAST/${yr}`;
+
+        const bastPplSm = document.getElementById("input-no-bast-ppl-sm");
+        if (bastPplSm && (!bastPplSm.value || bastPplSm.value.startsWith("BAST-"))) bastPplSm.value = `001/BPS/1172/BAST/${yr}`;
+
+        const bastPmlSm = document.getElementById("input-no-bast-pml-sm");
+        if (bastPmlSm && (!bastPmlSm.value || bastPmlSm.value.startsWith("BAST-"))) bastPmlSm.value = `001/BPS/1172/BAST/${yr}`;
+
+        const bastSmPpk = document.getElementById("input-no-bast-sm-ppk");
+        if (bastSmPpk && (!bastSmPpk.value || bastSmPpk.value.startsWith("BAST-"))) bastSmPpk.value = `001/BPS/1172/BAST/${yr}`;
       });
     }
 
@@ -511,7 +529,27 @@ function tambahDetailRow() {
 
   renumberDetailRows();
   updateTotalHonor();
+  autoGenerateJudul();
   selKeg.value = "";
+}
+
+function autoGenerateJudul() {
+  const inputJudul = document.getElementById("input-judul");
+  if (!inputJudul) return;
+
+  const rows = document.querySelectorAll("#detail-tbody tr[data-keg-id]");
+  const uraianList = [];
+  rows.forEach(tr => {
+    const kegId = tr.getAttribute("data-keg-id");
+    const keg = cariKegiatan(kegId, AppState.kegiatan);
+    if (keg && keg.Uraian_Tugas) {
+      uraianList.push(keg.Uraian_Tugas.trim().toUpperCase());
+    }
+  });
+
+  if (uraianList.length > 0) {
+    inputJudul.value = uraianList.join(" DAN ");
+  }
 }
 
 function recalcRow(inputEl) {
@@ -528,6 +566,7 @@ function hapusDetailRow(rowId) {
   if (tr) tr.remove();
   renumberDetailRows();
   updateTotalHonor();
+  autoGenerateJudul();
 }
 
 function renumberDetailRows() {
@@ -629,6 +668,7 @@ async function handleFormSubmit(e) {
     Tanggal_Mulai:           fd.get("tanggal_mulai") || "",
     Tanggal_Selesai:         fd.get("tanggal_selesai") || "",
     Batas_Penyerahan:        fd.get("batas_penyerahan") || "",
+    Batas_Penyerahan_Telat:  fd.get("batas_penyerahan_telat") || "",
     Total_Honor:             totalHonor,
     Terbilang:               terbilang(totalHonor) + " Rupiah",
     Status_Generate_SPK:     "Belum",
