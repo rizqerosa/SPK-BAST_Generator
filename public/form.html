@@ -368,12 +368,11 @@
               </div>
             </div>
 
-            <div class="mitra-search-wrap" id="wrap-search-mitra">
+            <div class="mitra-search-wrap" id="wrap-search-mitra" style="margin-bottom:12px;">
               <div class="search-input-wrap">
                 <span class="ico">🔍</span>
                 <input type="text" id="search-mitra" class="form-control"
                        placeholder="Cari nama, NIK, NIP, atau Sobat ID..." autocomplete="off">
-                <div class="live-search-results" id="petugas-search-results"></div>
               </div>
               <select id="filter-asal-mitra" class="form-control" style="width:180px;">
                 <option value="">Semua Kecamatan</option>
@@ -389,13 +388,8 @@
                 <option value="">-- Pilih Petugas --</option>
               </select>
 
-              <!-- Teks status jumlah data / hint -->
-              <div class="form-hint" id="mitra-count-hint" style="margin-top:0; margin-bottom:6px; font-size:.78rem; color:var(--gray-500);">
-                Ketik nama di kotak cari di atas, lalu klik nama yang muncul untuk memilih.
-              </div>
-
               <!-- Selected Petugas Card -->
-              <div id="selected-petugas-card" class="selected-petugas-card" style="display:none;">
+              <div id="selected-petugas-card" class="selected-petugas-card" style="display:none; margin-bottom:12px;">
                 <div class="selected-petugas-info">
                   <span style="font-size:1.2rem;">✅</span>
                   <div>
@@ -404,8 +398,34 @@
                   </div>
                 </div>
                 <button type="button" class="btn btn-outline btn-sm" onclick="clearSelectedPetugas()">
-                  🔄 Ganti
+                  🔄 Ganti Petugas
                 </button>
+              </div>
+
+              <!-- Tabel Daftar Petugas -->
+              <div class="petugas-table-wrapper" style="overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-md); background: #fff;">
+                <table class="detail-table" id="table-petugas-list" style="margin-bottom:0;">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px; text-align: center;">No</th>
+                      <th style="text-align: left; padding-left: 12px;">Nama &amp; Informasi Petugas</th>
+                      <th style="width: 80px; text-align: center;">Pilih</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody-petugas-list">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination Controls -->
+              <div class="petugas-pagination" id="petugas-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.82rem; color: var(--gray-600);">
+                <div id="pagination-info">Menampilkan 0 - 0 dari 0 data</div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" class="btn btn-outline btn-sm" id="btn-prev-page" disabled>← Prev</button>
+                  <span id="pagination-page-num" style="font-weight: 600;">Halaman 1 / 1</span>
+                  <button type="button" class="btn btn-outline btn-sm" id="btn-next-page" disabled>Next →</button>
+                </div>
               </div>
             </div>
 

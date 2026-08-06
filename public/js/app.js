@@ -160,17 +160,23 @@ function toggleBundlingFields() {
   }
 }
 
+let currentPetugasPage = 1;
+const PETUGAS_PER_PAGE = 10;
+
 function populatePetugasDropdown() {
+  renderPetugasTable();
+}
+
+function renderPetugasTable() {
   const sel = document.getElementById("sel-mitra");
-  if (!sel) return;
+  const tbody = document.getElementById("tbody-petugas-list");
+  if (!sel || !tbody) return;
 
   const previousVal   = sel.value;
   const sumber        = document.querySelector('input[name="sumber_petugas"]:checked')?.value || "mitra";
   const searchInput   = document.getElementById("search-mitra");
   const filterAsalSel = document.getElementById("filter-asal-mitra");
-  const hintEl        = document.getElementById("mitra-count-hint");
   const labelEl       = document.getElementById("label-sel-mitra");
-  const resultsBox    = document.getElementById("petugas-search-results");
 
   const isMitra = (sumber === "mitra");
   if (labelEl) {
@@ -180,19 +186,17 @@ function populatePetugasDropdown() {
   }
   if (filterAsalSel) filterAsalSel.style.display = isMitra ? "" : "none";
 
-  // Selalu rebuild opsi kecamatan dari data nyata (normalize ke Title Case agar filter konsisten)
+  // Rebuild opsi kecamatan dari data mitra
   if (isMitra && filterAsalSel) {
-    const prevAsal = filterAsalSel.value; // simpan pilihan sebelumnya
+    const prevAsal = filterAsalSel.value;
     const asalSet  = new Set();
     (AppState.mitra || []).forEach(m => {
       const raw  = getMitraAsal(m);
       if (!raw || raw === "-") return;
-      // Normalisasi ke Title Case: "SIMPANG KIRI" → "Simpang Kiri"
       const norm = raw.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
       asalSet.add(norm);
     });
 
-    // Rebuild opsi (pertahankan "Semua Kecamatan" di atas)
     filterAsalSel.innerHTML = `<option value="">Semua Kecamatan</option>`;
     Array.from(asalSet).sort().forEach(asal => {
       const opt = document.createElement("option");
@@ -201,7 +205,6 @@ function populatePetugasDropdown() {
       filterAsalSel.appendChild(opt);
     });
 
-    // Restore pilihan sebelumnya jika masih ada dalam daftar
     if (prevAsal && asalSet.has(prevAsal)) {
       filterAsalSel.value = prevAsal;
     }
@@ -251,8 +254,8 @@ function populatePetugasDropdown() {
     return nameA.localeCompare(nameB, "id", { sensitivity: "base" });
   });
 
-  // 1. Re-populate fallback <select>
-  sel.innerHTML = `<option value="">-- Pilih ${isMitra ? "Mitra Lapangan" : "Pegawai BPS"} (${filtered.length} ditemukan) --</option>`;
+  // Re-populate hidden <select id="sel-mitra"> untuk form submit validation
+  sel.innerHTML = `<option value="">-- Pilih ${isMitra ? "Mitra Lapangan" : "Pegawai BPS"} --</option>`;
   let foundPrevious = false;
   filtered.forEach(item => {
     const id   = isMitra ? getMitraId(item) : getPegawaiNip(item);
@@ -269,7 +272,6 @@ function populatePetugasDropdown() {
     sel.appendChild(opt);
   });
 
-  // Preserve previous value even if excluded by search query
   if (previousVal && !foundPrevious) {
     const currentName = document.getElementById("selected-petugas-name")?.textContent || previousVal;
     const currentMeta = document.getElementById("selected-petugas-meta")?.textContent || "";
@@ -280,88 +282,105 @@ function populatePetugasDropdown() {
     sel.appendChild(opt);
   }
 
-  if (hintEl) {
-    const selCard = document.getElementById("selected-petugas-card");
-    const isSelected = selCard && selCard.style.display !== "none";
-    if (!isSelected) {
-      const label = isMitra ? "mitra" : "pegawai";
-      hintEl.textContent = rawList.length > 0
-        ? `${filtered.length} ${label} ditemukan — klik nama di hasil pencarian untuk memilih.`
-        : `Memuat data ${label}...`;
-    }
+  // Hitung Pagination
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / PETUGAS_PER_PAGE) || 1;
+  if (currentPetugasPage > totalPages) currentPetugasPage = totalPages;
+  if (currentPetugasPage < 1) currentPetugasPage = 1;
+
+  const startIndex = (currentPetugasPage - 1) * PETUGAS_PER_PAGE;
+  const pageItems  = filtered.slice(startIndex, startIndex + PETUGAS_PER_PAGE);
+
+  // Render Baris Tabel
+  if (pageItems.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 24px; color: var(--gray-500);">Data tidak ditemukan.</td></tr>`;
+  } else {
+    tbody.innerHTML = pageItems.map((item, index) => {
+      const rowNo = startIndex + index + 1;
+      const id    = isMitra ? getMitraId(item) : getPegawaiNip(item);
+      const name  = isMitra ? getMitraName(item) : getPegawaiName(item);
+      const meta  = isMitra
+        ? `${getMitraPosisi(item)} · Kec. ${getMitraAsal(item)} · NIK: ${item.NIK || id}`
+        : `${item.Jabatan || "Pegawai BPS"} · NIP: ${id}`;
+      const isChecked = (sel.value === id);
+
+      const safeId   = escapeHtml(id);
+      const safeName = escapeHtml(name);
+      const safeMeta = escapeHtml(meta);
+
+      return `
+        <tr class="${isChecked ? 'selected-row' : ''}" style="cursor:pointer;" onclick="selectPetugasFromTable('${safeId}', '${safeName}', '${safeMeta}')">
+          <td style="text-align: center; font-weight: 600;">${rowNo}</td>
+          <td style="padding-left: 12px;">
+            <div style="font-weight: 600; color: var(--gray-900); font-size: 0.88rem;">${safeName}</div>
+            <div style="font-size: 0.76rem; color: var(--gray-500);">${safeMeta}</div>
+          </td>
+          <td style="text-align: center;">
+            <input type="radio" name="petugas_radio_choice" value="${safeId}" ${isChecked ? 'checked' : ''}
+                   onclick="event.stopPropagation(); selectPetugasFromTable('${safeId}', '${safeName}', '${safeMeta}')">
+          </td>
+        </tr>`;
+    }).join("");
   }
 
-  // 2. Render Live Search Results Dropdown Panel
-  if (resultsBox) {
-    if (filtered.length === 0) {
-      resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:var(--gray-500); font-size:.82rem;">Tidak ada hasil ditemukan.</div>`;
-    } else {
-      resultsBox.innerHTML = filtered.slice(0, 50).map(item => {
-        const id   = isMitra ? getMitraId(item) : getPegawaiNip(item);
-        const name = isMitra ? getMitraName(item) : getPegawaiName(item);
-        const meta = isMitra
-          ? `${getMitraPosisi(item)} · Kec. ${getMitraAsal(item)} · NIK: ${item.NIK || id}`
-          : `${item.Jabatan || "Pegawai BPS"} · NIP: ${id}`;
-        const inisial = (name || "?")[0].toUpperCase();
-        const safeName = escapeHtml(name);
-        const safeMeta = escapeHtml(meta);
-        const safeId   = escapeHtml(id);
+  // Update Kontrol Pagination
+  const infoEl    = document.getElementById("pagination-info");
+  const pageNumEl = document.getElementById("pagination-page-num");
+  const btnPrev   = document.getElementById("btn-prev-page");
+  const btnNext   = document.getElementById("btn-next-page");
 
-        return `
-          <div class="live-search-item" data-id="${safeId}" data-name="${safeName}" data-meta="${safeMeta}">
-            <div class="item-avatar">${inisial}</div>
-            <div class="item-info">
-              <div class="item-name">${safeName}</div>
-              <div class="item-meta">${safeMeta}</div>
-            </div>
-          </div>`;
-      }).join("");
-
-      // Bind click handlers cleanly on all items without string interpolation bugs
-      resultsBox.querySelectorAll(".live-search-item").forEach(itemEl => {
-        itemEl.addEventListener("click", function(e) {
-          e.stopPropagation();
-          const id   = this.dataset.id;
-          const name = this.dataset.name;
-          const meta = this.dataset.meta;
-          selectPetugasFromLive(id, name, meta);
-        });
-      });
-    }
-
-    if (document.activeElement === searchInput || query.length > 0) {
-      resultsBox.classList.add("visible");
-    }
+  if (infoEl) {
+    infoEl.textContent = totalItems > 0
+      ? `Menampilkan ${startIndex + 1} - ${Math.min(startIndex + PETUGAS_PER_PAGE, totalItems)} dari ${totalItems} data`
+      : `Menampilkan 0 - 0 dari 0 data`;
   }
+  if (pageNumEl) {
+    pageNumEl.textContent = `Halaman ${currentPetugasPage} / ${totalPages}`;
+  }
+  if (btnPrev) btnPrev.disabled = (currentPetugasPage <= 1);
+  if (btnNext) btnNext.disabled = (currentPetugasPage >= totalPages);
 
-  // Attach search input and filter listeners if not yet bound
-  if (searchInput && !searchInput.dataset.boundLive) {
-    searchInput.dataset.boundLive = "true";
-    searchInput.addEventListener("focus", () => {
-      populatePetugasDropdown();
-      resultsBox?.classList.add("visible");
-    });
+  // Bind Listener Input & Filter
+  if (searchInput && !searchInput.dataset.boundTable) {
+    searchInput.dataset.boundTable = "true";
     searchInput.addEventListener("input", () => {
-      populatePetugasDropdown();
-      resultsBox?.classList.add("visible");
+      currentPetugasPage = 1;
+      renderPetugasTable();
     });
-    document.addEventListener("click", (e) => {
-      const wrap = document.getElementById("wrap-search-mitra");
-      if (wrap && !wrap.contains(e.target)) {
-        resultsBox?.classList.remove("visible");
+  }
+
+  if (filterAsalSel && !filterAsalSel.dataset.boundTable) {
+    filterAsalSel.dataset.boundTable = "true";
+    filterAsalSel.addEventListener("change", () => {
+      currentPetugasPage = 1;
+      renderPetugasTable();
+    });
+  }
+
+  if (btnPrev && !btnPrev.dataset.bound) {
+    btnPrev.dataset.bound = "true";
+    btnPrev.addEventListener("click", () => {
+      if (currentPetugasPage > 1) {
+        currentPetugasPage--;
+        renderPetugasTable();
       }
     });
   }
 
-  if (filterAsalSel && !filterAsalSel.dataset.bound) {
-    filterAsalSel.dataset.bound = "true";
-    filterAsalSel.addEventListener("change", () => populatePetugasDropdown());
+  if (btnNext && !btnNext.dataset.bound) {
+    btnNext.dataset.bound = "true";
+    btnNext.addEventListener("click", () => {
+      if (currentPetugasPage < totalPages) {
+        currentPetugasPage++;
+        renderPetugasTable();
+      }
+    });
   }
 
   updateSelectedPetugasCard();
 }
 
-function selectPetugasFromLive(id, name, meta) {
+function selectPetugasFromTable(id, name, meta) {
   const sel = document.getElementById("sel-mitra");
   if (sel) {
     let opt = Array.from(sel.options).find(o => o.value === id);
@@ -374,13 +393,8 @@ function selectPetugasFromLive(id, name, meta) {
     sel.value = id;
   }
 
-  const searchInput = document.getElementById("search-mitra");
-  if (searchInput) searchInput.value = name;
-
-  const resultsBox = document.getElementById("petugas-search-results");
-  if (resultsBox) resultsBox.classList.remove("visible");
-
   updateSelectedPetugasCard(name, meta);
+  renderPetugasTable();
 }
 
 function updateSelectedPetugasCard(optName, optMeta) {
@@ -420,8 +434,9 @@ function clearSelectedPetugas() {
   if (sel) sel.value = "";
   const searchInput = document.getElementById("search-mitra");
   if (searchInput) searchInput.value = "";
+  currentPetugasPage = 1;
   updateSelectedPetugasCard();
-  populatePetugasDropdown();
+  renderPetugasTable();
 }
 
 function populatePegawaiDropdowns() {

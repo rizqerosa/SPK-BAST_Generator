@@ -907,3 +907,11 @@ table.detail-table .input-sm:focus {
   color: #15803d;
 }
 
+/* ─── Petugas Table Selected Row ────────────────────────────── */
+#table-petugas-list tbody tr.selected-row {
+  background-color: #f0fdf4 !important;
+}
+
+#table-petugas-list tbody tr.selected-row td {
+  border-color: #bbf7d0;
+}
