@@ -42,7 +42,22 @@ function renderTabelLampiran(detailPekerjaanArray) {
  * siap dipakai oleh renderTemplate().
  */
 function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
-  const mitra    = cariMitra(record.ID_Mitra, mitraArr) || {};
+  const isPegawai = (record.Jenis_Petugas || "").toLowerCase() === "pegawai";
+  let mitra = cariMitra(record.ID_Mitra, mitraArr);
+  if (!mitra || isPegawai) {
+    const p = cariPegawai(record.ID_Mitra, pegawaiArr);
+    if (p) {
+      mitra = {
+        ID_Mitra: getPegawaiNip(p),
+        Nama_Mitra: getPegawaiName(p),
+        NIK: getPegawaiNip(p),
+        Posisi: p.Jabatan || "Pegawai BPS",
+        Asal: "BPS Kota Subulussalam"
+      };
+    }
+  }
+  mitra = mitra || {};
+
   const ppk      = cariPegawai(record.PPK,        pegawaiArr) || {};
   const pml      = cariPegawai(record.PML,        pegawaiArr) || {};
   const ketuaTim = cariPegawai(record.Ketua_Tim,  pegawaiArr) || {};
