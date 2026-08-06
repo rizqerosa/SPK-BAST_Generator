@@ -115,12 +115,13 @@
       color: var(--gray-500);
     }
 
-    /* ─── Mitra search ─── */
+    /* ─── Mitra search & Live Results ─── */
     .mitra-search-wrap {
       display: flex;
       gap: 10px;
       margin-bottom: 8px;
       flex-wrap: wrap;
+      position: relative;
     }
     .mitra-search-wrap .search-input-wrap {
       flex: 1;
@@ -134,6 +135,90 @@
       transform: translateY(-50%);
       font-size: 13px;
       color: var(--gray-400);
+    }
+    .live-search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      margin-top: 4px;
+      display: none;
+    }
+    .live-search-results.visible {
+      display: block;
+    }
+    .live-search-item {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .live-search-item:last-child {
+      border-bottom: none;
+    }
+    .live-search-item:hover {
+      background: var(--brand-light);
+    }
+    .live-search-item .item-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .live-search-item .item-info {
+      flex: 1;
+    }
+    .live-search-item .item-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--gray-800);
+      line-height: 1.2;
+    }
+    .live-search-item .item-meta {
+      font-size: 0.76rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .selected-petugas-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md);
+      margin-top: 10px;
+    }
+    .selected-petugas-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .selected-petugas-info .name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #166534;
+    }
+    .selected-petugas-info .meta {
+      font-size: 0.78rem;
+      color: #15803d;
     }
 
     /* ─── Section divider ─── */
@@ -287,20 +372,35 @@
               <div class="search-input-wrap">
                 <span class="ico">🔍</span>
                 <input type="text" id="search-mitra" class="form-control"
-                       placeholder="Cari nama, NIK, atau Sobat ID mitra/pegawai...">
+                       placeholder="Cari nama, NIK, NIP, atau Sobat ID..." autocomplete="off">
+                <div class="live-search-results" id="petugas-search-results"></div>
               </div>
               <select id="filter-asal-mitra" class="form-control" style="width:180px;">
                 <option value="">Semua Kecamatan</option>
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-top:14px;">
               <label class="form-label" for="sel-mitra" id="label-sel-mitra">Pilih Petugas (Mitra / Pegawai) <span class="required">*</span></label>
               <select class="form-control" id="sel-mitra" name="id_mitra" required>
                 <option value="">-- Pilih Petugas --</option>
               </select>
               <div class="form-hint" id="mitra-count-hint" style="margin-top:5px; font-size:.78rem; color:var(--gray-500);">
                 Memuat data...
+              </div>
+
+              <!-- Selected Petugas Card -->
+              <div id="selected-petugas-card" class="selected-petugas-card" style="display:none;">
+                <div class="selected-petugas-info">
+                  <span style="font-size:1.2rem;">✅</span>
+                  <div>
+                    <div class="name" id="selected-petugas-name">—</div>
+                    <div class="meta" id="selected-petugas-meta">—</div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="clearSelectedPetugas()">
+                  🔄 Ganti / Reset
+                </button>
               </div>
             </div>
 
