@@ -95,7 +95,9 @@ async function initForm() {
 
     // 2. Radio Sumber Petugas (Mitra vs Pegawai)
     document.querySelectorAll('input[name="sumber_petugas"]').forEach(r => {
-      r.addEventListener("change", populatePetugasDropdown);
+      r.addEventListener("change", () => {
+        clearSelectedPetugas();
+      });
     });
 
     // 3. Peran Petugas (PPL vs PML)
@@ -251,6 +253,7 @@ function populatePetugasDropdown() {
 
   // 1. Re-populate fallback <select>
   sel.innerHTML = `<option value="">-- Pilih ${isMitra ? "Mitra Lapangan" : "Pegawai BPS"} (${filtered.length} ditemukan) --</option>`;
+  let foundPrevious = false;
   filtered.forEach(item => {
     const id   = isMitra ? getMitraId(item) : getPegawaiNip(item);
     const name = isMitra ? getMitraName(item) : getPegawaiName(item);
@@ -259,9 +262,23 @@ function populatePetugasDropdown() {
     const opt = document.createElement("option");
     opt.value = id;
     opt.textContent = `${name} — ${meta}`;
-    if (id && id === previousVal) opt.selected = true;
+    if (id && id === previousVal) {
+      opt.selected = true;
+      foundPrevious = true;
+    }
     sel.appendChild(opt);
   });
+
+  // Preserve previous value even if excluded by search query
+  if (previousVal && !foundPrevious) {
+    const currentName = document.getElementById("selected-petugas-name")?.textContent || previousVal;
+    const currentMeta = document.getElementById("selected-petugas-meta")?.textContent || "";
+    const opt = document.createElement("option");
+    opt.value = previousVal;
+    opt.textContent = `${currentName} — ${currentMeta}`;
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
 
   if (hintEl) {
     const selCard = document.getElementById("selected-petugas-card");
@@ -302,7 +319,8 @@ function populatePetugasDropdown() {
 
       // Bind click handlers cleanly on all items without string interpolation bugs
       resultsBox.querySelectorAll(".live-search-item").forEach(itemEl => {
-        itemEl.addEventListener("click", function() {
+        itemEl.addEventListener("click", function(e) {
+          e.stopPropagation();
           const id   = this.dataset.id;
           const name = this.dataset.name;
           const meta = this.dataset.meta;
@@ -346,6 +364,13 @@ function populatePetugasDropdown() {
 function selectPetugasFromLive(id, name, meta) {
   const sel = document.getElementById("sel-mitra");
   if (sel) {
+    let opt = Array.from(sel.options).find(o => o.value === id);
+    if (!opt) {
+      opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${name} — ${meta}`;
+      sel.appendChild(opt);
+    }
     sel.value = id;
   }
 
