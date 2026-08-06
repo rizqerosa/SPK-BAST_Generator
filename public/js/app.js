@@ -256,23 +256,40 @@ function populatePetugasDropdown() {
     if (filtered.length === 0) {
       resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:var(--gray-500); font-size:.82rem;">Tidak ada hasil ditemukan.</div>`;
     } else {
-      resultsBox.innerHTML = filtered.slice(0, 40).map(item => {
+      resultsBox.innerHTML = filtered.slice(0, 50).map(item => {
         const id   = isMitra ? getMitraId(item) : getPegawaiNip(item);
         const name = isMitra ? getMitraName(item) : getPegawaiName(item);
         const meta = isMitra
-          ? `${getMitraPosisi(item)} · ${getMitraAsal(item)} · NIK: ${item.NIK || id}`
+          ? `${getMitraPosisi(item)} · Kec. ${getMitraAsal(item)} · NIK: ${item.NIK || id}`
           : `${item.Jabatan || "Pegawai BPS"} · NIP: ${id}`;
         const inisial = (name || "?")[0].toUpperCase();
+        const safeName = escapeHtml(name);
+        const safeMeta = escapeHtml(meta);
+        const safeId   = escapeHtml(id);
 
         return `
-          <div class="live-search-item" onclick="selectPetugasFromLive('${id}', '${encodeURIComponent(name)}', '${encodeURIComponent(meta)}')">
+          <div class="live-search-item" data-id="${safeId}" data-name="${safeName}" data-meta="${safeMeta}">
             <div class="item-avatar">${inisial}</div>
             <div class="item-info">
-              <div class="item-name">${name}</div>
-              <div class="item-meta">${meta}</div>
+              <div class="item-name">${safeName}</div>
+              <div class="item-meta">${safeMeta}</div>
             </div>
           </div>`;
       }).join("");
+
+      // Bind click handlers cleanly on all items without string interpolation bugs
+      resultsBox.querySelectorAll(".live-search-item").forEach(itemEl => {
+        itemEl.addEventListener("click", function() {
+          const id   = this.dataset.id;
+          const name = this.dataset.name;
+          const meta = this.dataset.meta;
+          selectPetugasFromLive(id, name, meta);
+        });
+      });
+    }
+
+    if (document.activeElement === searchInput || query.length > 0) {
+      resultsBox.classList.add("visible");
     }
   }
 
@@ -303,10 +320,8 @@ function populatePetugasDropdown() {
   updateSelectedPetugasCard();
 }
 
-function selectPetugasFromLive(id, encodedName, encodedMeta) {
-  const name = decodeURIComponent(encodedName);
-  const meta = decodeURIComponent(encodedMeta);
-  const sel  = document.getElementById("sel-mitra");
+function selectPetugasFromLive(id, name, meta) {
+  const sel = document.getElementById("sel-mitra");
   if (sel) {
     sel.value = id;
   }

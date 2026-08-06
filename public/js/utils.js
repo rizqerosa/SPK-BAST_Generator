@@ -164,3 +164,16 @@ function formatTanggal(isoStr) {
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 }
 
+/**
+ * Escape karakter HTML khusus (&, <, >, ", ')
+ */
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
