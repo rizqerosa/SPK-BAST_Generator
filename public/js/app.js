@@ -264,7 +264,14 @@ function populatePetugasDropdown() {
   });
 
   if (hintEl) {
-    hintEl.textContent = `Menampilkan ${filtered.length} dari ${rawList.length} ${isMitra ? "mitra" : "pegawai"} (Urut A-Z).`;
+    const selCard = document.getElementById("selected-petugas-card");
+    const isSelected = selCard && selCard.style.display !== "none";
+    if (!isSelected) {
+      const label = isMitra ? "mitra" : "pegawai";
+      hintEl.textContent = rawList.length > 0
+        ? `${filtered.length} ${label} ditemukan — klik nama di hasil pencarian untuk memilih.`
+        : `Memuat data ${label}...`;
+    }
   }
 
   // 2. Render Live Search Results Dropdown Panel

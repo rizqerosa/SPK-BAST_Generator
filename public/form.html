@@ -381,12 +381,17 @@
             </div>
 
             <div class="form-group" style="margin-top:14px;">
-              <label class="form-label" for="sel-mitra" id="label-sel-mitra">Pilih Petugas (Mitra / Pegawai) <span class="required">*</span></label>
-              <select class="form-control" id="sel-mitra" name="id_mitra" required>
+              <label class="form-label" id="label-sel-mitra">Pilih Petugas <span class="required">*</span></label>
+
+              <!-- select disembunyikan dari tampilan, tetap digunakan untuk validasi & penyimpanan nilai -->
+              <select class="form-control" id="sel-mitra" name="id_mitra" required
+                      style="display:none; position:absolute; visibility:hidden;">
                 <option value="">-- Pilih Petugas --</option>
               </select>
-              <div class="form-hint" id="mitra-count-hint" style="margin-top:5px; font-size:.78rem; color:var(--gray-500);">
-                Memuat data...
+
+              <!-- Teks status jumlah data / hint -->
+              <div class="form-hint" id="mitra-count-hint" style="margin-top:0; margin-bottom:6px; font-size:.78rem; color:var(--gray-500);">
+                Ketik nama di kotak cari di atas, lalu klik nama yang muncul untuk memilih.
               </div>
 
               <!-- Selected Petugas Card -->
@@ -399,7 +404,7 @@
                   </div>
                 </div>
                 <button type="button" class="btn btn-outline btn-sm" onclick="clearSelectedPetugas()">
-                  🔄 Ganti / Reset
+                  🔄 Ganti
                 </button>
               </div>
             </div>
