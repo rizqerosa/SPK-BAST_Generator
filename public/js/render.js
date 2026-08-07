@@ -59,7 +59,18 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   mitra = mitra || {};
 
   const ppk      = cariPegawai(record.PPK,        pegawaiArr) || {};
-  const pml      = cariPegawai(record.PML,        pegawaiArr) || {};
+  let pml        = cariPegawai(record.PML,        pegawaiArr);
+  if (!pml && record.PML) {
+    const m = cariMitra(record.PML, mitraArr);
+    if (m) {
+      pml = {
+        Nama_Pegawai: getMitraName(m),
+        NIP: m.NIK || getMitraId(m),
+        Jabatan: getMitraPosisi(m) || "Mitra Pemeriksa Lapangan"
+      };
+    }
+  }
+  pml = pml || {};
   const ketuaTim = cariPegawai(record.Ketua_Tim,  pegawaiArr) || {};
   const kepala   = cariPegawai(record["Kepala/PLH"], pegawaiArr) || {};
   const details  = getDetailByDokumen(detailArr, record.ID_Dokumen);

@@ -177,3 +177,13 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+/**
+ * Ubah string ke format Title Case (huruf besar di awal kata).
+ * Contoh: "PEMERIKSAAN LAPANGAN" -> "Pemeriksaan Lapangan"
+ */
+function toTitleCase(str) {
+  if (!str) return "";
+  return String(str).toLowerCase().replace(/(?:^|\s|-)\S/g, a => a.toUpperCase());
+}
+
+

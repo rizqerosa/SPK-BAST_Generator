@@ -915,3 +915,136 @@ table.detail-table .input-sm:focus {
 #table-petugas-list tbody tr.selected-row td {
   border-color: #bbf7d0;
 }
+
+/* ─── Searchable Select Component ───────────────────────────── */
+.ss-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.ss-trigger {
+  width: 100%;
+  padding: 9px 13px;
+  background: #fff;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  color: var(--gray-800);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  user-select: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.ss-trigger:hover {
+  border-color: var(--brand-accent);
+}
+
+.ss-trigger.open {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+}
+
+.ss-trigger .ss-arrow {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  margin-left: 8px;
+  transition: transform var(--transition);
+}
+
+.ss-trigger.open .ss-arrow {
+  transform: rotate(180deg);
+}
+
+.ss-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: #fff;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  display: none;
+}
+
+.ss-dropdown.visible {
+  display: block;
+}
+
+.ss-search-wrap {
+  position: relative;
+  margin-bottom: 6px;
+}
+
+.ss-search-input {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  font-size: 0.82rem;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.ss-search-input:focus {
+  border-color: var(--brand-primary);
+}
+
+.ss-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.ss-options-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ss-optgroup-label {
+  padding: 6px 10px 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  letter-spacing: 0.5px;
+}
+
+.ss-option {
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  color: var(--gray-800);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ss-option:hover, .ss-option.highlighted {
+  background: var(--brand-light);
+  color: var(--brand-primary);
+}
+
+.ss-option.selected {
+  background: #dbeafe;
+  font-weight: 600;
+  color: var(--brand-dark);
+}
+
+.ss-no-results {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
