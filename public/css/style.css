@@ -1048,3 +1048,33 @@ table.detail-table .input-sm:focus {
   color: var(--gray-500);
 }
 
+/* ─── Honor SBM Warning Alert ──────────────────────────────── */
+.honor-sbm-warning {
+  margin-top: 10px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-md);
+  color: #991b1b;
+  font-size: 0.84rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.2s ease;
+}
+
+.honor-sbm-warning .warn-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.honor-box.over-sbm {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
+  border-color: #fca5a5;
+}
+
+.honor-box.over-sbm .hb-amount {
+  color: #dc2626;
+}
+
+

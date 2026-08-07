@@ -895,8 +895,27 @@ function updateTotalHonor() {
 
   const elAmount = document.getElementById("honor-amount");
   const elTerb   = document.getElementById("honor-terbilang");
+  const honorBox = document.querySelector(".honor-box");
+  const warnEl   = document.getElementById("honor-sbm-warning");
+  const warnAmt  = document.getElementById("warn-total-amount");
+
   if (elAmount) elAmount.textContent = `Rp ${formatRupiah(total)},-`;
   if (elTerb)   elTerb.textContent   = terbilang(total) + " Rupiah";
+
+  const SBM_LIMIT = 3500000;
+  if (total > SBM_LIMIT) {
+    if (honorBox) honorBox.classList.add("over-sbm");
+    if (warnEl) warnEl.style.display = "flex";
+    if (warnAmt) warnAmt.textContent = `Rp ${formatRupiah(total)},-`;
+    if (!window._sbmWarnedThisSession) {
+      showToast(`⚠️ Perhatian: Total honor (Rp ${formatRupiah(total)}) melebihi batas SBM Rp 3.500.000,-`, "warning", 5000);
+      window._sbmWarnedThisSession = true;
+    }
+  } else {
+    if (honorBox) honorBox.classList.remove("over-sbm");
+    if (warnEl) warnEl.style.display = "none";
+    window._sbmWarnedThisSession = false;
+  }
 }
 
 async function handleFormSubmit(e) {
