@@ -368,7 +368,40 @@
 
     document.getElementById("export-no-surat").value = noSurat;
     document.getElementById("export-tgl-surat").value = tglSurat;
+    validateExportNoSurat(document.getElementById("export-no-surat"));
     document.getElementById("export-modal").classList.add("visible");
+  }
+
+  function validateExportNoSurat(inputEl) {
+    if (!inputEl) return;
+    const val = inputEl.value ? inputEl.value.trim() : "";
+    let warnEl = inputEl.parentNode.querySelector(".doc-num-warning-msg");
+
+    if (!val) {
+      inputEl.classList.remove("is-duplicate");
+      if (warnEl) warnEl.remove();
+      return;
+    }
+
+    const target = val.toLowerCase();
+    const isDup = (_allDocs || []).some(d => {
+      if (_selectedDocId && String(d.ID_Dokumen) === String(_selectedDocId)) return false;
+      const noSpk = (d.Nomor_SPK || d.No_SPK || "").trim().toLowerCase();
+      return noSpk && noSpk === target;
+    });
+
+    if (isDup) {
+      inputEl.classList.add("is-duplicate");
+      if (!warnEl) {
+        warnEl = document.createElement("div");
+        warnEl.className = "doc-num-warning-msg";
+        inputEl.parentNode.appendChild(warnEl);
+      }
+      warnEl.innerHTML = "⚠️ Nomor surat ini sudah pernah dipakai pada dokumen lain!";
+    } else {
+      inputEl.classList.remove("is-duplicate");
+      if (warnEl) warnEl.remove();
+    }
   }
 
   function closeExportModal() {
@@ -427,6 +460,12 @@
 
       // Event listeners
       document.getElementById("search-input").addEventListener("input", applyFilters);
+      const exportNoInput = document.getElementById("export-no-surat");
+      if (exportNoInput) {
+        exportNoInput.addEventListener("input", function() {
+          validateExportNoSurat(this);
+        });
+      }
       document.querySelectorAll("[data-filter]").forEach(btn => {
         btn.addEventListener("click", function() {
           document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));

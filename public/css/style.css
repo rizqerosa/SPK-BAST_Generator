@@ -487,6 +487,22 @@ select.form-control {
   cursor: pointer;
 }
 
+.form-control.is-duplicate {
+  border-color: var(--danger) !important;
+  background-color: var(--danger-bg) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+.doc-num-warning-msg {
+  font-size: 0.78rem;
+  color: var(--danger);
+  font-weight: 600;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .form-hint {
   font-size: .73rem;
   color: var(--gray-400);
