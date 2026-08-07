@@ -493,6 +493,12 @@ select.form-control {
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
 }
 
+.form-control.is-gap-warning {
+  border-color: var(--warning) !important;
+  background-color: var(--warning-bg) !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15) !important;
+}
+
 .doc-num-warning-msg {
   font-size: 0.78rem;
   color: var(--danger);
@@ -501,6 +507,14 @@ select.form-control {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.doc-num-warning-msg.warning {
+  color: var(--warning);
+}
+
+.doc-num-warning-msg.danger {
+  color: var(--danger);
 }
 
 .form-hint {

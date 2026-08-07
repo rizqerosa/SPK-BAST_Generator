@@ -378,7 +378,7 @@
     let warnEl = inputEl.parentNode.querySelector(".doc-num-warning-msg");
 
     if (!val) {
-      inputEl.classList.remove("is-duplicate");
+      inputEl.classList.remove("is-duplicate", "is-gap-warning");
       if (warnEl) warnEl.remove();
       return;
     }
@@ -391,17 +391,75 @@
     });
 
     if (isDup) {
+      inputEl.classList.remove("is-gap-warning");
       inputEl.classList.add("is-duplicate");
       if (!warnEl) {
         warnEl = document.createElement("div");
-        warnEl.className = "doc-num-warning-msg";
+        warnEl.className = "doc-num-warning-msg danger";
         inputEl.parentNode.appendChild(warnEl);
+      } else {
+        warnEl.className = "doc-num-warning-msg danger";
       }
       warnEl.innerHTML = "⚠️ Nomor surat ini sudah pernah dipakai pada dokumen lain!";
-    } else {
-      inputEl.classList.remove("is-duplicate");
-      if (warnEl) warnEl.remove();
+      return;
     }
+
+    // Gap Warning check for SPK in Export Modal
+    const yearMatch = val.match(/(?:Tahun|\/|\b)(20\d{2})\b/i);
+    const defaultYear = yearMatch ? parseInt(yearMatch[1], 10) : new Date().getFullYear();
+    const seqMatches = val.match(/\d+/g);
+    let currentSeq = null;
+    if (seqMatches) {
+      for (const m of seqMatches) {
+        const num = parseInt(m, 10);
+        if (num !== defaultYear && num > 0 && num < 2000) {
+          currentSeq = num;
+          break;
+        }
+      }
+    }
+
+    if (currentSeq && currentSeq > 1) {
+      const usedSeqs = new Set();
+      (_allDocs || []).forEach(d => {
+        if (_selectedDocId && String(d.ID_Dokumen) === String(_selectedDocId)) return;
+        const recYear = parseInt(d.Tahun || d.tahun || (d["Tanggal SPK"] || d.Tanggal_SPK || "").slice(0, 4)) || defaultYear;
+        if (recYear === defaultYear) {
+          const spkVal = d.Nomor_SPK || d.No_SPK || "";
+          const matches = String(spkVal).match(/\d+/g);
+          if (matches) {
+            matches.forEach(m => {
+              const num = parseInt(m, 10);
+              if (num !== recYear && num > 0 && num < 2000) usedSeqs.add(num);
+            });
+          }
+        }
+      });
+
+      const missingNums = [];
+      for (let i = 1; i < currentSeq; i++) {
+        if (!usedSeqs.has(i)) missingNums.push(i);
+      }
+
+      if (missingNums.length > 0) {
+        inputEl.classList.remove("is-duplicate");
+        inputEl.classList.add("is-gap-warning");
+        const missingStr = missingNums.join(", ");
+        const labelNomor = missingNums.length > 1 ? "Nomor-nomor" : "Nomor";
+        if (!warnEl) {
+          warnEl = document.createElement("div");
+          warnEl.className = "doc-num-warning-msg warning";
+          inputEl.parentNode.appendChild(warnEl);
+        } else {
+          warnEl.className = "doc-num-warning-msg warning";
+        }
+        warnEl.innerHTML = `⚠️ Peringatan: ${labelNomor} ${missingStr} belum ada untuk tahun ${defaultYear} (melompati urutan)`;
+        return;
+      }
+    }
+
+    inputEl.classList.remove("is-duplicate", "is-gap-warning");
+    if (warnEl) warnEl.remove();
   }
 
   function closeExportModal() {

@@ -636,22 +636,164 @@ function checkDuplicateDocNumber(val, currentInputId) {
   return null;
 }
 
+// ─── Extraction Helper for Doc Numbers ───────────────────────
+function extractSeqAndYearFromStr(val, defaultYear, isSpk = false) {
+  if (!val) return null;
+  const str = String(val).trim();
+  if (!str) return null;
+
+  let year = parseInt(defaultYear) || new Date().getFullYear();
+  let seq = null;
+
+  if (isSpk) {
+    const yrMatch = str.match(/(?:Tahun|\/|\b)(20\d{2})\b/i);
+    if (yrMatch) {
+      year = parseInt(yrMatch[1], 10);
+    }
+    const matches = str.match(/\d+/g);
+    if (matches) {
+      for (const m of matches) {
+        const num = parseInt(m, 10);
+        if (num !== year && num > 0 && num < 2000) {
+          seq = num;
+          break;
+        }
+      }
+    }
+  } else {
+    const yrMatch = str.match(/\/BAST\/(20\d{2})\b/i) || str.match(/(?:Tahun|\/|\b)(20\d{2})\b/i);
+    if (yrMatch) {
+      year = parseInt(yrMatch[1], 10);
+    }
+    const headMatch = str.match(/^(\d+)\//);
+    if (headMatch) {
+      seq = parseInt(headMatch[1], 10);
+    } else {
+      const matches = str.match(/\d+/g);
+      if (matches) {
+        for (const m of matches) {
+          const num = parseInt(m, 10);
+          if (num !== year && num > 0 && num < 2000) {
+            seq = num;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (seq === null || isNaN(seq) || seq <= 0) return null;
+  return { seq, year };
+}
+
+// ─── Validasi Lompatan (Gap) Nomor SPK & BAST ────────────────
+function checkGapDocNumber(val, currentInputId) {
+  if (!val) return null;
+
+  const defaultYear = parseInt(document.getElementById("input-tahun")?.value) || new Date().getFullYear();
+  const isSpk = (currentInputId === "input-no-spk");
+
+  const parsed = extractSeqAndYearFromStr(val, defaultYear, isSpk);
+  if (!parsed) return null;
+
+  const { seq: currentSeq, year: targetYear } = parsed;
+  if (currentSeq <= 1) return null;
+
+  const currentDocId = AppState.currentDocId;
+  const spkRecords = AppState.spkBast || [];
+  const smPpkRecords = AppState.bastSmPpk || [];
+
+  const usedSeqs = new Set();
+
+  if (isSpk) {
+    spkRecords.forEach(r => {
+      if (currentDocId && String(r.ID_Dokumen) === String(currentDocId)) return;
+      const recYear = parseInt(r.Tahun || r.tahun || r["Tahun"] || (r["Tanggal SPK"] || r.Tanggal_SPK || "").slice(0, 4)) || defaultYear;
+      if (recYear === targetYear) {
+        const spkVal = r.No_SPK || r.Nomor_SPK || r["No_SPK"] || r["Nomor_SPK"] || r["No SPK"] || r["Nomor SPK"] || "";
+        const p = extractSeqAndYearFromStr(spkVal, recYear, true);
+        if (p && p.seq) usedSeqs.add(p.seq);
+      }
+    });
+  } else {
+    const allBastRecords = [...spkRecords, ...smPpkRecords];
+    allBastRecords.forEach(r => {
+      if (currentDocId && String(r.ID_Dokumen) === String(currentDocId)) return;
+      const recYear = parseInt(r.Tahun || r.tahun || r["Tahun"] || "") || defaultYear;
+      if (recYear === targetYear) {
+        const bastFields = [
+          r.No_BAST_PPL_PML, r["No_BAST_PPL_PML"], r["No BAST PPL PML"],
+          r.No_BAST_PPL_SM,  r["No_BAST_PPL_SM"],  r["No BAST PPL SM"],
+          r.No_BAST_PML_SM,  r["No_BAST_PML_SM"],  r["No BAST PML SM"],
+          r.No_BAST_SM_PPK,  r["No_BAST_SM_PPK"],  r["No BAST SM PPK"],
+          r.Nomor_BAST_PPL_PML, r.Nomor_BAST_PPL_SM, r.Nomor_BAST_PML_SM, r.Nomor_BAST_SM_PPK
+        ];
+        bastFields.forEach(bVal => {
+          if (bVal) {
+            const p = extractSeqAndYearFromStr(bVal, recYear, false);
+            if (p && p.seq) usedSeqs.add(p.seq);
+          }
+        });
+      }
+    });
+
+    const bastInputIds = [
+      "input-no-bast-ppl-pml",
+      "input-no-bast-ppl-sm",
+      "input-no-bast-pml-sm",
+      "input-no-bast-sm-ppk"
+    ];
+    bastInputIds.forEach(otherId => {
+      if (otherId === currentInputId) return;
+      const otherEl = document.getElementById(otherId);
+      if (!otherEl || !otherEl.value) return;
+
+      const formCardOrGrp = otherEl.closest("#grp-bast-ppl, #grp-bast-pml, #grp-bast-sm-ppk, .form-card");
+      if (formCardOrGrp && window.getComputedStyle(formCardOrGrp).display === "none") return;
+
+      const p = extractSeqAndYearFromStr(otherEl.value, targetYear, false);
+      if (p && p.year === targetYear && p.seq) {
+        usedSeqs.add(p.seq);
+      }
+    });
+  }
+
+  const missingNums = [];
+  for (let i = 1; i < currentSeq; i++) {
+    if (!usedSeqs.has(i)) {
+      missingNums.push(i);
+    }
+  }
+
+  if (missingNums.length > 0) {
+    return {
+      currentSeq,
+      year: targetYear,
+      missingNums
+    };
+  }
+
+  return null;
+}
+
 function validateDocNumberInput(inputEl, triggerToast = false) {
-  if (!inputEl) return false;
+  if (!inputEl) return { isDuplicate: false, hasGap: false };
   const val = inputEl.value ? inputEl.value.trim() : "";
   const inputId = inputEl.id;
 
   let warnEl = inputEl.parentNode.querySelector(".doc-num-warning-msg");
 
   if (!val) {
-    inputEl.classList.remove("is-duplicate");
+    inputEl.classList.remove("is-duplicate", "is-gap-warning");
     if (warnEl) warnEl.remove();
-    return false;
+    return { isDuplicate: false, hasGap: false };
   }
 
+  // 1. Cek duplikasi lebih dulu (Prioritas Tinggi - Merah)
   const dupInfo = checkDuplicateDocNumber(val, inputId);
 
   if (dupInfo) {
+    inputEl.classList.remove("is-gap-warning");
     inputEl.classList.add("is-duplicate");
 
     let textMsg = "⚠️ Nomor ini sudah dipakai";
@@ -663,20 +805,47 @@ function validateDocNumberInput(inputEl, triggerToast = false) {
 
     if (!warnEl) {
       warnEl = document.createElement("div");
-      warnEl.className = "doc-num-warning-msg";
+      warnEl.className = "doc-num-warning-msg danger";
       inputEl.parentNode.appendChild(warnEl);
+    } else {
+      warnEl.className = "doc-num-warning-msg danger";
     }
     warnEl.innerHTML = textMsg;
 
     if (triggerToast) {
       showToast(`⚠️ Peringatan: Nomor "${val}" sudah dipakai (${dupInfo.source === "Form" ? "Form" : dupInfo.label})!`, "warning", 4000);
     }
-    return true;
-  } else {
-    inputEl.classList.remove("is-duplicate");
-    if (warnEl) warnEl.remove();
-    return false;
+    return { isDuplicate: true, hasGap: false };
   }
+
+  // 2. Cek nomor melompati urutan (Gap Warning - Kuning)
+  const gapInfo = checkGapDocNumber(val, inputId);
+  if (gapInfo) {
+    inputEl.classList.remove("is-duplicate");
+    inputEl.classList.add("is-gap-warning");
+
+    const missingStr = gapInfo.missingNums.join(", ");
+    const labelNomor = gapInfo.missingNums.length > 1 ? "Nomor-nomor" : "Nomor";
+    const textMsg = `⚠️ Peringatan: ${labelNomor} ${missingStr} belum ada untuk tahun ${gapInfo.year} (melompati urutan)`;
+
+    if (!warnEl) {
+      warnEl = document.createElement("div");
+      warnEl.className = "doc-num-warning-msg warning";
+      inputEl.parentNode.appendChild(warnEl);
+    } else {
+      warnEl.className = "doc-num-warning-msg warning";
+    }
+    warnEl.innerHTML = textMsg;
+
+    if (triggerToast) {
+      showToast(textMsg, "warning", 4000);
+    }
+    return { isDuplicate: false, hasGap: true };
+  }
+
+  inputEl.classList.remove("is-duplicate", "is-gap-warning");
+  if (warnEl) warnEl.remove();
+  return { isDuplicate: false, hasGap: false };
 }
 
 function validateAllDocNumberInputs() {
@@ -689,22 +858,25 @@ function validateAllDocNumberInputs() {
   ];
 
   let hasDuplicate = false;
+  let hasGap = false;
+
   docNumInputIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       const parentGrp = el.closest("#grp-bast-ppl, #grp-bast-pml, #grp-bast-sm-ppk, .form-card");
       if (parentGrp && window.getComputedStyle(parentGrp).display === "none") {
-        el.classList.remove("is-duplicate");
+        el.classList.remove("is-duplicate", "is-gap-warning");
         const warnEl = el.parentNode.querySelector(".doc-num-warning-msg");
         if (warnEl) warnEl.remove();
         return;
       }
-      const isDup = validateDocNumberInput(el, false);
-      if (isDup) hasDuplicate = true;
+      const res = validateDocNumberInput(el, false);
+      if (res.isDuplicate) hasDuplicate = true;
+      if (res.hasGap) hasGap = true;
     }
   });
 
-  return hasDuplicate;
+  return { hasDuplicate, hasGap };
 }
 
 function populatePegawaiDropdowns() {
@@ -1111,10 +1283,12 @@ async function handleFormSubmit(e) {
     return;
   }
 
-  // Validasi duplikasi nomor SPK & BAST
-  const hasDuplicateNum = validateAllDocNumberInputs();
-  if (hasDuplicateNum) {
+  // Validasi duplikasi & lompatan nomor SPK & BAST
+  const validationStatus = validateAllDocNumberInputs();
+  if (validationStatus.hasDuplicate) {
     showToast("⚠️ Peringatan: Ada nomor SPK / BAST yang sudah pernah digunakan pada database!", "warning", 5000);
+  } else if (validationStatus.hasGap) {
+    showToast("⚠️ Peringatan: Ada nomor SPK / BAST yang melompati urutan!", "warning", 4000);
   }
 
   // Kumpulkan detail pekerjaan dari tabel
