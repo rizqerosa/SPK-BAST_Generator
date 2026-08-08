@@ -207,20 +207,21 @@ let currentPetugasPage = 1;
 const PETUGAS_PER_PAGE = 10;
 
 function populatePetugasDropdown() {
-  renderPetugasSearch();
+  renderPetugasTable();
 }
 
-function renderPetugasSearch() {
-  const sel           = document.getElementById("sel-mitra");
+function renderPetugasTable() {
+  const sel = document.getElementById("sel-mitra");
+  const tbody = document.getElementById("tbody-petugas-list");
+  if (!sel || !tbody) return;
+
+  const previousVal   = sel.value;
+  const sumber        = document.querySelector('input[name="sumber_petugas"]:checked')?.value || "mitra";
   const searchInput   = document.getElementById("search-mitra");
-  const resultsBox    = document.getElementById("petugas-search-results");
   const filterAsalSel = document.getElementById("filter-asal-mitra");
   const labelEl       = document.getElementById("label-sel-mitra");
-  if (!sel) return;
 
-  const sumber  = document.querySelector('input[name="sumber_petugas"]:checked')?.value || "mitra";
   const isMitra = (sumber === "mitra");
-
   if (labelEl) {
     labelEl.innerHTML = isMitra
       ? `Pilih Mitra Lapangan <span class="required">*</span>`
@@ -254,19 +255,7 @@ function renderPetugasSearch() {
 
   const query        = (searchInput?.value || "").toLowerCase().trim();
   const selectedAsal = filterAsalSel?.value || "";
-
-  // ── RULE UTAMA: Jika kueri pencarian kosong, JANGAN tampilkan dropdown sama sekali! ──
-  if (!query) {
-    if (resultsBox) {
-      resultsBox.classList.remove("visible");
-      resultsBox.innerHTML = "";
-    }
-    updateSelectedPetugasCard();
-    return;
-  }
-
-  // Jika kueri terisi (misal: "agu"), cari data yang cocok
-  const rawList = isMitra ? (AppState.mitra || []) : (AppState.pegawai || []);
+  const rawList      = isMitra ? (AppState.mitra || []) : (AppState.pegawai || []);
 
   let filtered = rawList.filter(item => {
     const name = isMitra ? getMitraName(item) : getPegawaiName(item);
@@ -282,83 +271,159 @@ function renderPetugasSearch() {
         const normalizedAsal = asal.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
         if (normalizedAsal !== selectedAsal) return false;
       }
-      return name.toLowerCase().includes(query) ||
-             id.toLowerCase().includes(query) ||
-             nik.toLowerCase().includes(query) ||
-             sobatId.toLowerCase().includes(query) ||
-             asal.toLowerCase().includes(query);
+      if (query) {
+        return name.toLowerCase().includes(query) ||
+               id.toLowerCase().includes(query) ||
+               nik.toLowerCase().includes(query) ||
+               sobatId.toLowerCase().includes(query) ||
+               asal.toLowerCase().includes(query);
+      }
     } else {
       const nip = getPegawaiNip(item);
       const jab = String(item.Jabatan || "");
-      return name.toLowerCase().includes(query) ||
-             nip.toLowerCase().includes(query) ||
-             jab.toLowerCase().includes(query);
+      if (query) {
+        return name.toLowerCase().includes(query) ||
+               nip.toLowerCase().includes(query) ||
+               jab.toLowerCase().includes(query);
+      }
     }
+    return true;
   });
 
+  // Urutkan A-Z berdasarkan Nama
   filtered.sort((a, b) => {
     const nameA = isMitra ? getMitraName(a) : getPegawaiName(a);
     const nameB = isMitra ? getMitraName(b) : getPegawaiName(b);
     return nameA.localeCompare(nameB, "id", { sensitivity: "base" });
   });
 
-  if (resultsBox) {
-    if (filtered.length === 0) {
-      resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:var(--gray-500); font-size:.82rem;">Tidak ada ${isMitra ? "Mitra" : "Pegawai"} yang cocok ("${escapeHtml(query)}")</div>`;
-    } else {
-      resultsBox.innerHTML = filtered.slice(0, 30).map(item => {
-        const id   = isMitra ? getMitraId(item) : getPegawaiNip(item);
-        const name = isMitra ? getMitraName(item) : getPegawaiName(item);
-        const meta = isMitra
-          ? `${getMitraPosisi(item)} · Kec. ${getMitraAsal(item)} · NIK: ${item.NIK || id}`
-          : `${item.Jabatan || "Pegawai BPS"} · NIP: ${id}`;
-        const inisial = (name || "?")[0].toUpperCase();
-        const safeName = escapeHtml(name);
-        const safeMeta = escapeHtml(meta);
-        const safeId   = escapeHtml(id);
+  // Re-populate hidden <select id="sel-mitra"> untuk form submit validation
+  sel.innerHTML = `<option value="">-- Pilih ${isMitra ? "Mitra Lapangan" : "Pegawai BPS"} --</option>`;
+  let foundPrevious = false;
+  filtered.forEach(item => {
+    const id   = isMitra ? getMitraId(item) : getPegawaiNip(item);
+    const name = isMitra ? getMitraName(item) : getPegawaiName(item);
+    const meta = isMitra ? `${getMitraPosisi(item)} (${getMitraAsal(item)})` : `${item.Jabatan || "Pegawai BPS"} (NIP: ${id})`;
 
-        return `
-          <div class="live-search-item" data-id="${safeId}" data-name="${safeName}" data-meta="${safeMeta}">
-            <div class="item-avatar">${inisial}</div>
-            <div class="item-info">
-              <div class="item-name">${safeName}</div>
-              <div class="item-meta">${safeMeta}</div>
-            </div>
-          </div>`;
-      }).join("");
-
-      resultsBox.querySelectorAll(".live-search-item").forEach(itemEl => {
-        itemEl.addEventListener("click", function(e) {
-          e.stopPropagation();
-          const id   = this.dataset.id;
-          const name = this.dataset.name;
-          const meta = this.dataset.meta;
-          selectPetugasFromLive(id, name, meta);
-        });
-      });
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = `${name} — ${meta}`;
+    if (id && id === previousVal) {
+      opt.selected = true;
+      foundPrevious = true;
     }
+    sel.appendChild(opt);
+  });
 
-    resultsBox.classList.add("visible");
+  if (previousVal && !foundPrevious) {
+    const currentName = document.getElementById("selected-petugas-name")?.textContent || previousVal;
+    const currentMeta = document.getElementById("selected-petugas-meta")?.textContent || "";
+    const opt = document.createElement("option");
+    opt.value = previousVal;
+    opt.textContent = `${currentName} — ${currentMeta}`;
+    opt.selected = true;
+    sel.appendChild(opt);
   }
 
-  // Bind listener input
-  if (searchInput && !searchInput.dataset.boundSearch) {
-    searchInput.dataset.boundSearch = "true";
-    searchInput.addEventListener("input", () => renderPetugasSearch());
-    searchInput.addEventListener("focus", () => {
-      if (searchInput.value.trim().length > 0) renderPetugasSearch();
+  // Hitung Pagination
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / PETUGAS_PER_PAGE) || 1;
+  if (currentPetugasPage > totalPages) currentPetugasPage = totalPages;
+  if (currentPetugasPage < 1) currentPetugasPage = 1;
+
+  const startIndex = (currentPetugasPage - 1) * PETUGAS_PER_PAGE;
+  const pageItems  = filtered.slice(startIndex, startIndex + PETUGAS_PER_PAGE);
+
+  // Render Baris Tabel
+  if (pageItems.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 24px; color: var(--gray-500);">Data tidak ditemukan.</td></tr>`;
+  } else {
+    tbody.innerHTML = pageItems.map((item, index) => {
+      const rowNo = startIndex + index + 1;
+      const id    = isMitra ? getMitraId(item) : getPegawaiNip(item);
+      const name  = isMitra ? getMitraName(item) : getPegawaiName(item);
+      const meta  = isMitra
+        ? `${getMitraPosisi(item)} · Kec. ${getMitraAsal(item)} · NIK: ${item.NIK || id}`
+        : `${item.Jabatan || "Pegawai BPS"} · NIP: ${id}`;
+      const isChecked = (sel.value === id);
+
+      const safeId   = escapeHtml(id);
+      const safeName = escapeHtml(name);
+      const safeMeta = escapeHtml(meta);
+
+      return `
+        <tr class="${isChecked ? 'selected-row' : ''}" style="cursor:pointer;" onclick="selectPetugasFromTable('${safeId}', '${safeName}', '${safeMeta}')">
+          <td style="text-align: center; font-weight: 600;">${rowNo}</td>
+          <td style="padding-left: 12px;">
+            <div style="font-weight: 600; color: var(--gray-900); font-size: 0.88rem;">${safeName}</div>
+            <div style="font-size: 0.76rem; color: var(--gray-500);">${safeMeta}</div>
+          </td>
+          <td style="text-align: center;">
+            <input type="radio" name="petugas_radio_choice" value="${safeId}" ${isChecked ? 'checked' : ''}
+                   onclick="event.stopPropagation(); selectPetugasFromTable('${safeId}', '${safeName}', '${safeMeta}')">
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  // Update Kontrol Pagination
+  const infoEl    = document.getElementById("pagination-info");
+  const pageNumEl = document.getElementById("pagination-page-num");
+  const btnPrev   = document.getElementById("btn-prev-page");
+  const btnNext   = document.getElementById("btn-next-page");
+
+  if (infoEl) {
+    infoEl.textContent = totalItems > 0
+      ? `Menampilkan ${startIndex + 1} - ${Math.min(startIndex + PETUGAS_PER_PAGE, totalItems)} dari ${totalItems} data`
+      : `Menampilkan 0 - 0 dari 0 data`;
+  }
+  if (pageNumEl) {
+    pageNumEl.textContent = `Halaman ${currentPetugasPage} / ${totalPages}`;
+  }
+  if (btnPrev) btnPrev.disabled = (currentPetugasPage <= 1);
+  if (btnNext) btnNext.disabled = (currentPetugasPage >= totalPages);
+
+  // Bind Listener Input & Filter
+  if (searchInput && !searchInput.dataset.boundTable) {
+    searchInput.dataset.boundTable = "true";
+    searchInput.addEventListener("input", () => {
+      currentPetugasPage = 1;
+      renderPetugasTable();
     });
   }
 
-  if (filterAsalSel && !filterAsalSel.dataset.boundSearch) {
-    filterAsalSel.dataset.boundSearch = "true";
-    filterAsalSel.addEventListener("change", () => renderPetugasSearch());
+  if (filterAsalSel && !filterAsalSel.dataset.boundTable) {
+    filterAsalSel.dataset.boundTable = "true";
+    filterAsalSel.addEventListener("change", () => {
+      currentPetugasPage = 1;
+      renderPetugasTable();
+    });
+  }
+
+  if (btnPrev && !btnPrev.dataset.bound) {
+    btnPrev.dataset.bound = "true";
+    btnPrev.addEventListener("click", () => {
+      if (currentPetugasPage > 1) {
+        currentPetugasPage--;
+        renderPetugasTable();
+      }
+    });
+  }
+
+  if (btnNext && !btnNext.dataset.bound) {
+    btnNext.dataset.bound = "true";
+    btnNext.addEventListener("click", () => {
+      if (currentPetugasPage < totalPages) {
+        currentPetugasPage++;
+        renderPetugasTable();
+      }
+    });
   }
 
   updateSelectedPetugasCard();
 }
 
-function selectPetugasFromLive(id, name, meta) {
+function selectPetugasFromTable(id, name, meta) {
   const sel = document.getElementById("sel-mitra");
   if (sel) {
     let opt = Array.from(sel.options).find(o => o.value === id);
@@ -371,16 +436,8 @@ function selectPetugasFromLive(id, name, meta) {
     sel.value = id;
   }
 
-  const searchInput = document.getElementById("search-mitra");
-  if (searchInput) searchInput.value = "";
-
-  const resultsBox = document.getElementById("petugas-search-results");
-  if (resultsBox) {
-    resultsBox.classList.remove("visible");
-    resultsBox.innerHTML = "";
-  }
-
   updateSelectedPetugasCard(name, meta);
+  renderPetugasTable();
 }
 
 function updateSelectedPetugasCard(optName, optMeta) {
@@ -420,11 +477,6 @@ function clearSelectedPetugas() {
   if (sel) sel.value = "";
   const searchInput = document.getElementById("search-mitra");
   if (searchInput) searchInput.value = "";
-  const resultsBox = document.getElementById("petugas-search-results");
-  if (resultsBox) {
-    resultsBox.classList.remove("visible");
-    resultsBox.innerHTML = "";
-  }
   updateSelectedPetugasCard();
   if (searchInput) searchInput.focus();
 }
@@ -886,75 +938,16 @@ function populatePegawaiDropdowns() {
 }
 
 function populateKegiatanOptions() {
-  renderKegiatanSearch();
-}
-
-function renderKegiatanSearch() {
-  const searchInput = document.getElementById("search-kegiatan");
-  const resultsBox  = document.getElementById("kegiatan-search-results");
-  if (!searchInput || !resultsBox) return;
-
-  const query = (searchInput.value || "").toLowerCase().trim();
-
-  // ── RULE UTAMA: Jika kueri pencarian kosong, JANGAN tampilkan dropdown! ──
-  if (!query) {
-    resultsBox.classList.remove("visible");
-    resultsBox.innerHTML = "";
-    return;
-  }
-
-  // Jika kueri terisi (misal: "shpb"), cari kegiatan yang mengandung kata kunci
-  const rawList = AppState.kegiatan || [];
-  let filtered = rawList.filter(k => {
-    if (!k) return false;
-    const uraian = String(k.Uraian_Tugas || "").toLowerCase();
-    const idKeg  = String(k.ID_Kegiatan || "").toLowerCase();
-    const beban  = String(k.Beban_Anggaran || "").toLowerCase();
-    return uraian.includes(query) || idKeg.includes(query) || beban.includes(query);
+  const sel = document.getElementById("sel-kegiatan");
+  if (!sel) return;
+  sel.innerHTML = `<option value="">-- Pilih Kegiatan --</option>`;
+  (AppState.kegiatan || []).forEach(k => {
+    const opt = document.createElement("option");
+    opt.value = k.ID_Kegiatan;
+    opt.textContent = `[${k.ID_Kegiatan}] ${k.Uraian_Tugas}`;
+    sel.appendChild(opt);
   });
-
-  if (filtered.length === 0) {
-    resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:var(--gray-500); font-size:.82rem;">Tidak ada kegiatan yang cocok ("${escapeHtml(query)}")</div>`;
-  } else {
-    resultsBox.innerHTML = filtered.slice(0, 30).map(k => {
-      const idKeg  = k.ID_Kegiatan;
-      const uraian = k.Uraian_Tugas || "";
-      const harga  = k.Harga_Satuan || 0;
-      const satuan = k.Satuan || "Dokumen";
-      const beban  = k.Beban_Anggaran || "";
-
-      const safeId   = escapeHtml(idKeg);
-      const safeName = escapeHtml(uraian);
-      const safeMeta = `[${safeId}] Rp ${formatRupiah(harga)} / ${satuan}${beban ? ' · ' + escapeHtml(beban) : ''}`;
-
-      return `
-        <div class="live-search-item" data-keg-id="${safeId}">
-          <div class="item-avatar" style="background:#e0f2fe; color:#0284c7;">📁</div>
-          <div class="item-info">
-            <div class="item-name">${safeName}</div>
-            <div class="item-meta">${safeMeta}</div>
-          </div>
-        </div>`;
-    }).join("");
-
-    resultsBox.querySelectorAll(".live-search-item").forEach(itemEl => {
-      itemEl.addEventListener("click", function(e) {
-        e.stopPropagation();
-        const idKeg = this.dataset.kegId;
-        tambahKegiatanFromLive(idKeg);
-      });
-    });
-  }
-
-  resultsBox.classList.add("visible");
-
-  if (!searchInput.dataset.boundKegiatanSearch) {
-    searchInput.dataset.boundKegiatanSearch = "true";
-    searchInput.addEventListener("input", () => renderKegiatanSearch());
-    searchInput.addEventListener("focus", () => {
-      if (searchInput.value.trim().length > 0) renderKegiatanSearch();
-    });
-  }
+  initSearchableSelect("sel-kegiatan");
 }
 
 /* ─── Searchable Select UI Component ────────────────────────── */
@@ -1124,17 +1117,16 @@ function syncSearchableSelect(selectId) {
 }
 
 let _detailCounter = 0;
-function tambahKegiatanFromLive(idKeg) {
-  if (!idKeg) return;
+function tambahDetailRow() {
+  const selKeg = document.getElementById("sel-kegiatan");
+  const idKeg = selKeg.value;
+  if (!idKeg) { showToast("Pilih kegiatan terlebih dahulu", "warning"); return; }
 
   const keg = cariKegiatan(idKeg, AppState.kegiatan);
   if (!keg) return;
 
   const existing = document.querySelectorAll(`[data-keg-id="${idKeg}"]`);
-  if (existing.length > 0) {
-    showToast("Kegiatan ini sudah ada di dalam tabel", "warning");
-    return;
-  }
+  if (existing.length > 0) { showToast("Kegiatan sudah ditambahkan", "warning"); return; }
 
   _detailCounter++;
   const rowId = `row-${_detailCounter}`;
@@ -1166,40 +1158,9 @@ function tambahKegiatanFromLive(idKeg) {
   renumberDetailRows();
   updateTotalHonor();
   autoGenerateJudul();
-
-  const searchInput = document.getElementById("search-kegiatan");
-  if (searchInput) searchInput.value = "";
-
-  const resultsBox = document.getElementById("kegiatan-search-results");
-  if (resultsBox) {
-    resultsBox.classList.remove("visible");
-    resultsBox.innerHTML = "";
-  }
-
-  showToast(`Kegiatan "${keg.Uraian_Tugas}" berhasil ditambahkan ✅`, "success");
+  selKeg.value = "";
+  syncSearchableSelect("sel-kegiatan");
 }
-
-function tambahDetailRow() {
-  const selKeg = document.getElementById("sel-kegiatan");
-  if (!selKeg) return;
-  const idKeg = selKeg.value;
-  tambahKegiatanFromLive(idKeg);
-}
-
-// Listener global untuk menutup dropdown live search jika mengeklik area luar
-document.addEventListener("click", (e) => {
-  const wrapMitra = document.getElementById("wrap-search-mitra");
-  if (wrapMitra && !wrapMitra.contains(e.target)) {
-    const resM = document.getElementById("petugas-search-results");
-    if (resM) resM.classList.remove("visible");
-  }
-
-  const wrapKeg = document.getElementById("wrap-search-kegiatan");
-  if (wrapKeg && !wrapKeg.contains(e.target)) {
-    const resK = document.getElementById("kegiatan-search-results");
-    if (resK) resK.classList.remove("visible");
-  }
-});
 
 function autoGenerateJudul() {
   const inputJudul = document.getElementById("input-judul");
