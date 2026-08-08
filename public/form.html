@@ -372,7 +372,8 @@
               <div class="search-input-wrap">
                 <span class="ico">🔍</span>
                 <input type="text" id="search-mitra" class="form-control"
-                       placeholder="Cari nama, NIK, NIP, atau Sobat ID..." autocomplete="off">
+                       placeholder="Ketik nama, NIK, NIP, atau Sobat ID untuk mencari..." autocomplete="off">
+                <div class="live-search-results" id="petugas-search-results"></div>
               </div>
               <select id="filter-asal-mitra" class="form-control" style="width:180px;">
                 <option value="">Semua Kecamatan</option>
@@ -400,32 +401,6 @@
                 <button type="button" class="btn btn-outline btn-sm" onclick="clearSelectedPetugas()">
                   🔄 Ganti Petugas
                 </button>
-              </div>
-
-              <!-- Tabel Daftar Petugas -->
-              <div class="petugas-table-wrapper" style="overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-md); background: #fff;">
-                <table class="detail-table" id="table-petugas-list" style="margin-bottom:0;">
-                  <thead>
-                    <tr>
-                      <th style="width: 50px; text-align: center;">No</th>
-                      <th style="text-align: left; padding-left: 12px;">Nama &amp; Informasi Petugas</th>
-                      <th style="width: 80px; text-align: center;">Pilih</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbody-petugas-list">
-                    <!-- Populated dynamically via JS -->
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Pagination Controls -->
-              <div class="petugas-pagination" id="petugas-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.82rem; color: var(--gray-600);">
-                <div id="pagination-info">Menampilkan 0 - 0 dari 0 data</div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="btn btn-outline btn-sm" id="btn-prev-page" disabled>← Prev</button>
-                  <span id="pagination-page-num" style="font-weight: 600;">Halaman 1 / 1</span>
-                  <button type="button" class="btn btn-outline btn-sm" id="btn-next-page" disabled>Next →</button>
-                </div>
               </div>
             </div>
           </div>
@@ -523,18 +498,14 @@
 
             <!-- Detail Pekerjaan -->
             <div class="sec-label">📦 Detail Pekerjaan (Lampiran SPK)</div>
-            <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:14px;">
-              <div class="form-group" style="flex:1; margin-bottom:0;">
-                <label class="form-label" for="sel-kegiatan">Pilih Master Kegiatan</label>
-                <select class="form-control" id="sel-kegiatan">
-                  <option value="">-- Pilih Kegiatan untuk Ditambahkan --</option>
-                </select>
+            <div class="form-group" style="margin-bottom:14px; position:relative;">
+              <label class="form-label" for="search-kegiatan">Cari &amp; Tambah Master Kegiatan</label>
+              <div class="search-input-wrap" id="wrap-search-kegiatan">
+                <span class="ico">🔍</span>
+                <input type="text" id="search-kegiatan" class="form-control"
+                       placeholder="Ketik nama kegiatan (contoh: shpb, regsosek, sakernas, susenas...)..." autocomplete="off">
+                <div class="live-search-results" id="kegiatan-search-results"></div>
               </div>
-              <button type="button" id="btn-tambah-kegiatan"
-                      class="btn btn-primary"
-                      style="height:42px; padding:0 20px; white-space:nowrap;">
-                ➕ Tambah
-              </button>
             </div>
 
             <div class="table-wrapper" style="border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--gray-200);">
