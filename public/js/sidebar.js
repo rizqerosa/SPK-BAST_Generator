@@ -36,7 +36,7 @@
         <div class="sidebar-logo">
           <div class="logo-icon">📋</div>
           <div class="logo-text">
-            <div class="title">SPK/BAST Generator</div>
+            <div class="title">Dokumen Keuangan Generator</div>
             <div class="sub">BPS Kota Subulussalam</div>
           </div>
         </div>
