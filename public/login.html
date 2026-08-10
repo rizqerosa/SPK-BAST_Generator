@@ -274,24 +274,7 @@
       </button>
     </form>
 
-    <!-- Quick Demo Login Selector -->
-    <div class="quick-login-box">
-      <div class="quick-login-title">💡 Akun Demo / Uji Coba Cepat</div>
-      <div class="quick-btn-group">
-        <button type="button" class="btn-quick" onclick="quickFill('ppk', 'ppk')">
-          <span>🏛️ PPK</span>
-          <span style="font-size:0.68rem; opacity:0.7;">(Pejabat PPK)</span>
-        </button>
-        <button type="button" class="btn-quick" onclick="quickFill('operator', 'operator')">
-          <span>📝 Operator</span>
-          <span style="font-size:0.68rem; opacity:0.7;">(Pembuat Dokumen)</span>
-        </button>
-        <button type="button" class="btn-quick" onclick="quickFill('admin', 'admin')">
-          <span>⚙️ Admin</span>
-          <span style="font-size:0.68rem; opacity:0.7;">(Akses Penuh)</span>
-        </button>
-      </div>
-    </div>
+    <!-- End Form Login -->
   </div>
 
   <div class="login-footer">
@@ -303,12 +286,6 @@
 <script src="js/data.js?v=4.0"></script>
 <script src="js/auth.js?v=4.0"></script>
 <script>
-  function quickFill(user, pass) {
-    document.getElementById("login-username").value = user;
-    document.getElementById("login-password").value = pass;
-    document.getElementById("form-login").dispatchEvent(new Event("submit"));
-  }
-
   document.getElementById("form-login").addEventListener("submit", async (e) => {
     e.preventDefault();
     const userVal = document.getElementById("login-username").value;
