@@ -144,32 +144,38 @@ const Auth = {
 
   // Guard Halaman: pastikan user sudah login & sesuai role
   requireAuth(allowedRoles = []) {
-    const currentPage = window.location.pathname.split("/").pop() || "index.html";
-    if (currentPage === "login.html") return;
+    const rawPath = (window.location.pathname || "").split("/").pop() || "index.html";
+    const currentPage = rawPath.split("?")[0].split("#")[0].toLowerCase();
+    if (currentPage === "login.html") return true;
 
     if (!this.isLoggedIn()) {
       window.location.href = "login.html?redirect=" + encodeURIComponent(currentPage);
-      return;
+      return false;
     }
 
     if (allowedRoles.length > 0) {
       const role = this.getRole();
       if (!allowedRoles.includes(role) && role !== "ADMIN") {
-        alert("Akses Ditolak: Halaman ini khusus untuk role " + allowedRoles.join(" / "));
-        window.location.href = role === "PPK" ? "verifikasi-ppk.html" : "index.html";
+        alert("Akses Ditolak: Halaman ini khusus untuk PPK / Admin!");
+        window.location.href = "login.html?redirect=" + encodeURIComponent(currentPage);
+        return false;
       }
     }
+    return true;
   }
 };
 
-// Auto-run auth guard saat DOM ready
-document.addEventListener("DOMContentLoaded", () => {
-  const page = window.location.pathname.split("/").pop() || "index.html";
-  if (page === "login.html") return;
-
-  // HAK AKSES: Hanya halaman verifikasi-ppk.html yang membutuhkan Login PPK.
-  // Halaman umum lainnya (Form, Daftar Dokumen, Master Data) dapat diakses bebas tanpa login.
+function checkPageAuth() {
+  const rawPath = (window.location.pathname || "").split("/").pop() || "index.html";
+  const page = rawPath.split("?")[0].split("#")[0].toLowerCase();
   if (page === "verifikasi-ppk.html") {
-    Auth.requireAuth(["PPK", "ADMIN"]);
+    if (!Auth.isPPK()) {
+      Auth.requireAuth(["PPK", "ADMIN"]);
+    }
   }
-});
+}
+
+// Run immediately upon script load & on DOMContentLoaded
+checkPageAuth();
+document.addEventListener("DOMContentLoaded", checkPageAuth);
+

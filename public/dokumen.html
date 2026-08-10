@@ -319,12 +319,37 @@
       }
 
       const vStatus = String(doc.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      const isApproved = (vStatus === "disetujui" || vStatus === "approved");
+      const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+
       let statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
-      if (vStatus === "disetujui" || vStatus === "approved") {
+      if (isApproved) {
         statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
-      } else if (vStatus === "ditolak" || vStatus === "rejected") {
+      } else if (isRejected) {
         const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
         statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
+      }
+
+      // Kolom Aksi HANYA ditampilkan jika dokumen SUDAH DIVERIFIKASI/DISETUJUI PPK
+      let aksiHTML = `<span class="text-muted" style="font-size:.78rem; font-style:italic; color:var(--gray-400);">🔒 Belum Diverifikasi</span>`;
+      if (isApproved) {
+        aksiHTML = `
+          <div class="action-btns">
+            <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')">
+              📤 Ekspor
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')">
+              🗑️
+            </button>
+          </div>`;
+      } else if (isRejected) {
+        aksiHTML = `
+          <div class="action-btns">
+            <span class="text-muted" style="font-size:.78rem; color:#dc2626;">❌ Perlu Revisi</span>
+            <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')">
+              🗑️
+            </button>
+          </div>`;
       }
 
       return `
@@ -335,16 +360,7 @@
           <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
           <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
           <td>${statusBadge}</td>
-          <td>
-            <div class="action-btns">
-              <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')">
-                📤 Ekspor
-              </button>
-              <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')">
-                🗑️
-              </button>
-            </div>
-          </td>
+          <td>${aksiHTML}</td>
         </tr>`;
     }).join("");
   }
