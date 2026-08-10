@@ -169,18 +169,35 @@ async function initForm() {
 
 function togglePeranFields() {
   const peran = document.getElementById("sel-peran-petugas")?.value || "ppl";
+  const docType = document.querySelector('input[name="target_doc_type"]:checked')?.value || "spk_bast";
+
   const grpPml = document.getElementById("grp-pml");
+  const selPml = document.getElementById("sel-pml");
   const grpBastPpl = document.getElementById("grp-bast-ppl");
   const grpBastPml = document.getElementById("grp-bast-pml");
+  const noPmlSm  = document.getElementById("input-no-bast-pml-sm");
+  const tglPmlSm = document.getElementById("input-tgl-bast-pml-sm");
 
-  if (peran === "ppl") {
-    if (grpPml) grpPml.style.display = "";
-    if (grpBastPpl) grpBastPpl.style.display = "";
-    if (grpBastPml) grpBastPml.style.display = "none";
-  } else if (peran === "pml") {
-    if (grpPml) grpPml.style.display = "none";
-    if (grpBastPpl) grpBastPpl.style.display = "none";
-    if (grpBastPml) grpBastPml.style.display = "";
+  if (docType === "spk_bast") {
+    if (peran === "ppl") {
+      if (grpPml) grpPml.style.display = "";
+      if (selPml) selPml.required = true;
+      if (grpBastPpl) grpBastPpl.style.display = "";
+      if (grpBastPml) grpBastPml.style.display = "none";
+      if (noPmlSm) noPmlSm.required = false;
+      if (tglPmlSm) tglPmlSm.required = false;
+    } else if (peran === "pml") {
+      if (grpPml) grpPml.style.display = "none";
+      if (selPml) selPml.required = false;
+      if (grpBastPpl) grpBastPpl.style.display = "none";
+      if (grpBastPml) grpBastPml.style.display = "";
+      if (noPmlSm) noPmlSm.required = true;
+      if (tglPmlSm) tglPmlSm.required = true;
+    }
+  } else {
+    if (selPml) selPml.required = false;
+    if (noPmlSm) noPmlSm.required = false;
+    if (tglPmlSm) tglPmlSm.required = false;
   }
   validateAllDocNumberInputs();
 }
@@ -190,17 +207,26 @@ function toggleBundlingFields() {
   const cardPetugas  = document.getElementById("card-petugas");
   const cardPeran    = document.getElementById("card-peran");
   const grpBastSmPpk = document.getElementById("grp-bast-sm-ppk");
+  const selMitra     = document.getElementById("sel-mitra");
+  const noSmPpk      = document.getElementById("input-no-bast-sm-ppk");
+  const tglSmPpk     = document.getElementById("input-tgl-bast-sm-ppk");
 
   if (docType === "sm_ppk") {
     if (cardPetugas)  cardPetugas.style.display = "none";
     if (cardPeran)    cardPeran.style.display   = "none";
     if (grpBastSmPpk) grpBastSmPpk.style.display = "";
+    if (selMitra)     selMitra.required = false;
+    if (noSmPpk)      noSmPpk.required = true;
+    if (tglSmPpk)     tglSmPpk.required = true;
   } else {
     if (cardPetugas)  cardPetugas.style.display = "";
     if (cardPeran)    cardPeran.style.display   = "";
     if (grpBastSmPpk) grpBastSmPpk.style.display = "none";
+    if (selMitra)     selMitra.required = true;
+    if (noSmPpk)      noSmPpk.required = false;
+    if (tglSmPpk)     tglSmPpk.required = false;
   }
-  validateAllDocNumberInputs();
+  togglePeranFields();
 }
 
 let currentPetugasPage = 1;

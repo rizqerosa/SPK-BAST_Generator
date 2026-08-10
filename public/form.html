@@ -471,18 +471,18 @@
 
             <div class="form-row" style="margin-top:12px;">
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai Pekerjaan</label>
-                <input type="date" class="form-control" id="input-tanggal-mulai" name="tanggal_mulai">
+                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai Pekerjaan <span class="required">*</span></label>
+                <input type="date" class="form-control" id="input-tanggal-mulai" name="tanggal_mulai" required>
               </div>
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai Pekerjaan</label>
-                <input type="date" class="form-control" id="input-tanggal-selesai" name="tanggal_selesai">
+                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai Pekerjaan <span class="required">*</span></label>
+                <input type="date" class="form-control" id="input-tanggal-selesai" name="tanggal_selesai" required>
               </div>
             </div>
 
             <div class="form-group" style="margin-top:12px;">
-              <label class="form-label" for="input-batas-penyerahan-telat">Batas Penyerahan Hasil (Keterlambatan / Telat)</label>
-              <input type="date" class="form-control" id="input-batas-penyerahan-telat" name="batas_penyerahan_telat">
+              <label class="form-label" for="input-batas-penyerahan-telat">Batas Penyerahan Hasil (Keterlambatan / Telat) <span class="required">*</span></label>
+              <input type="date" class="form-control" id="input-batas-penyerahan-telat" name="batas_penyerahan_telat" required>
             </div>
           </div>
         </div>
@@ -584,9 +584,9 @@
 
             <!-- Buku Pedoman -->
             <div class="form-group" style="margin-top:12px;">
-              <label class="form-label" for="input-buku-pedoman">Buku Pedoman</label>
+              <label class="form-label" for="input-buku-pedoman">Buku Pedoman <span class="required">*</span></label>
               <input type="text" class="form-control" id="input-buku-pedoman"
-                     name="buku_pedoman" placeholder="Buku Pedoman Pewawancara REGSOSEK 2026">
+                     name="buku_pedoman" placeholder="Buku Pedoman Pewawancara REGSOSEK 2026" required>
               <div style="font-size:.78rem; color:var(--gray-500); margin-top:4px;">Akan otomatis terisi dari uraian tugas kegiatan yang dipilih, tetapi dapat Anda edit jika perlu.</div>
             </div>
 
@@ -617,40 +617,40 @@
 
             <div class="form-row" style="margin-top:12px;">
               <div class="form-group">
-                <label class="form-label" for="input-nomor-kepka">Nomor SK Kepala (Kepka)</label>
+                <label class="form-label" for="input-nomor-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
                 <input type="text" class="form-control" id="input-nomor-kepka"
-                       name="nomor_kepka" placeholder="001/BPS-1172/I/2026">
+                       name="nomor_kepka" placeholder="001/BPS-1172/I/2026" required>
               </div>
               <div class="form-group">
-                <label class="form-label" for="input-tanggal-kepka">Tanggal SK Kepala</label>
-                <input type="date" class="form-control" id="input-tanggal-kepka" name="tanggal_kepka">
+                <label class="form-label" for="input-tanggal-kepka">Tanggal SK Kepala <span class="required">*</span></label>
+                <input type="date" class="form-control" id="input-tanggal-kepka" name="tanggal_kepka" required>
               </div>
             </div>
 
             <hr class="sec-divider">
             <div class="sec-label">📋 Nomor &amp; Tanggal BAST</div>
 
-            <!-- Group BAST PPL -->
+            <!-- Group BAST PPL (Opsional / Tidak Wajib Isi) -->
             <div id="grp-bast-ppl">
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL → PML</label>
+                  <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL → PML <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
                   <input type="text" class="form-control" id="input-no-bast-ppl-pml"
                          name="no_bast_ppl_pml" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML</label>
+                  <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
                   <input type="date" class="form-control" id="input-tgl-bast-ppl-pml" name="tanggal_bast_ppl_pml">
                 </div>
               </div>
               <div class="form-row" style="margin-top:12px;">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL → SM</label>
+                  <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL → SM <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
                   <input type="text" class="form-control" id="input-no-bast-ppl-sm"
                          name="no_bast_ppl_sm" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM</label>
+                  <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
                   <input type="date" class="form-control" id="input-tgl-bast-ppl-sm" name="tanggal_bast_ppl_sm">
                 </div>
               </div>
@@ -660,12 +660,12 @@
             <div id="grp-bast-pml">
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML → SM</label>
+                  <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML → SM <span class="required">*</span></label>
                   <input type="text" class="form-control" id="input-no-bast-pml-sm"
                          name="no_bast_pml_sm" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM</label>
+                  <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM <span class="required">*</span></label>
                   <input type="date" class="form-control" id="input-tgl-bast-pml-sm" name="tanggal_bast_pml_sm">
                 </div>
               </div>
@@ -675,12 +675,12 @@
             <div id="grp-bast-sm-ppk">
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-sm-ppk">No. BAST SM → PPK</label>
+                  <label class="form-label" for="input-no-bast-sm-ppk">No. BAST SM → PPK <span class="required">*</span></label>
                   <input type="text" class="form-control" id="input-no-bast-sm-ppk"
                          name="no_bast_sm_ppk" placeholder="001/BPS/1172/BAST/2026">
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-sm-ppk">Tanggal BAST SM-PPK</label>
+                  <label class="form-label" for="input-tgl-bast-sm-ppk">Tanggal BAST SM-PPK <span class="required">*</span></label>
                   <input type="date" class="form-control" id="input-tgl-bast-sm-ppk" name="tanggal_bast_sm_ppk">
                 </div>
               </div>
