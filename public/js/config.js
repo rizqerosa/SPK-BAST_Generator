@@ -20,5 +20,6 @@ const CONFIG = {
     DETAIL_PEKERJAAN: "detail_pekerjaan", // Detail pekerjaan per dokumen
     BAST_SM_PPK: "bast_sm_ppk",      // BAST kumpulan kegiatan besar (SM-PPK)
     PARAMETER: "parameter",        // Konfigurasi sistem
+    PENGGUNA: "pengguna",          // Akun pengguna & role (Operator, PPK, Admin)
   },
 };

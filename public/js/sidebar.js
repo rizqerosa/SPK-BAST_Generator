@@ -1,46 +1,74 @@
 // ============================================================
 // SIDEBAR.JS — Shared Sidebar untuk semua halaman
-// Auto-inject sidebar HTML, deteksi halaman aktif dari URL
+// Auto-inject sidebar HTML, deteksi halaman aktif dari URL,
+// & menyesuaikan menu berdasarkan Role (PPK, Operator, Admin)
 // ============================================================
 
 (function () {
-  const NAV_ITEMS = [
-    { section: "Menu Utama" },
-    { icon: "🏠", label: "Dashboard",       href: "index.html"    },
-    { icon: "📋", label: "Daftar Dokumen",  href: "dokumen.html"  },
-    { section: "Data Referensi" },
-    { icon: "👥", label: "Daftar Mitra",    href: "mitra.html"    },
-    { icon: "🏛️", label: "Daftar Pegawai",  href: "pegawai.html"  },
-    { icon: "📁", label: "Daftar Kegiatan", href: "kegiatan.html" },
-  ];
-
   // Deteksi halaman aktif dari URL
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
 
   function buildSidebar() {
+    const user = (typeof Auth !== "undefined" && Auth.getUser) ? Auth.getUser() : null;
+    const isPPK = (typeof Auth !== "undefined" && Auth.isPPK) ? Auth.isPPK() : false;
+
+    const navItems = [
+      { section: "Menu Utama" },
+      { icon: "🏠", label: "Dashboard",       href: "index.html"    },
+    ];
+
+    // Menu Verifikasi PPK (Tampil jika role PPK / Admin)
+    if (isPPK) {
+      navItems.push({ icon: "🏛️", label: "Verifikasi PPK", href: "verifikasi-ppk.html", badge: "PPK" });
+    }
+
+    navItems.push(
+      { icon: "📋", label: "Daftar Dokumen",  href: "dokumen.html"  },
+      { section: "Data Referensi" },
+      { icon: "👥", label: "Daftar Mitra",    href: "mitra.html"    },
+      { icon: "🏛️", label: "Daftar Pegawai",  href: "pegawai.html"  },
+      { icon: "📁", label: "Daftar Kegiatan", href: "kegiatan.html" }
+    );
+
     let navHTML = "";
-    for (const item of NAV_ITEMS) {
+    for (const item of navItems) {
       if (item.section) {
         navHTML += `<div class="nav-section-label">${item.section}</div>`;
         continue;
       }
       const isActive = currentPage === item.href;
+      const badgeHTML = item.badge ? `<span style="margin-left:auto; background:#dcfce7; color:#166534; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px;">${item.badge}</span>` : "";
       navHTML += `
         <a href="${item.href}" class="nav-item${isActive ? " active" : ""}">
-          <span class="nav-icon">${item.icon}</span> ${item.label}
+          <span class="nav-icon">${item.icon}</span> ${item.label} ${badgeHTML}
         </a>`;
+    }
+
+    // User profile section at footer
+    let userFooterHTML = "";
+    if (user) {
+      const roleColor = user.role === "PPK" ? "#047857" : user.role === "ADMIN" ? "#7c3aed" : "#1d4ed8";
+      userFooterHTML = `
+        <div style="padding: 12px; margin: 10px; background: #f8fafc; border: 1px solid var(--gray-200); border-radius: var(--radius-md);">
+          <div style="font-weight: 700; font-size: 0.82rem; color: var(--gray-800); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${user.nama || user.username}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+            <span style="font-size: 0.68rem; font-weight: 800; color: ${roleColor}; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${user.role || 'OPERATOR'}</span>
+            <button type="button" onclick="Auth.logout()" style="background: none; border: none; color: #dc2626; font-weight: 700; font-size: 0.75rem; cursor: pointer; padding: 0;">🚪 Keluar</button>
+          </div>
+        </div>`;
     }
 
     return `
       <aside class="sidebar" id="app-sidebar">
         <div class="sidebar-logo">
-          <div class="logo-icon">📋</div>
+          <div class="logo-icon">📜</div>
           <div class="logo-text">
             <div class="title">Dokumen Keuangan Generator</div>
             <div class="sub">BPS Kota Subulussalam</div>
           </div>
         </div>
         <nav class="sidebar-nav">${navHTML}</nav>
+        ${userFooterHTML}
         <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
       </aside>`;
   }

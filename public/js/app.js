@@ -1349,6 +1349,10 @@ async function handleFormSubmit(e) {
     Total_Honor:             totalHonor,
     Terbilang:               terbilang(totalHonor) + " Rupiah",
     Status_Generate_SPK:     "Belum",
+    Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
+    Tanggal_Verifikasi_PPK:   "",
+    Catatan_Verifikasi_PPK:   "",
+    PPK_Verifikator:         "",
   };
 
   // Update ID_Dokumen di detail

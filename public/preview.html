@@ -280,6 +280,11 @@
 
         <!-- ─── DOKUMEN PREVIEW (kanan) ─── -->
         <div>
+          <!-- PPK Status Banner -->
+          <div id="ppk-status-banner" style="display:none; padding:14px 18px; border-radius:var(--radius-md); border:1px solid #fde68a; margin-bottom:14px; align-items:center; gap:12px;">
+            <!-- Rendered via JS -->
+          </div>
+
           <div class="doc-preview-wrapper" id="preview-container">
             <div id="preview-doc-content">
               <div class="empty-state">
@@ -307,18 +312,61 @@
 
 <script src="js/config.js?v=4.0"></script>
 <script src="js/data.js?v=4.0"></script>
+<script src="js/auth.js?v=4.0"></script>
 <script src="js/utils.js?v=4.0"></script>
 <script src="js/render.js?v=4.0"></script>
 <script src="js/sidebar.js?v=4.0"></script>
 <script src="js/app.js?v=4.0"></script>
-
 <script>
-  // ── State untuk preview ──
   let _previewRecord = null;
   let _previewDetails = [];
   let _previewCtx = null;
   let _currentTab = "spk";
   let _zoomLevel = 100;
+
+  function renderPpkStatusBanner(record) {
+    const vStatus = String(record?.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+    const bannerBox = document.getElementById("ppk-status-banner");
+    if (!bannerBox) return;
+
+    if (vStatus === "disetujui" || vStatus === "approved") {
+      bannerBox.style.display = "flex";
+      bannerBox.style.background = "#dcfce7";
+      bannerBox.style.borderColor = "#bbf7d0";
+      bannerBox.style.color = "#166534";
+      bannerBox.innerHTML = `
+        <span style="font-size:1.2rem;">🟢</span>
+        <div>
+          <strong>DISETUJUI PPK</strong>
+          <div style="font-size:0.8rem; opacity:0.9;">Dokumen ini telah diverifikasi &amp; disetujui resmi oleh PPK${record.PPK_Verifikator ? ' (' + record.PPK_Verifikator + ')' : ''}. Dokumen siap dipublikasikan/diunduh.</div>
+        </div>
+      `;
+    } else if (vStatus === "ditolak" || vStatus === "rejected") {
+      bannerBox.style.display = "flex";
+      bannerBox.style.background = "#fee2e2";
+      bannerBox.style.borderColor = "#fca5a5";
+      bannerBox.style.color = "#991b1b";
+      bannerBox.innerHTML = `
+        <span style="font-size:1.2rem;">🔴</span>
+        <div>
+          <strong>DITOLAK / REVISI PPK</strong>
+          <div style="font-size:0.8rem; margin-top:2px;">Catatan PPK: <em>"${record.Catatan_Verifikasi_PPK || 'Harap periksa kembali rincian data dokumen'}"</em></div>
+        </div>
+      `;
+    } else {
+      bannerBox.style.display = "flex";
+      bannerBox.style.background = "#fef3c7";
+      bannerBox.style.borderColor = "#fde68a";
+      bannerBox.style.color = "#92400e";
+      bannerBox.innerHTML = `
+        <span style="font-size:1.2rem;">🟡</span>
+        <div>
+          <strong>MENUNGGU VERIFIKASI PPK</strong>
+          <div style="font-size:0.8rem;">Dokumen ini masih dalam tahap peninjauan oleh Pejabat Pembuat Komitmen (PPK).</div>
+        </div>
+      `;
+    }
+  }
 
   // ── Init: async, fetch dari Google Sheets via AppState ──
   document.addEventListener("DOMContentLoaded", async () => {
@@ -404,6 +452,8 @@
       const elStatus = document.getElementById("preview-status");
       elStatus.textContent = _previewRecord.Status_Generate_SPK || "Belum";
       elStatus.className = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning"}`;
+
+      renderPpkStatusBanner(_previewRecord);
 
       // Fetch bastSmPpk di background
       getBastSmPpk().then(data => { AppState.bastSmPpk = data; });

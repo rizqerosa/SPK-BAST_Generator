@@ -182,8 +182,9 @@
             <!-- Filter status -->
             <div class="filter-bar">
               <button class="btn btn-outline btn-sm active" data-filter="all">Semua</button>
-              <button class="btn btn-outline btn-sm" data-filter="Sudah">Sudah</button>
-              <button class="btn btn-outline btn-sm" data-filter="Belum">Belum</button>
+              <button class="btn btn-outline btn-sm" data-filter="Menunggu_Verifikasi">🟡 Menunggu PPK</button>
+              <button class="btn btn-outline btn-sm" data-filter="Disetujui">🟢 Disetujui PPK</button>
+              <button class="btn btn-outline btn-sm" data-filter="Ditolak">🔴 Ditolak</button>
             </div>
             <!-- Search -->
             <div class="search-box" style="max-width:220px;">
@@ -202,7 +203,7 @@
                 <th>Judul Pekerjaan</th>
                 <th style="width:110px;">Bulan / Tahun</th>
                 <th style="width:115px;" class="tr">Total Honor</th>
-                <th style="width:90px;">Status</th>
+                <th style="width:145px;">Status Verif PPK</th>
                 <th style="width:160px;" class="tc">Aksi</th>
               </tr>
             </thead>
@@ -285,6 +286,7 @@
 
 <script src="js/config.js?v=4.0"></script>
 <script src="js/data.js?v=4.0"></script>
+<script src="js/auth.js?v=4.0"></script>
 <script src="js/utils.js?v=4.0"></script>
 <script src="js/render.js?v=4.0"></script>
 <script src="js/sidebar.js?v=4.0"></script>
@@ -316,10 +318,14 @@
         }
       }
 
-      const isSudah = (doc.Status_Generate_SPK || "").toLowerCase() === "sudah";
-      const statusBadge = isSudah
-        ? `<span class="badge badge-success">Sudah</span>`
-        : `<span class="badge badge-warning">Belum</span>`;
+      const vStatus = String(doc.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      let statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
+      if (vStatus === "disetujui" || vStatus === "approved") {
+        statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
+      } else if (vStatus === "ditolak" || vStatus === "rejected") {
+        const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
+        statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
+      }
 
       return `
         <tr>
@@ -346,7 +352,12 @@
   function applyFilters() {
     const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
     const data = _allDocs.filter(d => {
-      const matchStatus = _activeFilter === "all" || (d.Status_Generate_SPK || "").toLowerCase() === _activeFilter.toLowerCase();
+      const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      let matchStatus = false;
+      if (_activeFilter === "all") matchStatus = true;
+      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "menunggu_verifikasi" || vStatus === "pending" || vStatus === "" || !d.Status_Verifikasi_PPK);
+      else matchStatus = vStatus === _activeFilter.toLowerCase();
+
       const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
         .some(v => String(v || "").toLowerCase().includes(q));
       return matchStatus && matchQ;

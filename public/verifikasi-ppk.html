@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifikasi PPK — Dokumen Keuangan Generator BPS Kota Subulussalam</title>
+  <meta name="description" content="Halaman khusus PPK untuk verifikasi dan persetujuan dokumen SPK/BAST">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <style>
+    .hero-banner-ppk {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #047857 100%);
+      border-radius: var(--radius-xl);
+      padding: 26px 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(4, 120, 87, 0.2);
+    }
+    .hero-banner-ppk::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .hero-icon-ppk { font-size: 2.8rem; position: relative; }
+    .hero-text-ppk h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .hero-text-ppk p { font-size: .83rem; opacity: .88; }
+
+    .action-btns { display: flex; gap: 6px; align-items: center; }
+
+    /* Modal Overlay & Box */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      backdrop-filter: blur(4px);
+      z-index: 5000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #fff;
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      max-width: 680px;
+      width: 92%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      transform: scale(.95);
+      transition: transform .2s ease;
+    }
+    .modal-overlay.visible .modal-box { transform: scale(1); }
+    .modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+    .modal-desc { font-size: .85rem; color: var(--gray-600); margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
+
+    .doc-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+      background: var(--gray-50);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+    }
+    .doc-detail-item .lbl { color: var(--gray-500); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; margin-bottom: 2px; }
+    .doc-detail-item .val { font-weight: 700; color: var(--gray-800); }
+
+    .badge-ppk-pending  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight:700; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-ppk-approved { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-weight:700; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-ppk-rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-weight:700; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px; }
+
+    /* Filter Bar */
+    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-bar .btn.active {
+      background: var(--brand-primary);
+      color: #fff;
+      border-color: var(--brand-primary);
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Verifikasi PPK
+        <small>Portal Persetujuan Dokumen Keuangan oleh PPK</small>
+      </div>
+      <div class="topbar-actions" id="topbar-user-badge">
+        <!-- Injected via JS -->
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner-ppk">
+        <div class="hero-icon-ppk">🏛️</div>
+        <div class="hero-text-ppk">
+          <h1>Verifikasi &amp; Persetujuan Dokumen SPK / BAST</h1>
+          <p>Pejabat Pembuat Komitmen (PPK) — Peninjauan keabsahan dokumen keuangan sebelum diproduksi resmi.</p>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">📄</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-label">Total Dokumen Masuk</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-pending">—</div>
+            <div class="stat-label">Menunggu Persetujuan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-approved">—</div>
+            <div class="stat-label">Telah Disetujui</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple" style="background:#fee2e2; color:#dc2626;">❌</div>
+          <div class="stat-info">
+            <div class="stat-num" id="stat-rejected" style="color:#dc2626;">—</div>
+            <div class="stat-label">Ditolak / Minta Revisi</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Daftar Pengajuan Dokumen</h2>
+          <div class="list-controls">
+            <!-- Filter status -->
+            <div class="filter-bar">
+              <button class="btn btn-outline btn-sm active" data-filter="Menunggu_Verifikasi">⏳ Menunggu Verifikasi</button>
+              <button class="btn btn-outline btn-sm" data-filter="Disetujui">🟢 Disetujui</button>
+              <button class="btn btn-outline btn-sm" data-filter="Ditolak">🔴 Ditolak</button>
+              <button class="btn btn-outline btn-sm" data-filter="all">Semua Dokumen</button>
+            </div>
+            <!-- Search -->
+            <div class="search-box" style="max-width:220px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" class="form-control" placeholder="Cari nama / judul...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">No</th>
+                <th>Petugas / Mitra</th>
+                <th>Judul Pekerjaan</th>
+                <th style="width:110px;">Bulan / Tahun</th>
+                <th style="width:115px;" class="tr">Total Honor</th>
+                <th style="width:150px;">Status Verifikasi</th>
+                <th style="width:160px;" class="tc">Aksi PPK</th>
+              </tr>
+            </thead>
+            <tbody id="verif-tbody">
+              <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:48px;">
+                  <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+                  Memuat data dokumen untuk verifikasi...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<!-- ─── Modal Detail & Verifikasi PPK ─── -->
+<div class="modal-overlay" id="verif-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="vm-title">🔍 Peninjauan Dokumen SPK / BAST</div>
+    <div class="modal-desc" id="vm-desc">Periksa kelengkapan data dokumen sebelum menentukan persetujuan.</div>
+
+    <div class="doc-detail-grid">
+      <div class="doc-detail-item">
+        <div class="lbl">ID Dokumen</div>
+        <div class="val" id="vm-id">—</div>
+      </div>
+      <div class="doc-detail-item">
+        <div class="lbl">Nama Petugas / Mitra</div>
+        <div class="val" id="vm-petugas">—</div>
+      </div>
+      <div class="doc-detail-item">
+        <div class="lbl">Nomor SPK</div>
+        <div class="val" id="vm-no-spk">—</div>
+      </div>
+      <div class="doc-detail-item">
+        <div class="lbl">Tanggal SPK</div>
+        <div class="val" id="vm-tgl-spk">—</div>
+      </div>
+      <div class="doc-detail-item">
+        <div class="lbl">Bulan &amp; Tahun</div>
+        <div class="val" id="vm-periode">—</div>
+      </div>
+      <div class="doc-detail-item">
+        <div class="lbl">Total Honor</div>
+        <div class="val" id="vm-honor" style="color:var(--brand-primary); font-size:1.05rem;">—</div>
+      </div>
+    </div>
+
+    <div class="sec-label" style="font-weight:700; margin-bottom:8px;">📦 Uraian Pekerjaan:</div>
+    <div class="table-wrapper" style="margin-bottom:16px; max-height:180px; overflow-y:auto;">
+      <table class="data-table" style="font-size:0.82rem;">
+        <thead>
+          <tr>
+            <th>Uraian Tugas</th>
+            <th style="width:60px;">Vol</th>
+            <th style="width:70px;">Satuan</th>
+            <th style="width:90px;" class="tr">Harga Satuan</th>
+            <th style="width:100px;" class="tr">Total</th>
+          </tr>
+        </thead>
+        <tbody id="vm-detail-tbody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label" for="vm-catatan" style="font-weight:700;">Catatan / Feedback Verifikasi PPK (Opsional untuk Setujui, Wajib jika Menolak)</label>
+      <textarea id="vm-catatan" class="form-control" rows="3" placeholder="Tuliskan catatan atau masukan revisi jika dokumen ditolak..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" onclick="closeVerifModal()">Batal</button>
+      <a href="#" id="vm-preview-link" target="_blank" class="btn btn-outline" style="border-color:var(--brand-primary); color:var(--brand-primary);">
+        👁️ Preview PDF
+      </a>
+      <button type="button" class="btn btn-danger" onclick="prosesVerifikasi('Ditolak')">
+        ❌ Tolak / Minta Revisi
+      </button>
+      <button type="button" class="btn btn-success" style="background:#16a34a; border-color:#16a34a; color:#fff;" onclick="prosesVerifikasi('Disetujui')">
+        🟢 Setujui Dokumen
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=4.0"></script>
+<script src="js/data.js?v=4.0"></script>
+<script src="js/auth.js?v=4.0"></script>
+<script src="js/utils.js?v=4.0"></script>
+<script src="js/render.js?v=4.0"></script>
+<script src="js/sidebar.js?v=4.0"></script>
+<script src="js/app.js?v=4.0"></script>
+<script>
+  let _allDocs = [];
+  let _allMitra = [];
+  let _allPegawai = [];
+  let _allDetails = [];
+  let _activeFilter = "Menunggu_Verifikasi";
+  let _selectedDoc = null;
+
+  function renderVerifBadge(status) {
+    const s = String(status || "Menunggu_Verifikasi").toLowerCase();
+    if (s === "disetujui" || s === "approved") {
+      return `<span class="badge-ppk-approved">🟢 Disetujui PPK</span>`;
+    } else if (s === "ditolak" || s === "rejected") {
+      return `<span class="badge-ppk-rejected">🔴 Ditolak PPK</span>`;
+    } else {
+      return `<span class="badge-ppk-pending">🟡 Menunggu Verifikasi</span>`;
+    }
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById("verif-tbody");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada dokumen dalam kategori ini</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map((doc, i) => {
+      let namaPetugas = "—";
+      if (doc.ID_Mitra) {
+        const m = _allMitra.find(item => String(getMitraId(item)) === String(doc.ID_Mitra));
+        if (m) namaPetugas = getMitraName(m);
+        else {
+          const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(doc.ID_Mitra));
+          if (p) namaPetugas = getPegawaiName(p);
+        }
+      }
+
+      return `
+        <tr>
+          <td class="tc text-muted">${i + 1}</td>
+          <td><div style="font-weight:600; font-size:.88rem;">${namaPetugas}</div></td>
+          <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
+          <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
+          <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
+          <td>${renderVerifBadge(doc.Status_Verifikasi_PPK)}</td>
+          <td>
+            <div class="action-btns">
+              <button type="button" class="btn btn-primary btn-sm" onclick="openVerifModal('${doc.ID_Dokumen}')">
+                🔍 Verifikasi
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  function applyFilters() {
+    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const data = _allDocs.filter(d => {
+      const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      let matchStatus = false;
+      if (_activeFilter === "all") matchStatus = true;
+      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "menunggu_verifikasi" || vStatus === "pending" || vStatus === "" || !d.Status_Verifikasi_PPK);
+      else matchStatus = vStatus === _activeFilter.toLowerCase();
+
+      const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
+        .some(v => String(v || "").toLowerCase().includes(q));
+      return matchStatus && matchQ;
+    });
+    renderTable(data);
+  }
+
+  async function openVerifModal(docId) {
+    _selectedDoc = _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
+    if (!_selectedDoc) return;
+
+    let namaPetugas = "—";
+    if (_selectedDoc.ID_Mitra) {
+      const m = _allMitra.find(item => String(getMitraId(item)) === String(_selectedDoc.ID_Mitra));
+      if (m) namaPetugas = getMitraName(m);
+      else {
+        const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(_selectedDoc.ID_Mitra));
+        if (p) namaPetugas = getPegawaiName(p);
+      }
+    }
+
+    document.getElementById("vm-id").textContent = _selectedDoc.ID_Dokumen;
+    document.getElementById("vm-petugas").textContent = namaPetugas;
+    document.getElementById("vm-no-spk").textContent = _selectedDoc.Nomor_SPK || _selectedDoc.No_SPK || "—";
+    document.getElementById("vm-tgl-spk").textContent = _selectedDoc["Tanggal SPK"] || _selectedDoc.Tanggal_SPK || "—";
+    document.getElementById("vm-periode").textContent = `${_selectedDoc.Bulan || ""} ${_selectedDoc.Tahun || ""}`;
+    document.getElementById("vm-honor").textContent = `Rp ${formatRupiah(_selectedDoc.Total_Honor || 0)}`;
+    document.getElementById("vm-catatan").value = _selectedDoc.Catatan_Verifikasi_PPK || "";
+    document.getElementById("vm-preview-link").href = `preview.html?id=${encodeURIComponent(_selectedDoc.ID_Dokumen)}`;
+
+    // Render detail pekerjaan table
+    const details = _allDetails.filter(dt => String(dt.ID_Dokumen) === String(_selectedDoc.ID_Dokumen));
+    const dtTbody = document.getElementById("vm-detail-tbody");
+    if (details.length === 0) {
+      dtTbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Uraian tugas otomatis dari SPK</td></tr>`;
+    } else {
+      dtTbody.innerHTML = details.map(dt => `
+        <tr>
+          <td>${dt.Uraian_Tugas || dt.Uraian || "—"}</td>
+          <td class="tc">${dt.Volume || 1}</td>
+          <td>${dt.Satuan || "Dokumen"}</td>
+          <td class="tr">Rp ${formatRupiah(dt.Harga_Satuan || 0)}</td>
+          <td class="tr" style="font-weight:600;">Rp ${formatRupiah(dt.Nilai_Perjanjian || (dt.Volume * dt.Harga_Satuan) || 0)}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("verif-modal").classList.add("visible");
+  }
+
+  function closeVerifModal() {
+    document.getElementById("verif-modal").classList.remove("visible");
+    _selectedDoc = null;
+  }
+
+  async function prosesVerifikasi(statusBaru) {
+    if (!_selectedDoc) return;
+
+    const catatan = document.getElementById("vm-catatan").value.trim();
+    if (statusBaru === "Ditolak" && !catatan) {
+      showToast("Harap isi alasan / catatan penolakan untuk Operator!", "danger");
+      document.getElementById("vm-catatan").focus();
+      return;
+    }
+
+    const currUser = Auth.getUser() || {};
+    const verifikatorInfo = `${currUser.nama || 'PPK'} (NIP. ${currUser.nip || '-'})`;
+
+    setLoading(true);
+    try {
+      // Direct update to sheet
+      await updateInSheet("spkBast", "ID_Dokumen", _selectedDoc.ID_Dokumen, {
+        Status_Verifikasi_PPK: statusBaru,
+        Catatan_Verifikasi_PPK: catatan,
+        Tanggal_Verifikasi_PPK: new Date().toISOString(),
+        PPK_Verifikator: verifikatorInfo
+      });
+
+      // Update local array
+      _selectedDoc.Status_Verifikasi_PPK = statusBaru;
+      _selectedDoc.Catatan_Verifikasi_PPK = catatan;
+      _selectedDoc.Tanggal_Verifikasi_PPK = new Date().toISOString();
+      _selectedDoc.PPK_Verifikator = verifikatorInfo;
+
+      clearCache("spkBast");
+
+      showToast(`Dokumen berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning");
+      closeVerifModal();
+      updateStats();
+      applyFilters();
+    } catch (err) {
+      showToast("Gagal memperbarui verifikasi: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function updateStats() {
+    const total = _allDocs.length;
+    const pending = _allDocs.filter(d => {
+      const s = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      return s === "menunggu_verifikasi" || s === "pending" || s === "" || !d.Status_Verifikasi_PPK;
+    }).length;
+    const approved = _allDocs.filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui").length;
+    const rejected = _allDocs.filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "ditolak").length;
+
+    document.getElementById("stat-total").textContent = total;
+    document.getElementById("stat-pending").textContent = pending;
+    document.getElementById("stat-approved").textContent = approved;
+    document.getElementById("stat-rejected").textContent = rejected;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    setLoading(true);
+    try {
+      const [spkBastData, mitraData, pegawaiData, detailData] = await Promise.all([
+        getSpkBast(),
+        getMitra(),
+        getPegawai(),
+        getDetailPekerjaan()
+      ]);
+
+      _allDocs    = spkBastData || [];
+      _allMitra   = mitraData   || [];
+      _allPegawai = pegawaiData || [];
+      _allDetails = detailData  || [];
+
+      updateStats();
+      applyFilters();
+
+      document.getElementById("search-input")?.addEventListener("input", applyFilters);
+
+      document.querySelectorAll("[data-filter]").forEach(btn => {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+          this.classList.add("active");
+          _activeFilter = this.dataset.filter;
+          applyFilters();
+        });
+      });
+
+    } catch (err) {
+      showToast("Gagal memuat pengajuan verifikasi: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>

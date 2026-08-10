@@ -18,6 +18,7 @@ const CACHE_TTL_MS = {
   detailPekerjaan:   2 * 60 * 1000,
   bastSmPpk:         5 * 60 * 1000,
   parameter:        15 * 60 * 1000,
+  pengguna:         10 * 60 * 1000,
 };
 
 // ─── In-memory cache (per sesi) ───────────────────────────────
@@ -30,6 +31,7 @@ const _DB = {
   detailPekerjaan:  null,
   bastSmPpk:        null,
   parameter:        null,
+  pengguna:         null,
 };
 
 // ─── LocalStorage helpers ─────────────────────────────────────
@@ -185,3 +187,4 @@ async function getSpkBast()          { return fetchSheet("spkBast"); }
 async function getDetailPekerjaan()  { return fetchSheet("detailPekerjaan"); }
 async function getBastSmPpk()        { return fetchSheet("bastSmPpk"); }
 async function getParameter()        { return fetchSheet("parameter"); }
+async function getPengguna()         { return fetchSheet("pengguna"); }
