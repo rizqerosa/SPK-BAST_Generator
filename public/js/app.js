@@ -1303,8 +1303,9 @@ async function handleFormSubmit(e) {
   }
 
   // Validasi kegiatan untuk SPK / BAST
-  if (docType !== "sm_ppk" && document.querySelectorAll("#detail-tbody tr").length === 0) {
-    showToast("Tambahkan minimal 1 kegiatan", "danger");
+  const detailRows = document.querySelectorAll("#detail-tbody tr[data-keg-id]");
+  if (docType !== "sm_ppk" && detailRows.length === 0) {
+    showToast("Pilih dan tambahkan minimal 1 Master Kegiatan terlebih dahulu", "danger");
     return;
   }
 
