@@ -167,11 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const page = window.location.pathname.split("/").pop() || "index.html";
   if (page === "login.html") return;
 
-  // Halaman khusus PPK hanya bisa diakses PPK & Admin
+  // HAK AKSES: Hanya halaman verifikasi-ppk.html yang membutuhkan Login PPK.
+  // Halaman umum lainnya (Form, Daftar Dokumen, Master Data) dapat diakses bebas tanpa login.
   if (page === "verifikasi-ppk.html") {
     Auth.requireAuth(["PPK", "ADMIN"]);
-  } else {
-    // Halaman lainnya hanya butuh login
-    Auth.requireAuth();
   }
 });

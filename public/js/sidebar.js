@@ -14,21 +14,14 @@
 
     const navItems = [
       { section: "Menu Utama" },
-      { icon: "🏠", label: "Dashboard",       href: "index.html"    },
-    ];
-
-    // Menu Verifikasi PPK (Tampil jika role PPK / Admin)
-    if (isPPK) {
-      navItems.push({ icon: "🏛️", label: "Verifikasi PPK", href: "verifikasi-ppk.html", badge: "PPK" });
-    }
-
-    navItems.push(
-      { icon: "📋", label: "Daftar Dokumen",  href: "dokumen.html"  },
+      { icon: "🏠", label: "Dashboard",        href: "index.html"        },
+      { icon: "📋", label: "Daftar Dokumen",   href: "dokumen.html"      },
+      { icon: "🏛️", label: "Verifikasi PPK",   href: "verifikasi-ppk.html", badge: isPPK ? "PPK Active" : "Login Required" },
       { section: "Data Referensi" },
-      { icon: "👥", label: "Daftar Mitra",    href: "mitra.html"    },
-      { icon: "🏛️", label: "Daftar Pegawai",  href: "pegawai.html"  },
-      { icon: "📁", label: "Daftar Kegiatan", href: "kegiatan.html" }
-    );
+      { icon: "👥", label: "Daftar Mitra",     href: "mitra.html"        },
+      { icon: "🏛️", label: "Daftar Pegawai",   href: "pegawai.html"      },
+      { icon: "📁", label: "Daftar Kegiatan",  href: "kegiatan.html"     }
+    ];
 
     let navHTML = "";
     for (const item of navItems) {
@@ -37,7 +30,8 @@
         continue;
       }
       const isActive = currentPage === item.href;
-      const badgeHTML = item.badge ? `<span style="margin-left:auto; background:#dcfce7; color:#166534; font-size:0.7rem; font-weight:800; padding:2px 6px; border-radius:10px;">${item.badge}</span>` : "";
+      const badgeStyle = isPPK ? "background:#dcfce7; color:#166534;" : "background:#fef3c7; color:#92400e;";
+      const badgeHTML = item.badge ? `<span style="margin-left:auto; ${badgeStyle} font-size:0.68rem; font-weight:800; padding:2px 6px; border-radius:10px;">${item.badge}</span>` : "";
       navHTML += `
         <a href="${item.href}" class="nav-item${isActive ? " active" : ""}">
           <span class="nav-icon">${item.icon}</span> ${item.label} ${badgeHTML}
@@ -52,9 +46,16 @@
         <div style="padding: 12px; margin: 10px; background: #f8fafc; border: 1px solid var(--gray-200); border-radius: var(--radius-md);">
           <div style="font-weight: 700; font-size: 0.82rem; color: var(--gray-800); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${user.nama || user.username}</div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-            <span style="font-size: 0.68rem; font-weight: 800; color: ${roleColor}; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${user.role || 'OPERATOR'}</span>
+            <span style="font-size: 0.68rem; font-weight: 800; color: ${roleColor}; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${user.role || 'PPK'}</span>
             <button type="button" onclick="Auth.logout()" style="background: none; border: none; color: #dc2626; font-weight: 700; font-size: 0.75rem; cursor: pointer; padding: 0;">🚪 Keluar</button>
           </div>
+        </div>`;
+    } else {
+      userFooterHTML = `
+        <div style="padding: 10px; margin: 10px; text-align: center;">
+          <a href="login.html?redirect=verifikasi-ppk.html" class="btn btn-outline btn-sm" style="width: 100%; font-size: 0.78rem; font-weight: 700; justify-content: center;">
+            🔑 Login Khusus PPK
+          </a>
         </div>`;
     }
 
