@@ -1562,10 +1562,11 @@ async function handleFormSubmit(e) {
     showToast("⚠️ Peringatan: Ada nomor SPK / BAST yang melompati urutan!", "warning", 4000);
   }
 
-  // Kumpulkan detail pekerjaan dari tabel
+  // Kumpulkan detail pekerjaan dari tabel (hanya baris dengan data-keg-id)
   const details = [];
-  document.querySelectorAll("#detail-tbody tr").forEach((tr, i) => {
+  document.querySelectorAll("#detail-tbody tr[data-keg-id]").forEach((tr, i) => {
     const kegId    = tr.getAttribute("data-keg-id");
+    if (!kegId) return; // skip baris tanpa kegiatan
     const keg      = cariKegiatan(kegId, AppState.kegiatan);
     const volInput = tr.querySelector("input[type=number]");
     const jwInput  = tr.querySelector("input[type=text]");

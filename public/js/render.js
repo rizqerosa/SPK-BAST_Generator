@@ -20,10 +20,15 @@ function renderTemplate(templateHTML, dataObject) {
  * @returns {string} HTML <tr>...</tr> yang di-join
  */
 function renderTabelLampiran(detailPekerjaanArray) {
-  if (!detailPekerjaanArray || detailPekerjaanArray.length === 0) {
+  // Filter baris yang valid (punya Uraian_Tugas atau Harga > 0)
+  const valid = (detailPekerjaanArray || []).filter(d =>
+    (d.Uraian_Tugas && String(d.Uraian_Tugas).trim() !== "") ||
+    (Number(d.Harga_Satuan) > 0)
+  );
+  if (valid.length === 0) {
     return `<tr><td colspan="8" style="text-align:center;color:#999;">Tidak ada data pekerjaan</td></tr>`;
   }
-  return detailPekerjaanArray.map((d, i) => `
+  return valid.map((d, i) => `
     <tr>
       <td class="tc">${d.No_Urut || (i + 1)}</td>
       <td>${d.Uraian_Tugas || ""}</td>
