@@ -1868,7 +1868,19 @@ async function renderTab(tabKey, ctx, containerId, record, details) {
     dataCtx = ctx;
   }
 
-  const tpl = await loadTemplate(map.tpl);
+  let templateName = map.tpl;
+  if (tabKey === "ppl-pml") {
+    templateName = dataCtx.IS_PML_MITRA ? "template-bast-ppl-pml-mitra.html" : "template-bast-ppl-pml-organik.html";
+  } else if (tabKey === "pml-sm") {
+    templateName = dataCtx.IS_PML_MITRA ? "template-bast-pml-sm-mitra.html" : "template-bast-pml-sm-organik.html";
+  }
+
+  let tpl;
+  try {
+    tpl = await loadTemplate(templateName);
+  } catch (e) {
+    tpl = await loadTemplate(map.tpl);
+  }
   content.innerHTML = renderTemplate(tpl, dataCtx);
 }
 

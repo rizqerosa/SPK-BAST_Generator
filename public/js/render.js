@@ -59,13 +59,16 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   mitra = mitra || {};
 
   const ppk      = cariPegawai(record.PPK,        pegawaiArr) || {};
+  let isPmlMitra = false;
   let pml        = cariPegawai(record.PML,        pegawaiArr);
   if (!pml && record.PML) {
     const m = cariMitra(record.PML, mitraArr);
     if (m) {
+      isPmlMitra = true;
       pml = {
         Nama_Pegawai: getMitraName(m),
         NIP: m.NIK || getMitraId(m),
+        NIK: m.NIK || getMitraId(m),
         Jabatan: getMitraPosisi(m) || "Mitra Pemeriksa Lapangan"
       };
     }
@@ -157,6 +160,8 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NIK_PIHAK_PERTAMA:        mitra.NIK || "",
     JABATAN_PIHAK_PERTAMA:    mitra.Posisi || "Mitra Pendataan",
     NAMA_PIHAK_KEDUA:         pml.Nama_Pegawai || "",
+    NIP_PIHAK_KEDUA:          isPmlMitra ? "" : (pml.NIP || ""),
+    NIK_PIHAK_KEDUA:          pml.NIK || pml.NIP || "",
     NIK_NIP_PIHAK_KEDUA:      pml.NIP || "",
     JABATAN_PIHAK_KEDUA:      pml.Jabatan || "",
     NOMOR_KEPKA:              record.Nomor_Kepka || "",
@@ -164,6 +169,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TANGGAL:                  tSPK.tanggalFormat,
     BULAN:                    tSPK.bulan,
     TAHUN:                    String(record.Tahun || ""),
+    IS_PML_MITRA:             isPmlMitra,
   };
 
   // BAST PPL-SM context
@@ -202,11 +208,13 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TAHUN_TERBILANG:          tBAST_PML_SM.tahun,
     TANGGAL_BAST:             tBAST_PML_SM.tanggalFormat,
     TANGGAL_BAST_SM_PPK:      tBAST_PML_SM.tanggalFormat,
-    // Pihak Pertama = PML (bukan mitra)
+    // Pihak Pertama = PML
     NAMA_PIHAK_PERTAMA:       pml.Nama_Pegawai || "",
-    NIK_PIHAK_PERTAMA:        pml.NIP || "",
+    NIK_PIHAK_PERTAMA:        pml.NIK || pml.NIP || "",
+    NIP_PIHAK_PERTAMA:        isPmlMitra ? "" : (pml.NIP || ""),
     JABATAN_PIHAK_PERTAMA:    pml.Jabatan || "",
-  };
+    IS_PML_MITRA:             isPmlMitra,
+  };  };
 
   return { spkCtx, bastPplPmlCtx, bastPplSmCtx, bastPmlSmCtx, details, totalHonor, terbilangHonor };
 }
