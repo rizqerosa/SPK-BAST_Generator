@@ -201,8 +201,8 @@
           <span id="zoom-level">100%</span>
           <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
         </div>
-        <a href="form.html" class="btn btn-outline btn-sm">← Form</a>
-        <a href="index.html" class="btn btn-outline btn-sm">🏠 Dashboard</a>
+        <a href="form.html" id="topbar-btn-edit" class="btn btn-outline btn-sm">✏️ Edit Isian</a>
+        <a href="dokumen.html" class="btn btn-outline btn-sm">📁 Daftar Dokumen</a>
       </div>
     </header>
 
@@ -452,6 +452,11 @@
       const elStatus = document.getElementById("preview-status");
       elStatus.textContent = _previewRecord.Status_Generate_SPK || "Belum";
       elStatus.className = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning"}`;
+
+      const btnEdit = document.getElementById("topbar-btn-edit");
+      if (btnEdit && _previewRecord.ID_Dokumen) {
+        btnEdit.href = `form.html?id=${encodeURIComponent(_previewRecord.ID_Dokumen)}`;
+      }
 
       renderPpkStatusBanner(_previewRecord);
 

@@ -204,7 +204,7 @@
                 <th style="width:110px;">Bulan / Tahun</th>
                 <th style="width:115px;" class="tr">Total Honor</th>
                 <th style="width:145px;">Status Verif PPK</th>
-                <th style="width:160px;" class="tc">Aksi</th>
+                <th style="width:230px;" class="tc">Aksi</th>
               </tr>
             </thead>
             <tbody id="doc-tbody">
@@ -284,13 +284,13 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.0"></script>
-<script src="js/data.js?v=4.0"></script>
-<script src="js/auth.js?v=4.0"></script>
-<script src="js/utils.js?v=4.0"></script>
-<script src="js/render.js?v=4.0"></script>
-<script src="js/sidebar.js?v=4.0"></script>
-<script src="js/app.js?v=4.0"></script>
+<script src="js/config.js?v=4.1"></script>
+<script src="js/data.js?v=4.1"></script>
+<script src="js/auth.js?v=4.1"></script>
+<script src="js/utils.js?v=4.1"></script>
+<script src="js/render.js?v=4.1"></script>
+<script src="js/sidebar.js?v=4.1"></script>
+<script src="js/app.js?v=4.1"></script>
 <script>
   let _allDocs = [];
   let _allMitra = [];
@@ -330,27 +330,24 @@
         statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
       }
 
-      // Kolom Aksi HANYA ditampilkan jika dokumen SUDAH DIVERIFIKASI/DISETUJUI PPK
-      let aksiHTML = `<span class="text-muted" style="font-size:.78rem; font-style:italic; color:var(--gray-400);">🔒 Belum Diverifikasi</span>`;
-      if (isApproved) {
-        aksiHTML = `
-          <div class="action-btns">
-            <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')">
+      // Kolom Aksi menampilkan tombol Preview & Edit untuk semua status, serta Ekspor jika sudah disetujui PPK
+      let aksiHTML = `
+        <div class="action-btns">
+          <a href="preview.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Preview Isian Dokumen">
+            👁️ Preview
+          </a>
+          <a href="form.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Edit Isian Dokumen">
+            ✏️ Edit
+          </a>
+          ${isApproved ? `
+            <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')" title="Ekspor Dokumen PDF">
               📤 Ekspor
             </button>
-            <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')">
-              🗑️
-            </button>
-          </div>`;
-      } else if (isRejected) {
-        aksiHTML = `
-          <div class="action-btns">
-            <span class="text-muted" style="font-size:.78rem; color:#dc2626;">❌ Perlu Revisi</span>
-            <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')">
-              🗑️
-            </button>
-          </div>`;
-      }
+          ` : ''}
+          <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')" title="Hapus Dokumen">
+            🗑️
+          </button>
+        </div>`;
 
       return `
         <tr>
