@@ -155,14 +155,23 @@ function getKegiatanId(k) {
 // ─── Lookup helpers ───────────────────────────────────────────
 function cariPegawai(nip, pegawaiArray) {
   if (!nip || !pegawaiArray) return null;
-  const targetNip = String(nip).trim();
-  return pegawaiArray.find(p => getPegawaiNip(p) === targetNip) || null;
+  const target = String(nip).trim().toLowerCase();
+  return pegawaiArray.find(p => {
+    const pNip  = getPegawaiNip(p).toLowerCase();
+    const pName = getPegawaiName(p).toLowerCase();
+    return (pNip && pNip === target) || (pName && pName === target);
+  }) || null;
 }
 
 function cariMitra(idMitra, mitraArray) {
   if (!idMitra || !mitraArray) return null;
-  const targetId = String(idMitra).trim();
-  return mitraArray.find(m => getMitraId(m) === targetId || String(m.ID_Mitra || "").trim() === targetId) || null;
+  const target = String(idMitra).trim().toLowerCase();
+  return mitraArray.find(m => {
+    const mId   = getMitraId(m).toLowerCase();
+    const mNik  = String(m.NIK || "").trim().toLowerCase();
+    const mName = getMitraName(m).toLowerCase();
+    return (mId && mId === target) || (mNik && mNik === target) || (mName && mName === target);
+  }) || null;
 }
 
 function cariKegiatan(idKegiatan, kegiatanArray) {

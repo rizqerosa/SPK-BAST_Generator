@@ -70,23 +70,63 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const ppk      = cariPegawai(record.PPK,        pegawaiArr) || {};
 
   // Cek apakah PML dipilih dari Mitra atau Pegawai Organik
-  // isPmlMitra = true  → PML = Mitra Lapangan → template *-mitra.html
-  // isPmlMitra = false → PML = Pegawai Organik → template *-organik.html
   let isPmlMitra = false;
-  let pml        = cariPegawai(record.PML,        pegawaiArr);
-  if (!pml && record.PML) {
-    const m = cariMitra(record.PML, mitraArr);
-    if (m) {
-      isPmlMitra = true;
-      pml = {
-        Nama_Pegawai: getMitraName(m),
-        NIP: m.NIK || getMitraId(m),
-        NIK: m.NIK || getMitraId(m),
-        Jabatan: getMitraPosisi(m) || "Mitra Pemeriksa Lapangan"
+  let pmlObj     = null;
+
+  // Opsi A: Jika record.PML diisi & beda dari ID_Mitra
+  if (record.PML && String(record.PML).trim() !== String(record.ID_Mitra).trim()) {
+    const p = cariPegawai(record.PML, pegawaiArr);
+    if (p) {
+      isPmlMitra = false;
+      pmlObj = {
+        Nama_Pegawai: getPegawaiName(p),
+        NIP:          getPegawaiNip(p),
+        NIK:          getPegawaiNip(p),
+        Jabatan:      p.Jabatan || "Pegawai BPS",
       };
+    } else {
+      const m = cariMitra(record.PML, mitraArr);
+      if (m) {
+        isPmlMitra = true;
+        pmlObj = {
+          Nama_Pegawai: getMitraName(m),
+          NIP:          "",
+          NIK:          m.NIK || getMitraId(m),
+          Jabatan:      getMitraPosisi(m) || "Mitra Pemeriksa Lapangan",
+        };
+      }
     }
   }
-  pml = pml || {};
+
+  // Opsi B: Jika record.PML kosong (misalnya dokumen ini adalah dokumen PML itu sendiri),
+  // atau record.PML == record.ID_Mitra
+  if (!pmlObj) {
+    if (isPegawai) {
+      const p = cariPegawai(record.ID_Mitra, pegawaiArr);
+      if (p) {
+        isPmlMitra = false;
+        pmlObj = {
+          Nama_Pegawai: getPegawaiName(p),
+          NIP:          getPegawaiNip(p),
+          NIK:          getPegawaiNip(p),
+          Jabatan:      p.Jabatan || "Pegawai BPS",
+        };
+      }
+    } else {
+      const m = cariMitra(record.ID_Mitra, mitraArr);
+      if (m) {
+        isPmlMitra = true;
+        pmlObj = {
+          Nama_Pegawai: getMitraName(m),
+          NIP:          "",
+          NIK:          m.NIK || getMitraId(m),
+          Jabatan:      getMitraPosisi(m) || "Mitra Pemeriksa Lapangan",
+        };
+      }
+    }
+  }
+
+  const pml = pmlObj || {};
   const ketuaTim = cariPegawai(record.Ketua_Tim,  pegawaiArr) || {};
   const kepala   = cariPegawai(record["Kepala/PLH"], pegawaiArr) || {};
   const details  = getDetailByDokumen(detailArr, record.ID_Dokumen);
