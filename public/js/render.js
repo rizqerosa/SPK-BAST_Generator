@@ -40,6 +40,10 @@ function renderTabelLampiran(detailPekerjaanArray) {
  * Bangun objek data lengkap untuk satu record spkBast.
  * Menggabungkan semua lookup (mitra, pegawai, detailPekerjaan) jadi satu flat object
  * siap dipakai oleh renderTemplate().
+ *
+ * Logika mitra vs organik:
+ *   - isPmlMitra = true  → PML yang dipilih adalah Mitra Lapangan → pakai template *-mitra.html
+ *   - isPmlMitra = false → PML yang dipilih adalah Pegawai Organik BPS → pakai template *-organik.html
  */
 function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const isPegawai = (record.Jenis_Petugas || "").toLowerCase() === "pegawai";
@@ -59,6 +63,10 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   mitra = mitra || {};
 
   const ppk      = cariPegawai(record.PPK,        pegawaiArr) || {};
+
+  // Cek apakah PML dipilih dari Mitra atau Pegawai Organik
+  // isPmlMitra = true  → PML = Mitra Lapangan → template *-mitra.html
+  // isPmlMitra = false → PML = Pegawai Organik → template *-organik.html
   let isPmlMitra = false;
   let pml        = cariPegawai(record.PML,        pegawaiArr);
   if (!pml && record.PML) {
@@ -143,9 +151,15 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     // === Buku pedoman (ambil dari detail pertama) ===
     BUKU_PEDOMAN: details.length > 0 ? details[0].Buku_Pedoman : "",
     BEBAN_ANGGARAN: details.length > 0 ? details[0].Beban_Anggaran : "",
+
+    // === Nomor Kepka & Tanggal ===
+    NOMOR_KEPKA:  record.Nomor_Kepka || "",
+    TANGGAL_KEPKA: tKepka.tanggalFormat,
   };
 
   // BAST PPL-PML context
+  // isPmlMitra = true  → PML adalah Mitra Lapangan → template-bast-ppl-pml-mitra.html
+  // isPmlMitra = false → PML adalah Pegawai Organik → template-bast-ppl-pml-organik.html
   const bastPplPmlCtx = {
     ...spkCtx,
     NO_BAST_PPL_PML:          record.No_BAST_PPL_PML || "",
@@ -155,6 +169,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     BULAN_TERBILANG:          tBAST_PPL_PML.bulan,
     TAHUN_TERBILANG:          tBAST_PPL_PML.tahun,
     TANGGAL_BAST:             tBAST_PPL_PML.tanggalFormat,
+    TANGGAL_BAST_SM_PPK:      tBAST_PPL_PML.tanggalFormat,
     // BAST PPL-PML: Pihak Pertama = Mitra/PPL, Pihak Kedua = PML
     NAMA_PIHAK_PERTAMA:       mitra.Nama_Mitra || "",
     NIK_PIHAK_PERTAMA:        mitra.NIK || "",
@@ -199,6 +214,8 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   };
 
   // BAST PML-SM context
+  // isPmlMitra = true  → PML (Pihak Pertama) adalah Mitra Lapangan → template-bast-pml-sm-mitra.html (pakai NIK)
+  // isPmlMitra = false → PML (Pihak Pertama) adalah Pegawai Organik → template-bast-pml-sm-organik.html (pakai NIP)
   const bastPmlSmCtx = {
     ...bastPplSmCtx,
     NO_BAST_PML_SM:           record.No_BAST_PML_SM || "",
@@ -214,7 +231,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NIP_PIHAK_PERTAMA:        isPmlMitra ? "" : (pml.NIP || ""),
     JABATAN_PIHAK_PERTAMA:    pml.Jabatan || "",
     IS_PML_MITRA:             isPmlMitra,
-  };  };
+  };
 
   return { spkCtx, bastPplPmlCtx, bastPplSmCtx, bastPmlSmCtx, details, totalHonor, terbilangHonor };
 }
