@@ -8,389 +8,221 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/print.css">
   <style>
-    /* ── Preview page specific ── */
-    .preview-layout {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 20px;
-      align-items: start;
+    .preview-layout { display:grid; grid-template-columns:300px 1fr; gap:20px; align-items:start; }
+    .control-panel  { position:sticky; top:calc(var(--topbar-height) + 16px); }
+    .doc-info-card  {
+      background:linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-dark) 100%);
+      color:#fff; border-radius:var(--radius-lg); padding:20px;
+      margin-bottom:16px; box-shadow:var(--shadow-md);
     }
-
-    /* ── Control Panel (kiri) ── */
-    .control-panel {
-      position: sticky;
-      top: calc(var(--topbar-height) + 16px);
+    .doc-info-card .doc-id   { font-size:.7rem; opacity:.6; font-family:'Courier New',monospace; margin-bottom:6px; }
+    .doc-info-card .doc-name { font-family:'Plus Jakarta Sans',sans-serif; font-size:.95rem; font-weight:700; line-height:1.3; margin-bottom:10px; }
+    .doc-info-card .doc-mitra { font-size:.8rem; opacity:.8; }
+    .doc-type-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+    .doc-chip { padding:3px 10px; border-radius:20px; font-size:.68rem; font-weight:700; letter-spacing:.3px; }
+    .chip-mitra   { background:rgba(251,191,36,.3);  color:#fef9c3; border:1px solid rgba(251,191,36,.5); }
+    .chip-organik { background:rgba(167,243,208,.25); color:#d1fae5; border:1px solid rgba(167,243,208,.4); }
+    .chip-ppl     { background:rgba(147,197,253,.25); color:#dbeafe; border:1px solid rgba(147,197,253,.4); }
+    .chip-pml     { background:rgba(196,181,253,.25); color:#ede9fe; border:1px solid rgba(196,181,253,.4); }
+    .chip-sm      { background:rgba(252,165,165,.25); color:#fee2e2; border:1px solid rgba(252,165,165,.4); }
+    .tab-panel { background:#fff; border-radius:var(--radius-lg); border:1px solid var(--gray-100); box-shadow:var(--shadow-sm); overflow:hidden; }
+    .tab-panel-header { background:var(--gray-50); padding:12px 16px; font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--gray-200); }
+    .tab-list { padding:8px; display:flex; flex-direction:column; gap:4px; }
+    .tab-item {
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      border-radius:var(--radius-sm); cursor:pointer; border:none; background:transparent;
+      width:100%; text-align:left; font-family:'Inter',sans-serif;
+      font-size:.83rem; font-weight:500; color:var(--gray-600); transition:all var(--transition);
     }
-
-    .doc-info-card {
-      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-dark) 100%);
-      color: #fff;
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: var(--shadow-md);
-    }
-
-    .doc-info-card .doc-id {
-      font-size: .7rem;
-      opacity: .6;
-      font-family: 'Courier New', monospace;
-      margin-bottom: 6px;
-    }
-
-    .doc-info-card .doc-name {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: .95rem;
-      font-weight: 700;
-      line-height: 1.3;
-      margin-bottom: 10px;
-    }
-
-    .doc-info-card .doc-mitra {
-      font-size: .8rem;
-      opacity: .8;
-    }
-
-    .tab-panel {
-      background: #fff;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--gray-100);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-    }
-
-    .tab-panel .tab-panel-header {
-      background: var(--gray-50);
-      padding: 12px 16px;
-      font-size: .75rem;
-      font-weight: 700;
-      color: var(--gray-500);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      border-bottom: 1px solid var(--gray-200);
-    }
-
-    .tab-panel .tab-list {
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .tab-panel .tab-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      font-family: 'Inter', sans-serif;
-      font-size: .83rem;
-      font-weight: 500;
-      color: var(--gray-600);
-      transition: all var(--transition);
-    }
-
-    .tab-panel .tab-item:hover {
-      background: var(--brand-light);
-      color: var(--brand-primary);
-    }
-
-    .tab-panel .tab-item.active {
-      background: var(--brand-primary);
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .tab-panel .tab-item .tab-icon { font-size: 1rem; }
-
-    .tab-panel .tab-item .tab-desc {
-      font-size: .7rem;
-      opacity: .7;
-    }
-
-    .export-section {
-      background: #fff;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--gray-100);
-      box-shadow: var(--shadow-sm);
-      padding: 16px;
-      margin-top: 16px;
-    }
-
-    .export-section h3 {
-      font-size: .8rem;
-      font-weight: 700;
-      color: var(--gray-500);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      margin-bottom: 10px;
-    }
-
-    /* ── Dokumen preview area ── */
-    #preview-doc-content {
-      min-height: 600px;
-    }
-
-    /* ── Zoom controls ── */
-    .zoom-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 4px 8px;
-    }
-
-    .zoom-btn {
-      width: 28px; height: 28px;
-      border: none;
-      background: var(--gray-100);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: .85rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: background var(--transition);
-    }
-
-    .zoom-btn:hover { background: var(--gray-200); }
-
-    #zoom-level {
-      font-size: .78rem;
-      font-weight: 600;
-      color: var(--gray-600);
-      min-width: 36px;
-      text-align: center;
-    }
-
-    @media (max-width: 900px) {
-      .preview-layout {
-        grid-template-columns: 1fr;
-      }
-      .control-panel { position: static; }
-    }
+    .tab-item:hover  { background:var(--brand-light); color:var(--brand-primary); }
+    .tab-item.active { background:var(--brand-primary); color:#fff; font-weight:600; }
+    .tab-icon  { font-size:1rem; flex-shrink:0; }
+    .tab-info  { flex:1; }
+    .tab-title { font-size:.83rem; font-weight:600; }
+    .tab-desc  { font-size:.7rem; opacity:.7; margin-top:1px; }
+    .tab-badge { font-size:.62rem; font-weight:700; padding:2px 7px; border-radius:10px; white-space:nowrap; flex-shrink:0; }
+    .badge-mitra   { background:#fef3c7; color:#92400e; }
+    .badge-organik { background:#d1fae5; color:#065f46; }
+    .tab-item.active .tab-badge { background:rgba(255,255,255,.25); color:#fff; }
+    .export-section { background:#fff; border-radius:var(--radius-lg); border:1px solid var(--gray-100); box-shadow:var(--shadow-sm); padding:16px; margin-top:16px; }
+    .export-section h3 { font-size:.8rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+    #preview-doc-content { min-height:600px; }
+    .zoom-controls { display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--gray-200); border-radius:var(--radius-sm); padding:4px 8px; }
+    .zoom-btn { width:28px; height:28px; border:none; background:var(--gray-100); border-radius:4px; cursor:pointer; font-size:.85rem; display:flex; align-items:center; justify-content:center; transition:background var(--transition); }
+    .zoom-btn:hover { background:var(--gray-200); }
+    #zoom-level { font-size:.78rem; font-weight:600; color:var(--gray-600); min-width:36px; text-align:center; }
+    @media (max-width:900px) { .preview-layout { grid-template-columns:1fr; } .control-panel { position:static; } }
   </style>
 </head>
 <body>
 <div class="app-layout">
-
-  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
   <aside class="sidebar" id="app-sidebar"></aside>
-
-  <!-- ─── MAIN ─── -->
   <div class="main-content">
-
-    <!-- Topbar -->
     <header class="topbar">
       <div class="topbar-title">
         <span id="preview-doc-title">Preview Dokumen</span>
-        <small>
-          <span id="preview-mitra-name">—</span> &nbsp;|&nbsp;
-          <span id="preview-status" class="badge badge-warning">Belum</span>
-        </small>
+        <small><span id="preview-mitra-name">&#8212;</span> &nbsp;|&nbsp; <span id="preview-status" class="badge badge-warning">Belum</span></small>
       </div>
       <div class="topbar-actions">
-        <!-- Zoom -->
         <div class="zoom-controls">
-          <button class="zoom-btn" onclick="changeZoom(-10)">−</button>
+          <button class="zoom-btn" onclick="changeZoom(-10)">&#8722;</button>
           <span id="zoom-level">100%</span>
           <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
         </div>
-        <a href="form.html" id="topbar-btn-edit" class="btn btn-outline btn-sm">✏️ Edit Isian</a>
-        <a href="dokumen.html" class="btn btn-outline btn-sm">📁 Daftar Dokumen</a>
+        <a href="form.html" id="topbar-btn-edit" class="btn btn-outline btn-sm">&#9999;&#65039; Edit Isian</a>
+        <a href="dokumen.html" class="btn btn-outline btn-sm">&#128193; Daftar Dokumen</a>
       </div>
     </header>
-
     <div class="page-body" style="max-width:1280px;">
       <div class="preview-layout">
-
-        <!-- ─── CONTROL PANEL (kiri) ─── -->
         <div class="control-panel">
-
-          <!-- Info dokumen -->
           <div class="doc-info-card">
-            <div class="doc-id" id="preview-doc-id">—</div>
+            <div class="doc-id" id="preview-doc-id">&#8212;</div>
             <div class="doc-name" id="preview-doc-title-2">Memuat...</div>
-            <div class="doc-mitra">👤 <span id="preview-mitra-name-2">—</span></div>
+            <div class="doc-mitra">&#128100; <span id="preview-mitra-name-2">&#8212;</span></div>
+            <div class="doc-type-chips" id="doc-type-chips"></div>
           </div>
-
-          <!-- Tab list -->
           <div class="tab-panel">
-            <div class="tab-panel-header">📂 Pilih Dokumen</div>
-            <div class="tab-list">
-              <button class="tab-item active" data-tab="spk" onclick="switchTab('spk', this)">
-                <span class="tab-icon">📝</span>
-                <div>
-                  <div>SPK / Perjanjian Kerja</div>
-                  <div class="tab-desc">+ Lampiran Uraian Tugas</div>
-                </div>
-              </button>
-              <button class="tab-item" data-tab="ppl-pml" onclick="switchTab('ppl-pml', this)">
-                <span class="tab-icon">📋</span>
-                <div>
-                  <div>BAST PPL → PML</div>
-                  <div class="tab-desc">Mitra serahkan ke PML</div>
-                </div>
-              </button>
-              <button class="tab-item" data-tab="ppl-sm" onclick="switchTab('ppl-sm', this)">
-                <span class="tab-icon">📋</span>
-                <div>
-                  <div>BAST PPL → SM</div>
-                  <div class="tab-desc">Mitra serahkan ke Ketua Tim</div>
-                </div>
-              </button>
-              <button class="tab-item" data-tab="pml-sm" onclick="switchTab('pml-sm', this)">
-                <span class="tab-icon">📋</span>
-                <div>
-                  <div>BAST PML → SM</div>
-                  <div class="tab-desc">PML serahkan ke Ketua Tim</div>
-                </div>
-              </button>
-              <button class="tab-item" data-tab="sm-ppk" onclick="switchTab('sm-ppk', this)">
-                <span class="tab-icon">📋</span>
-                <div>
-                  <div>BAST SM → PPK</div>
-                  <div class="tab-desc">Closing administratif</div>
-                </div>
-              </button>
+            <div class="tab-panel-header">&#128194; Pilih Dokumen</div>
+            <div class="tab-list" id="tab-list">
+              <div style="padding:16px; font-size:.8rem; color:var(--gray-400);">Memuat...</div>
             </div>
           </div>
-
-          <!-- Export section -->
           <div class="export-section">
-            <h3>📥 Export PDF</h3>
-            <button class="btn btn-success w-full mb-8" id="btn-export-pdf"
-                    onclick="exportCurrentPdf()">
-              ⬇ Download PDF Dokumen Ini
-            </button>
-            <button class="btn btn-outline w-full btn-sm" onclick="window.print()">
-              🖨️ Print
-            </button>
-            <p class="text-xs text-muted mt-8">
-              Export menggunakan html2pdf.js. Pastikan popup tidak diblokir.
-            </p>
+            <h3>&#128229; Export PDF</h3>
+            <button class="btn btn-success w-full mb-8" onclick="exportCurrentPdf()">&#11015; Download PDF Dokumen Ini</button>
+            <button class="btn btn-outline w-full btn-sm" onclick="window.print()">&#128424;&#65039; Print</button>
+            <p class="text-xs text-muted mt-8">Export menggunakan html2pdf.js.</p>
           </div>
-
-        </div><!-- /control-panel -->
-
-        <!-- ─── DOKUMEN PREVIEW (kanan) ─── -->
+        </div>
         <div>
-          <!-- PPK Status Banner -->
-          <div id="ppk-status-banner" style="display:none; padding:14px 18px; border-radius:var(--radius-md); border:1px solid #fde68a; margin-bottom:14px; align-items:center; gap:12px;">
-            <!-- Rendered via JS -->
-          </div>
-
+          <div id="ppk-status-banner" style="display:none; padding:14px 18px; border-radius:var(--radius-md); border:1px solid #fde68a; margin-bottom:14px; align-items:center; gap:12px;"></div>
           <div class="doc-preview-wrapper" id="preview-container">
             <div id="preview-doc-content">
-              <div class="empty-state">
-                <div class="empty-icon">📄</div>
-                <p>Memuat dokumen...</p>
-              </div>
+              <div class="empty-state"><div class="empty-icon">&#128196;</div><p>Memuat dokumen...</p></div>
             </div>
           </div>
         </div>
-
-      </div><!-- /preview-layout -->
-    </div><!-- /page-body -->
-  </div><!-- /main-content -->
-</div><!-- /app-layout -->
-
-<!-- Toast & Loading -->
-<div id="toast-container"></div>
-<div id="loading-overlay" class="loading-overlay">
-  <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
 </div>
-
-<!-- html2pdf.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-<script src="js/config.js?v=4.0"></script>
-<script src="js/data.js?v=4.0"></script>
-<script src="js/auth.js?v=4.0"></script>
-<script src="js/utils.js?v=4.0"></script>
-<script src="js/render.js?v=4.0"></script>
-<script src="js/sidebar.js?v=4.0"></script>
-<script src="js/app.js?v=4.0"></script>
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/config.js?v=4.2"></script>
+<script src="js/data.js?v=4.2"></script>
+<script src="js/auth.js?v=4.2"></script>
+<script src="js/utils.js?v=4.2"></script>
+<script src="js/render.js?v=4.2"></script>
+<script src="js/sidebar.js?v=4.2"></script>
+<script src="js/app.js?v=4.2"></script>
 <script>
-  let _previewRecord = null;
+  let _previewRecord  = null;
   let _previewDetails = [];
-  let _previewCtx = null;
-  let _currentTab = "spk";
-  let _zoomLevel = 100;
+  let _previewCtx     = null;
+  let _currentTab     = "spk";
+  let _zoomLevel      = 100;
+  let _isPmlMitra     = false;
+
+  function detectPeran(record) {
+    if (!record) return "ppl";
+    if (record.No_BAST_SM_PPK && !record.ID_Mitra) return "sm_ppk";
+    if (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) return "pml";
+    if (record.No_BAST_PPL_PML || record.No_BAST_PPL_SM) return "ppl";
+    const stored = sessionStorage.getItem("preview_target_tab") || "";
+    if (stored === "sm-ppk") return "sm_ppk";
+    if (stored === "pml-sm") return "pml";
+    return "ppl";
+  }
+
+  function getTabConfig(record, isPmlMitra) {
+    const peran      = detectPeran(record);
+    const jenisLabel = isPmlMitra ? "Mitra" : "Organik";
+    const jenisClass = isPmlMitra ? "badge-mitra" : "badge-organik";
+    const tabs = [];
+    if (peran === "sm_ppk") {
+      tabs.push({ key:"spk",    icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      tabs.push({ key:"sm-ppk", icon:"🏛️", title:"BAST SM → PPK",          desc:"Closing administratif",       badge:null });
+    } else if (peran === "pml") {
+      tabs.push({ key:"spk",    icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      tabs.push({ key:"pml-sm", icon:"📋", title:"BAST PML → SM",
+        desc: isPmlMitra ? "PML Mitra serahkan ke Ketua Tim" : "PML Organik serahkan ke Ketua Tim",
+        badge:jenisLabel, badgeClass:jenisClass });
+    } else {
+      tabs.push({ key:"spk",     icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      tabs.push({ key:"ppl-pml", icon:"📋", title:"BAST PPL → PML",
+        desc: isPmlMitra ? "Mitra PPL serahkan ke PML Mitra" : "Mitra PPL serahkan ke PML Organik",
+        badge:jenisLabel, badgeClass:jenisClass });
+      tabs.push({ key:"ppl-sm",  icon:"📋", title:"BAST PPL → SM", desc:"Mitra PPL serahkan ke Ketua Tim / SM", badge:null });
+    }
+    return tabs;
+  }
+
+  function buildTabList(record, isPmlMitra, activeKey) {
+    const tabs = getTabConfig(record, isPmlMitra);
+    const container = document.getElementById("tab-list");
+    if (!container) return;
+    container.innerHTML = tabs.map(t =>
+      `<button class="tab-item ${t.key === activeKey ? 'active' : ''}" data-tab="${t.key}" onclick="switchTab('${t.key}', this)">
+        <span class="tab-icon">${t.icon}</span>
+        <div class="tab-info">
+          <div class="tab-title">${t.title}</div>
+          <div class="tab-desc">${t.desc}</div>
+        </div>
+        ${t.badge ? `<span class="tab-badge ${t.badgeClass}">${t.badge}</span>` : ""}
+      </button>`
+    ).join("");
+  }
+
+  function buildTypeChips(record, isPmlMitra) {
+    const peran = detectPeran(record);
+    const chips = [];
+    if (peran === "ppl")      chips.push(`<span class="doc-chip chip-ppl">PPL</span>`);
+    else if (peran === "pml") chips.push(`<span class="doc-chip chip-pml">PML</span>`);
+    else                      chips.push(`<span class="doc-chip chip-sm">SM→PPK</span>`);
+    if (peran !== "sm_ppk") {
+      chips.push(isPmlMitra
+        ? `<span class="doc-chip chip-mitra">PML Mitra</span>`
+        : `<span class="doc-chip chip-organik">PML Organik</span>`);
+    }
+    const el = document.getElementById("doc-type-chips");
+    if (el) el.innerHTML = chips.join("");
+  }
 
   function renderPpkStatusBanner(record) {
-    const vStatus = String(record?.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
-    const bannerBox = document.getElementById("ppk-status-banner");
-    if (!bannerBox) return;
-
-    if (vStatus === "disetujui" || vStatus === "approved") {
-      bannerBox.style.display = "flex";
-      bannerBox.style.background = "#dcfce7";
-      bannerBox.style.borderColor = "#bbf7d0";
-      bannerBox.style.color = "#166534";
-      bannerBox.innerHTML = `
-        <span style="font-size:1.2rem;">🟢</span>
-        <div>
-          <strong>DISETUJUI PPK</strong>
-          <div style="font-size:0.8rem; opacity:0.9;">Dokumen ini telah diverifikasi &amp; disetujui resmi oleh PPK${record.PPK_Verifikator ? ' (' + record.PPK_Verifikator + ')' : ''}. Dokumen siap dipublikasikan/diunduh.</div>
-        </div>
-      `;
-    } else if (vStatus === "ditolak" || vStatus === "rejected") {
-      bannerBox.style.display = "flex";
-      bannerBox.style.background = "#fee2e2";
-      bannerBox.style.borderColor = "#fca5a5";
-      bannerBox.style.color = "#991b1b";
-      bannerBox.innerHTML = `
-        <span style="font-size:1.2rem;">🔴</span>
-        <div>
-          <strong>DITOLAK / REVISI PPK</strong>
-          <div style="font-size:0.8rem; margin-top:2px;">Catatan PPK: <em>"${record.Catatan_Verifikasi_PPK || 'Harap periksa kembali rincian data dokumen'}"</em></div>
-        </div>
-      `;
+    const v = String(record?.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+    const box = document.getElementById("ppk-status-banner");
+    if (!box) return;
+    const base = "display:flex; padding:14px 18px; border-radius:var(--radius-md); border:1px solid; margin-bottom:14px; align-items:center; gap:12px;";
+    if (v === "disetujui" || v === "approved") {
+      box.style.cssText = base + "background:#dcfce7; border-color:#bbf7d0; color:#166534;";
+      box.innerHTML = `<span style="font-size:1.2rem;">🟢</span><div><strong>DISETUJUI PPK</strong><div style="font-size:.8rem;opacity:.9;">Dokumen telah disetujui resmi oleh PPK.</div></div>`;
+    } else if (v === "ditolak" || v === "rejected") {
+      box.style.cssText = base + "background:#fee2e2; border-color:#fca5a5; color:#991b1b;";
+      box.innerHTML = `<span style="font-size:1.2rem;">🔴</span><div><strong>DITOLAK / REVISI PPK</strong><div style="font-size:.8rem;margin-top:2px;">Catatan: <em>"${record.Catatan_Verifikasi_PPK || 'Harap periksa kembali data dokumen'}"</em></div></div>`;
     } else {
-      bannerBox.style.display = "flex";
-      bannerBox.style.background = "#fef3c7";
-      bannerBox.style.borderColor = "#fde68a";
-      bannerBox.style.color = "#92400e";
-      bannerBox.innerHTML = `
-        <span style="font-size:1.2rem;">🟡</span>
-        <div>
-          <strong>MENUNGGU VERIFIKASI PPK</strong>
-          <div style="font-size:0.8rem;">Dokumen ini masih dalam tahap peninjauan oleh Pejabat Pembuat Komitmen (PPK).</div>
-        </div>
-      `;
+      box.style.cssText = base + "background:#fef3c7; border-color:#fde68a; color:#92400e;";
+      box.innerHTML = `<span style="font-size:1.2rem;">🟡</span><div><strong>MENUNGGU VERIFIKASI PPK</strong><div style="font-size:.8rem;">Dokumen masih dalam peninjauan PPK.</div></div>`;
     }
   }
 
-  // ── Init: async, fetch dari Google Sheets via AppState ──
   document.addEventListener("DOMContentLoaded", async () => {
     setLoading(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const docId = urlParams.get("id");
-
       let mitraArr, pegawaiArr;
 
       if (docId) {
-        // Load dari Sheets berdasar ID_Dokumen
         const [spkBastData, detailData, mitraData, pegawaiData] = await Promise.all([
-          getSpkBast(),
-          getDetailPekerjaan(),
-          getMitra(),
-          getPegawai(),
+          getSpkBast(), getDetailPekerjaan(), getMitra(), getPegawai(),
         ]);
         _previewRecord  = spkBastData.find(r => r.ID_Dokumen === docId) || null;
         _previewDetails = detailData.filter(d => d.ID_Dokumen === docId);
-        mitraArr        = mitraData;
-        pegawaiArr      = pegawaiData;
+        mitraArr  = mitraData;
+        pegawaiArr = pegawaiData;
       } else {
-        // Load dari sessionStorage (form baru)
         const rStr = sessionStorage.getItem("preview_record");
         const dStr = sessionStorage.getItem("preview_details");
         const mStr = sessionStorage.getItem("preview_mitra");
@@ -400,186 +232,142 @@
           _previewDetails = JSON.parse(dStr || "[]");
           _previewDetails = _previewDetails.map(d => ({ ...d, ID_Dokumen: _previewRecord.ID_Dokumen }));
         }
-        if (mStr && pStr) {
-          mitraArr   = JSON.parse(mStr);
-          pegawaiArr = JSON.parse(pStr);
-        } else {
-          [mitraArr, pegawaiArr] = await Promise.all([getMitra(), getPegawai()]);
-        }
+        if (mStr && pStr) { mitraArr = JSON.parse(mStr); pegawaiArr = JSON.parse(pStr); }
+        else [mitraArr, pegawaiArr] = await Promise.all([getMitra(), getPegawai()]);
       }
 
-      // Override Nomor SPK & Tanggal SPK dari URL jika diinput dari modal ekspor
       const customNoSpk  = urlParams.get("no_spk");
       const customTglSpk = urlParams.get("tgl_spk");
       if (_previewRecord) {
-        if (customNoSpk) {
-          _previewRecord.Nomor_SPK = customNoSpk;
-          _previewRecord.No_SPK    = customNoSpk;
-        }
-        if (customTglSpk) {
-          _previewRecord["Tanggal SPK"] = customTglSpk;
-          _previewRecord.Tanggal_SPK    = customTglSpk;
-        }
+        if (customNoSpk)  { _previewRecord.Nomor_SPK = customNoSpk; _previewRecord.No_SPK = customNoSpk; }
+        if (customTglSpk) { _previewRecord["Tanggal SPK"] = customTglSpk; _previewRecord.Tanggal_SPK = customTglSpk; }
       }
 
-      // Simpan ke AppState agar fungsi lain bisa akses
       AppState.mitra   = mitraArr   || [];
       AppState.pegawai = pegawaiArr || [];
 
       if (!_previewRecord) {
         document.getElementById("preview-doc-content").innerHTML =
-          `<div class="empty-state"><div class="empty-icon">❌</div>
-           <p>Dokumen tidak ditemukan.</p>
-           <a href="form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
+          `<div class="empty-state"><div class="empty-icon">❌</div><p>Dokumen tidak ditemukan.</p><a href="form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
         return;
       }
 
-      // Bangun context
-      _previewCtx = buildDataContext(_previewRecord, {
-        mitraArr,
-        pegawaiArr,
-        detailArr: _previewDetails,
-      });
+      _previewCtx = buildDataContext(_previewRecord, { mitraArr, pegawaiArr, detailArr: _previewDetails });
+      _isPmlMitra = !!(_previewCtx.bastPplPmlCtx?.IS_PML_MITRA || _previewCtx.bastPmlSmCtx?.IS_PML_MITRA);
 
-      // Update info panel
       const m = cariMitra(_previewRecord.ID_Mitra, mitraArr);
+      const petugasName = m ? getMitraName(m) : (() => {
+        const p = cariPegawai(_previewRecord.ID_Mitra, pegawaiArr);
+        return p ? getPegawaiName(p) : "—";
+      })();
+
       document.getElementById("preview-doc-title").textContent   = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen;
-      document.getElementById("preview-doc-title-2").textContent  = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen;
-      document.getElementById("preview-doc-id").textContent       = _previewRecord.ID_Dokumen;
-      document.getElementById("preview-mitra-name").textContent   = m ? m.Nama_Mitra : "—";
-      document.getElementById("preview-mitra-name-2").textContent  = m ? m.Nama_Mitra : "—";
+      document.getElementById("preview-doc-title-2").textContent = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen;
+      document.getElementById("preview-doc-id").textContent      = _previewRecord.ID_Dokumen;
+      document.getElementById("preview-mitra-name").textContent  = petugasName;
+      document.getElementById("preview-mitra-name-2").textContent= petugasName;
 
       const elStatus = document.getElementById("preview-status");
       elStatus.textContent = _previewRecord.Status_Generate_SPK || "Belum";
-      elStatus.className = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning"}`;
+      elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning"}`;
 
       const btnEdit = document.getElementById("topbar-btn-edit");
-      if (btnEdit && _previewRecord.ID_Dokumen) {
-        btnEdit.href = `form.html?id=${encodeURIComponent(_previewRecord.ID_Dokumen)}`;
-      }
+      if (btnEdit && _previewRecord.ID_Dokumen) btnEdit.href = `form.html?id=${encodeURIComponent(_previewRecord.ID_Dokumen)}`;
 
       renderPpkStatusBanner(_previewRecord);
-
-      // Fetch bastSmPpk di background
+      buildTypeChips(_previewRecord, _isPmlMitra);
       getBastSmPpk().then(data => { AppState.bastSmPpk = data; });
 
-      // Render tab yang dipilih
       const defaultTab = urlParams.get("tab") || sessionStorage.getItem("preview_target_tab") || "spk";
+      buildTabList(_previewRecord, _isPmlMitra, defaultTab);
       await switchTab(defaultTab, document.querySelector(`.tab-item[data-tab="${defaultTab}"]`));
 
     } catch (err) {
       console.error("Preview init error:", err);
       document.getElementById("preview-doc-content").innerHTML =
-        `<div class="empty-state"><div class="empty-icon">❌</div>
-         <p>Gagal memuat dokumen.<br><small>${err.message}</small></p></div>`;
+        `<div class="empty-state"><div class="empty-icon">❌</div><p>Gagal memuat dokumen.<br><small>${err.message}</small></p></div>`;
     } finally {
       setLoading(false);
     }
   });
 
-  // ── Tab switching ──
   async function switchTab(tabKey, btnEl) {
     _currentTab = tabKey;
-
     document.querySelectorAll(".tab-item").forEach(b => b.classList.remove("active"));
     if (btnEl) btnEl.classList.add("active");
-
     if (!_previewRecord || !_previewCtx) return;
 
     setLoading(true);
-
     const content = document.getElementById("preview-doc-content");
-
-    if (tabKey === "sm-ppk") {
-      // Fetch bastSmPpk jika belum ada
-      let bastArr = AppState.bastSmPpk;
-      if (!bastArr || bastArr.length === 0) {
-        bastArr = await getBastSmPpk();
-        AppState.bastSmPpk = bastArr;
-      }
-      let bastRecord = bastArr.find(b =>
-        String(b.Bulan) === String(_previewRecord.Bulan) &&
-        String(b.Tahun) === String(_previewRecord.Tahun)
-      );
-      if (!bastRecord) {
-        bastRecord = {
-          Judul_Pekerjaan_Dokumen: _previewRecord.Judul_Pekerjaan_Dokumen,
-          No_BAST_SM_PPK:          `BAST-SM-PPK/${_previewRecord.No_SPK || _previewRecord.ID_Dokumen}`,
-          Uraian_Tugas:            _previewRecord.Judul_Pekerjaan_Dokumen,
-          PPK:                     _previewRecord.PPK,
-          Ketua_Tim:               _previewRecord.Ketua_Tim,
-          Tanggal_BAST_SM_PPK:     _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai,
-          Total_Honor:             _previewRecord.Total_Honor,
-        };
-      }
-      const smPpkCtx = buildBastSmPpkContext(bastRecord, AppState.pegawai);
-      const tpl = await loadTemplate("template-bast-sm-ppk.html");
-      content.innerHTML = renderTemplate(tpl, smPpkCtx);
-      setLoading(false);
-      return;
-    }
-
-    const templateMap = {
-      "spk":     { tpl: "template-spk.html",          ctx: _previewCtx.spkCtx },
-      "ppl-pml": { tpl: "template-bast-ppl-pml.html", ctx: _previewCtx.bastPplPmlCtx },
-      "ppl-sm":  { tpl: "template-bast-ppl-sm.html",  ctx: _previewCtx.bastPplSmCtx  },
-      "pml-sm":  { tpl: "template-bast-pml-sm.html",  ctx: _previewCtx.bastPmlSmCtx  },
-    };
-
-    const m = templateMap[tabKey];
-    if (!m) { setLoading(false); return; }
-
     try {
-      const tpl = await loadTemplate(m.tpl);
-      content.innerHTML = renderTemplate(tpl, m.ctx);
+      if (tabKey === "sm-ppk") {
+        let bastArr = AppState.bastSmPpk;
+        if (!bastArr || bastArr.length === 0) { bastArr = await getBastSmPpk(); AppState.bastSmPpk = bastArr; }
+        let bastRec = bastArr.find(b => String(b.Bulan) === String(_previewRecord.Bulan) && String(b.Tahun) === String(_previewRecord.Tahun));
+        if (!bastRec) {
+          bastRec = {
+            Judul_Pekerjaan_Dokumen: _previewRecord.Judul_Pekerjaan_Dokumen,
+            No_BAST_SM_PPK:  _previewRecord.No_BAST_SM_PPK || ("BAST-SM-PPK/" + (_previewRecord.No_SPK || _previewRecord.ID_Dokumen)),
+            Uraian_Tugas:    _previewRecord.Judul_Pekerjaan_Dokumen,
+            PPK:             _previewRecord.PPK,
+            Ketua_Tim:       _previewRecord.Ketua_Tim,
+            Tanggal_BAST_SM_PPK: _previewRecord.Tanggal_BAST_SM_PPK || _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai,
+            Total_Honor:     _previewRecord.Total_Honor,
+          };
+        }
+        const smCtx = buildBastSmPpkContext(bastRec, AppState.pegawai);
+        const tpl   = await loadTemplate("template-bast-sm-ppk.html");
+        content.innerHTML = renderTemplate(tpl, smCtx);
+        setLoading(false);
+        return;
+      }
+
+      const tplMap = {
+        "spk":     { tpl: "template-spk.html",                  ctx: _previewCtx.spkCtx },
+        "ppl-sm":  { tpl: "template-bast-ppl-sm.html",          ctx: _previewCtx.bastPplSmCtx },
+        "ppl-pml": {
+          tpl: _isPmlMitra ? "template-bast-ppl-pml-mitra.html" : "template-bast-ppl-pml-organik.html",
+          ctx: _previewCtx.bastPplPmlCtx,
+        },
+        "pml-sm": {
+          tpl: _isPmlMitra ? "template-bast-pml-sm-mitra.html" : "template-bast-pml-sm-organik.html",
+          ctx: _previewCtx.bastPmlSmCtx,
+        },
+      };
+
+      const entry = tplMap[tabKey];
+      if (!entry) { setLoading(false); return; }
+      const tpl = await loadTemplate(entry.tpl);
+      content.innerHTML = renderTemplate(tpl, entry.ctx);
     } catch(e) {
       content.innerHTML = `<div class="alert alert-danger">Gagal memuat template: ${e.message}</div>`;
     }
     setLoading(false);
   }
 
-  // ── Export PDF ──
   function exportCurrentPdf() {
-    const content = document.getElementById("preview-doc-content");
-    if (!window.html2pdf) {
-      showToast("html2pdf belum dimuat", "danger");
-      return;
-    }
-
-    const tabLabels = {
-      spk: "SPK", "ppl-pml": "BAST-PPL-PML",
-      "ppl-sm": "BAST-PPL-SM", "pml-sm": "BAST-PML-SM", "sm-ppk": "BAST-SM-PPK"
-    };
-
-    const docId = _previewRecord?.ID_Dokumen || "DOK";
-    const filename = `${docId}_${tabLabels[_currentTab] || _currentTab}.pdf`;
-
+    if (!window.html2pdf) { showToast("html2pdf belum dimuat", "danger"); return; }
+    const tabLabels = { spk:"SPK", "ppl-pml":"BAST-PPL-PML", "ppl-sm":"BAST-PPL-SM", "pml-sm":"BAST-PML-SM", "sm-ppk":"BAST-SM-PPK" };
+    const docId    = _previewRecord?.ID_Dokumen || "DOK";
+    const filename = docId + "_" + (tabLabels[_currentTab] || _currentTab) + ".pdf";
+    const content  = document.getElementById("preview-doc-content");
     const opt = {
-      margin:      [0, 0, 0, 0],
-      filename:    filename,
-      image:       { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
-      jsPDF:       { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak:   { mode: ["css", "avoid-all"], before: ".doc-page" },
+      margin:[0,0,0,0], filename,
+      image:{ type:"jpeg", quality:0.98 },
+      html2canvas:{ scale:2, useCORS:true, logging:false, scrollY:0 },
+      jsPDF:{ unit:"mm", format:"a4", orientation:"portrait" },
+      pagebreak:{ mode:["css","avoid-all"], before:".doc-page" },
     };
-
     setLoading(true);
     html2pdf().set(opt).from(content).save()
-      .then(() => {
-        setLoading(false);
-        showToast(`PDF "${filename}" berhasil diunduh`, "success");
-      })
-      .catch(err => {
-        setLoading(false);
-        showToast("Gagal export PDF: " + err.message, "danger");
-      });
+      .then(() => { setLoading(false); showToast('PDF "' + filename + '" berhasil diunduh', "success"); })
+      .catch(err => { setLoading(false); showToast("Gagal export PDF: " + err.message, "danger"); });
   }
 
-  // ── Zoom ──
   function changeZoom(delta) {
     _zoomLevel = Math.max(50, Math.min(150, _zoomLevel + delta));
     const content = document.getElementById("preview-doc-content");
-    content.style.transform = `scale(${_zoomLevel / 100})`;
+    content.style.transform = "scale(" + (_zoomLevel / 100) + ")";
     content.style.transformOrigin = "top center";
     document.getElementById("zoom-level").textContent = _zoomLevel + "%";
   }
