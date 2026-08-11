@@ -62,17 +62,38 @@ const _NAMA_BULAN = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
  */
 function tanggalTerbilang(tanggalISO) {
   if (!tanggalISO) return { hari: "-", tanggal: "-", bulan: "-", tahun: "-", tanggalFormat: "-" };
-  const [y, m, d] = tanggalISO.split("-").map(Number);
-  const dt   = new Date(y, m - 1, d);
-  const hari = _NAMA_HARI[dt.getDay()];
+
+  // Normalisasi: ambil hanya bagian tanggal YYYY-MM-DD, abaikan waktu / spasi
+  let str = String(tanggalISO).trim();
+  // Handle format ISO dengan waktu: "2026-08-05T00:00:00" → "2026-08-05"
+  if (str.includes("T")) str = str.split("T")[0];
+  // Handle format dd/mm/yyyy (dari beberapa sumber Sheets)
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+    const [dd2, mm2, yyyy2] = str.split("/").map(Number);
+    str = `${yyyy2}-${String(mm2).padStart(2,"0")}-${String(dd2).padStart(2,"0")}`;
+  }
+
+  const parts = str.split("-").map(Number);
+  if (parts.length < 3 || parts.some(isNaN)) {
+    console.warn("[tanggalTerbilang] Format tanggal tidak dikenali:", tanggalISO);
+    return { hari: "-", tanggal: "-", bulan: "-", tahun: "-", tanggalFormat: String(tanggalISO) };
+  }
+
+  const [y, m, d] = parts;
+  if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) {
+    return { hari: "-", tanggal: "-", bulan: "-", tahun: "-", tanggalFormat: String(tanggalISO) };
+  }
+
+  const dt    = new Date(y, m - 1, d);
+  const hari  = _NAMA_HARI[dt.getDay()];
   const bulan = _NAMA_BULAN[m];
-  const dd   = String(d).padStart(2, "0");
-  const mm   = String(m).padStart(2, "0");
+  const dd    = String(d).padStart(2, "0");
+  const mm    = String(m).padStart(2, "0");
   return {
     hari,
-    tanggal:      terbilang(d),
+    tanggal:       terbilang(d),
     bulan,
-    tahun:        terbilang(y),
+    tahun:         terbilang(y),
     tanggalFormat: `${dd}-${mm}-${y}`,
   };
 }
