@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daftar Dokumen — Dokumen Keuangan Generator BPS Kota Subulussalam</title>
   <meta name="description" content="Histori seluruh dokumen SPK dan BAST yang telah dibuat di BPS Kota Subulussalam">
-  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <link rel="stylesheet" href="css/style.css?v=4.2">
   <style>
     .hero-banner {
       background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 55%, #3b82f6 100%);
@@ -62,7 +62,7 @@
       background: #fff;
       border-radius: var(--radius-xl);
       padding: 28px 32px;
-      max-width: 460px;
+      max-width: 480px;
       width: 90%;
       box-shadow: 0 20px 60px rgba(0,0,0,.2);
       transform: scale(.95);
@@ -104,10 +104,32 @@
       transition: all var(--transition);
     }
     .export-doc-btn:hover {
-      background: var(--brand-light);
-      border-color: var(--brand-accent);
-      color: var(--brand-primary);
+      background: #ecfdf5;
+      border-color: #6ee7b7;
+      color: #065f46;
       transform: translateX(2px);
+    }
+    .export-doc-btn .doc-type-badge {
+      font-size: .72rem;
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 7px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    /* Pengguna readonly banner */
+    .readonly-notice {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: .84rem;
+      color: #1e40af;
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
   </style>
 </head>
@@ -124,10 +146,8 @@
         Daftar Dokumen
         <small>Histori seluruh dokumen SPK &amp; BAST</small>
       </div>
-      <div class="topbar-actions">
-        <a href="form.html" class="btn btn-primary">
-          <span>➕</span> Buat Dokumen Baru
-        </a>
+      <div class="topbar-actions" id="topbar-actions">
+        <!-- Diisi JS berdasarkan role -->
       </div>
     </header>
 
@@ -138,8 +158,14 @@
         <div class="hero-icon">📁</div>
         <div class="hero-text">
           <h1>Histori Dokumen SPK &amp; BAST</h1>
-          <p>Lihat, ekspor PDF dengan nomor/tanggal kustom, atau hapus dokumen yang telah dibuat.</p>
+          <p id="hero-desc">Lihat, ekspor Word, atau hapus dokumen yang telah dibuat.</p>
         </div>
+      </div>
+
+      <!-- Notice untuk PENGGUNA -->
+      <div class="readonly-notice" id="readonly-notice" style="display:none;">
+        <span style="font-size:1.2rem;">🔒</span>
+        <div>Anda login sebagai <strong>Pengguna</strong> — hanya dapat melihat daftar dokumen. Untuk mengekspor, print, mengedit, atau menghapus, hubungi Administrator atau Ketua Tim.</div>
       </div>
 
       <!-- Stats Row -->
@@ -226,9 +252,9 @@
 <!-- ─── Export Modal ─── -->
 <div class="modal-overlay" id="export-modal">
   <div class="modal-box">
-    <div class="modal-title">📤 Ekspor Dokumen SPK / BAST</div>
+    <div class="modal-title">📝 Ekspor Dokumen ke Word</div>
     <div class="modal-desc">
-      Atur Nomor Surat dan Tanggal Surat sebelum membuka preview / mengunduh PDF.
+      Atur Nomor Surat dan Tanggal Surat sebelum mengunduh file Word (.docx).
     </div>
 
     <div class="form-group" style="margin-bottom:12px;">
@@ -244,20 +270,25 @@
     <div class="sec-label" style="margin-bottom:10px;">Pilih Dokumen yang Ingin Diunduh:</div>
 
     <div style="display:flex; flex-direction:column; gap:4px;">
-      <button type="button" class="export-doc-btn" onclick="triggerExport('spk')">
-        <span>📜 Surat Perjanjian Kerja (SPK)</span> <span>›</span>
+      <button type="button" class="export-doc-btn" id="btn-export-spk" onclick="triggerWordExport('spk')">
+        <span>📜 Surat Perjanjian Kerja (SPK)</span>
+        <span class="doc-type-badge">Word</span>
       </button>
-      <button type="button" class="export-doc-btn" onclick="triggerExport('ppl-pml')">
-        <span>📄 BAST PPL → PML</span> <span>›</span>
+      <button type="button" class="export-doc-btn" id="btn-export-ppl-pml" onclick="triggerWordExport('ppl-pml')">
+        <span>📄 BAST PPL → PML</span>
+        <span class="doc-type-badge">Word</span>
       </button>
-      <button type="button" class="export-doc-btn" onclick="triggerExport('ppl-sm')">
-        <span>📄 BAST PPL → SM</span> <span>›</span>
+      <button type="button" class="export-doc-btn" id="btn-export-ppl-sm" onclick="triggerWordExport('ppl-sm')">
+        <span>📄 BAST PPL → SM</span>
+        <span class="doc-type-badge">Word</span>
       </button>
-      <button type="button" class="export-doc-btn" onclick="triggerExport('pml-sm')">
-        <span>📄 BAST PML → SM</span> <span>›</span>
+      <button type="button" class="export-doc-btn" id="btn-export-pml-sm" onclick="triggerWordExport('pml-sm')">
+        <span>📄 BAST PML → SM</span>
+        <span class="doc-type-badge">Word</span>
       </button>
-      <button type="button" class="export-doc-btn" onclick="triggerExport('sm-ppk')">
-        <span>📄 BAST SM → PPK</span> <span>›</span>
+      <button type="button" class="export-doc-btn" id="btn-export-sm-ppk" onclick="triggerWordExport('sm-ppk')">
+        <span>📄 BAST SM → PPK</span>
+        <span class="doc-type-badge">Word</span>
       </button>
     </div>
 
@@ -284,21 +315,61 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.1"></script>
-<script src="js/data.js?v=4.1"></script>
-<script src="js/auth.js?v=4.1"></script>
-<script src="js/utils.js?v=4.1"></script>
-<script src="js/render.js?v=4.1"></script>
-<script src="js/sidebar.js?v=4.1"></script>
-<script src="js/app.js?v=4.1"></script>
+<script src="js/config.js?v=4.2"></script>
+<script src="js/data.js?v=4.2"></script>
+<script src="js/auth.js?v=4.2"></script>
+<script src="js/utils.js?v=4.2"></script>
+<script src="js/render.js?v=4.2"></script>
+<script src="js/sidebar.js?v=4.2"></script>
+<script src="js/app.js?v=4.2"></script>
+
+<!-- docx.js library untuk export Word -->
+<script src="https://unpkg.com/docx@8/build/index.min.js"></script>
+
 <script>
-  let _allDocs = [];
-  let _allMitra = [];
-  let _allPegawai = [];
+  let _allDocs     = [];
+  let _allMitra    = [];
+  let _allPegawai  = [];
+  let _allKegiatan = [];
+  let _allDetail   = [];
   let _activeFilter = "all";
   let _selectedDocId = null;
-  let _deleteDocId = null;
+  let _deleteDocId   = null;
 
+  // ─── Deteksi Role ────────────────────────────────────────────
+  const _role = (typeof Auth !== "undefined" && Auth.getRole) ? Auth.getRole() : "PENGGUNA";
+  // PENGGUNA hanya bisa preview
+  const _canEdit   = (_role !== "PENGGUNA");
+  const _canExport = (_role !== "PENGGUNA");
+  const _canDelete = (_role !== "PENGGUNA");
+
+  // ─── Setup UI berdasarkan role ───────────────────────────────
+  document.addEventListener("DOMContentLoaded", () => {
+    // Tombol topbar
+    const topbarActions = document.getElementById("topbar-actions");
+    if (topbarActions) {
+      if (_canEdit) {
+        topbarActions.innerHTML = `
+          <a href="form.html" class="btn btn-primary" id="btn-buat-dokumen">
+            <span>➕</span> Buat Dokumen Baru
+          </a>`;
+      }
+    }
+
+    // Notice readonly
+    const notice = document.getElementById("readonly-notice");
+    if (notice && !_canEdit) {
+      notice.style.display = "flex";
+    }
+
+    // Hero desc
+    const heroDesc = document.getElementById("hero-desc");
+    if (heroDesc && !_canEdit) {
+      heroDesc.textContent = "Lihat dan preview dokumen SPK & BAST yang telah dibuat.";
+    }
+  });
+
+  // ─── Render tabel ───────────────────────────────────────────
   function renderTable(data) {
     const tbody = document.getElementById("doc-tbody");
     if (!data || data.length === 0) {
@@ -330,24 +401,40 @@
         statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
       }
 
-      // Kolom Aksi menampilkan tombol Preview & Edit untuk semua status, serta Ekspor jika sudah disetujui PPK
-      let aksiHTML = `
-        <div class="action-btns">
-          <a href="preview.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Preview Isian Dokumen">
-            👁️ Preview
-          </a>
+      // Kolom Aksi — disesuaikan per role
+      let aksiHTML = `<div class="action-btns">`;
+
+      // Preview: semua role bisa
+      aksiHTML += `
+        <a href="preview.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Preview Isian Dokumen">
+          👁️ Preview
+        </a>`;
+
+      // Edit: hanya non-PENGGUNA
+      if (_canEdit) {
+        aksiHTML += `
           <a href="form.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Edit Isian Dokumen">
             ✏️ Edit
-          </a>
-          ${isApproved ? `
-            <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')" title="Ekspor Dokumen PDF">
-              📤 Ekspor
-            </button>
-          ` : ''}
+          </a>`;
+      }
+
+      // Ekspor Word: hanya non-PENGGUNA & sudah disetujui
+      if (_canExport && isApproved) {
+        aksiHTML += `
+          <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')" title="Ekspor Dokumen Word (.docx)">
+            📝 Ekspor
+          </button>`;
+      }
+
+      // Hapus: hanya non-PENGGUNA
+      if (_canDelete) {
+        aksiHTML += `
           <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')" title="Hapus Dokumen">
             🗑️
-          </button>
-        </div>`;
+          </button>`;
+      }
+
+      aksiHTML += `</div>`;
 
       return `
         <tr>
@@ -378,6 +465,7 @@
     renderTable(data);
   }
 
+  // ─── Export Modal ────────────────────────────────────────────
   function openExportModal(docId) {
     _selectedDocId = docId;
     const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
@@ -385,105 +473,28 @@
 
     const noSurat = doc.Nomor_SPK || doc.No_SPK || "";
     let tglSurat = doc["Tanggal SPK"] || doc.Tanggal_SPK || doc.Tanggal_Mulai || "";
-    // format tglSurat to YYYY-MM-DD if ISO
     if (tglSurat && tglSurat.includes("T")) {
       tglSurat = tglSurat.split("T")[0];
     }
 
     document.getElementById("export-no-surat").value = noSurat;
     document.getElementById("export-tgl-surat").value = tglSurat;
-    validateExportNoSurat(document.getElementById("export-no-surat"));
+
+    // Tampilkan/sembunyikan tombol dokumen sesuai tipe
+    const isSmPpk = doc.No_BAST_SM_PPK && !doc.ID_Mitra;
+    const hasPplPml = !!doc.No_BAST_PPL_PML;
+    const hasPplSm  = !!doc.No_BAST_PPL_SM;
+    const hasPmlSm  = !!doc.No_BAST_PML_SM;
+    const hasSmPpk  = !!doc.No_BAST_SM_PPK;
+
+    // Tampilkan tombol sesuai yang ada
+    document.getElementById("btn-export-spk").style.display = (!isSmPpk) ? "" : "none";
+    document.getElementById("btn-export-ppl-pml").style.display = hasPplPml ? "" : "none";
+    document.getElementById("btn-export-ppl-sm").style.display = hasPplSm ? "" : "none";
+    document.getElementById("btn-export-pml-sm").style.display = hasPmlSm ? "" : "none";
+    document.getElementById("btn-export-sm-ppk").style.display = hasSmPpk ? "" : "none";
+
     document.getElementById("export-modal").classList.add("visible");
-  }
-
-  function validateExportNoSurat(inputEl) {
-    if (!inputEl) return;
-    const val = inputEl.value ? inputEl.value.trim() : "";
-    let warnEl = inputEl.parentNode.querySelector(".doc-num-warning-msg");
-
-    if (!val) {
-      inputEl.classList.remove("is-duplicate", "is-gap-warning");
-      if (warnEl) warnEl.remove();
-      return;
-    }
-
-    const target = val.toLowerCase();
-    const isDup = (_allDocs || []).some(d => {
-      if (_selectedDocId && String(d.ID_Dokumen) === String(_selectedDocId)) return false;
-      const noSpk = (d.Nomor_SPK || d.No_SPK || "").trim().toLowerCase();
-      return noSpk && noSpk === target;
-    });
-
-    if (isDup) {
-      inputEl.classList.remove("is-gap-warning");
-      inputEl.classList.add("is-duplicate");
-      if (!warnEl) {
-        warnEl = document.createElement("div");
-        warnEl.className = "doc-num-warning-msg danger";
-        inputEl.parentNode.appendChild(warnEl);
-      } else {
-        warnEl.className = "doc-num-warning-msg danger";
-      }
-      warnEl.innerHTML = "⚠️ Nomor surat ini sudah pernah dipakai pada dokumen lain!";
-      return;
-    }
-
-    // Gap Warning check for SPK in Export Modal
-    const yearMatch = val.match(/(?:Tahun|\/|\b)(20\d{2})\b/i);
-    const defaultYear = yearMatch ? parseInt(yearMatch[1], 10) : new Date().getFullYear();
-    const seqMatches = val.match(/\d+/g);
-    let currentSeq = null;
-    if (seqMatches) {
-      for (const m of seqMatches) {
-        const num = parseInt(m, 10);
-        if (num !== defaultYear && num > 0 && num < 2000) {
-          currentSeq = num;
-          break;
-        }
-      }
-    }
-
-    if (currentSeq && currentSeq > 1) {
-      const usedSeqs = new Set();
-      (_allDocs || []).forEach(d => {
-        if (_selectedDocId && String(d.ID_Dokumen) === String(_selectedDocId)) return;
-        const recYear = parseInt(d.Tahun || d.tahun || (d["Tanggal SPK"] || d.Tanggal_SPK || "").slice(0, 4)) || defaultYear;
-        if (recYear === defaultYear) {
-          const spkVal = d.Nomor_SPK || d.No_SPK || "";
-          const matches = String(spkVal).match(/\d+/g);
-          if (matches) {
-            matches.forEach(m => {
-              const num = parseInt(m, 10);
-              if (num !== recYear && num > 0 && num < 2000) usedSeqs.add(num);
-            });
-          }
-        }
-      });
-
-      const missingNums = [];
-      for (let i = 1; i < currentSeq; i++) {
-        if (!usedSeqs.has(i)) missingNums.push(i);
-      }
-
-      if (missingNums.length > 0) {
-        inputEl.classList.remove("is-duplicate");
-        inputEl.classList.add("is-gap-warning");
-        const missingStr = missingNums.join(", ");
-        const labelNomor = missingNums.length > 1 ? "Nomor-nomor" : "Nomor";
-        if (!warnEl) {
-          warnEl = document.createElement("div");
-          warnEl.className = "doc-num-warning-msg warning";
-          inputEl.parentNode.appendChild(warnEl);
-        } else {
-          warnEl.className = "doc-num-warning-msg warning";
-        }
-        warnEl.innerHTML = `⚠️ Peringatan: ${labelNomor} ${missingStr} belum ada untuk tahun ${defaultYear} (melompati urutan)`;
-        return;
-      }
-    }
-
-    inputEl.classList.remove("is-duplicate", "is-gap-warning");
-    if (warnEl) warnEl.remove();
   }
 
   function closeExportModal() {
@@ -491,19 +502,272 @@
     _selectedDocId = null;
   }
 
-  function triggerExport(tabKey) {
+  // ─── Word Export ─────────────────────────────────────────────
+  async function triggerWordExport(tabKey) {
     if (!_selectedDocId) return;
+
     const noSurat  = document.getElementById("export-no-surat").value.trim();
     const tglSurat = document.getElementById("export-tgl-surat").value;
 
-    let url = `preview.html?id=${encodeURIComponent(_selectedDocId)}&tab=${encodeURIComponent(tabKey)}`;
-    if (noSurat)  url += `&no_spk=${encodeURIComponent(noSurat)}`;
-    if (tglSurat) url += `&tgl_spk=${encodeURIComponent(tglSurat)}`;
-
     closeExportModal();
-    window.location.href = url;
+
+    // Cek apakah docx tersedia
+    if (typeof docx === "undefined") {
+      showToast("Library Word (docx.js) belum termuat. Pastikan koneksi internet aktif.", "danger", 5000);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(_selectedDocId));
+      if (!doc) throw new Error("Dokumen tidak ditemukan");
+
+      // Ambil detail pekerjaan jika belum ada
+      if (_allDetail.length === 0) {
+        _allDetail = await getDetailPekerjaan();
+      }
+
+      const dataCtx = buildDataContext(doc, {
+        mitraArr: _allMitra,
+        pegawaiArr: _allPegawai,
+        detailArr: _allDetail
+      });
+
+      // Override nomor & tanggal jika diisi
+      if (noSurat)  dataCtx.spkCtx.NO_SPK = noSurat;
+      if (tglSurat) {
+        const tgl = tanggalTerbilang(tglSurat);
+        const overrides = {
+          HARI_TERBILANG: tgl.hari,
+          TANGGAL_TERBILANG: tgl.tanggal,
+          BULAN_TERBILANG: tgl.bulan,
+          TAHUN_TERBILANG: tgl.tahun,
+          TANGGAL_BAST: tgl.tanggalFormat,
+          TANGGAL: tgl.tanggalFormat,
+        };
+        Object.assign(dataCtx.spkCtx, overrides);
+        Object.assign(dataCtx.bastPplPmlCtx, overrides);
+        Object.assign(dataCtx.bastPplSmCtx, overrides);
+        Object.assign(dataCtx.bastPmlSmCtx, overrides);
+      }
+
+      await _generateWordDoc(tabKey, dataCtx, doc);
+
+    } catch (err) {
+      showToast("Gagal generate Word: " + err.message, "danger", 5000);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
+  // ─── Generate & download Word document ───────────────────────
+  async function _generateWordDoc(tabKey, dataCtx, docRecord) {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, HeadingLevel,
+            AlignmentType, WidthType, BorderStyle, PageOrientation, convertInchesToTwip } = docx;
+
+    // Helper teks biasa
+    const P = (text, opts = {}) => new Paragraph({
+      alignment: opts.align || AlignmentType.LEFT,
+      spacing: { after: opts.spaceAfter ?? 100 },
+      children: [new TextRun({
+        text: String(text || ""),
+        bold: opts.bold || false,
+        size: (opts.size || 11) * 2,
+        font: "Times New Roman",
+      })]
+    });
+
+    // Helper baris tabel tandatangan
+    const ttdRow = (label1, label2) => new TableRow({
+      children: [
+        new TableCell({
+          width: { size: 50, type: WidthType.PERCENTAGE },
+          borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
+          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: label1, size: 22, font: "Times New Roman" })] })]
+        }),
+        new TableCell({
+          width: { size: 50, type: WidthType.PERCENTAGE },
+          borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
+          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: label2, size: 22, font: "Times New Roman" })] })]
+        }),
+      ]
+    });
+
+    let content = [];
+    let filename = "";
+
+    // ── Pilih isi dokumen berdasarkan tabKey ──────────────────
+    if (tabKey === "spk") {
+      const ctx = dataCtx.spkCtx;
+      filename = `SPK_${ctx.NAMA_PETUGAS || docRecord.ID_Dokumen}_${ctx.BULAN || ""}_${ctx.TAHUN || ""}.docx`;
+      content = _buildSpkContent(ctx, dataCtx.details, { P, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, BorderStyle, Paragraph });
+
+    } else if (tabKey === "ppl-pml") {
+      const ctx = dataCtx.bastPplPmlCtx;
+      filename = `BAST_PPL_PML_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
+      content = _buildBastContent("BAST Penyerahan Hasil Pekerjaan PPL kepada PML", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle });
+
+    } else if (tabKey === "ppl-sm") {
+      const ctx = dataCtx.bastPplSmCtx;
+      filename = `BAST_PPL_SM_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
+      content = _buildBastContent("BAST Penyerahan Hasil Pekerjaan PPL kepada SM/Ketua Tim", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle });
+
+    } else if (tabKey === "pml-sm") {
+      const ctx = dataCtx.bastPmlSmCtx;
+      filename = `BAST_PML_SM_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
+      content = _buildBastContent("BAST Penyerahan Hasil Pekerjaan PML kepada SM/Ketua Tim", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle });
+
+    } else if (tabKey === "sm-ppk") {
+      const ctx = buildBastSmPpkContext(docRecord, _allPegawai);
+      if (noSurat) ctx.NO_BAST_SM_PPK = noSurat;
+      filename = `BAST_SM_PPK_${docRecord.ID_Dokumen}.docx`;
+      content = _buildBastContent("BAST Penyerahan Hasil Pekerjaan SM kepada PPK", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle });
+    }
+
+    // Buat & download dokumen
+    const wordDoc = new Document({
+      sections: [{
+        properties: {},
+        children: content,
+      }],
+    });
+
+    const blob = await Packer.toBlob(wordDoc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "dokumen.docx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast("File Word berhasil diunduh: " + filename, "success");
+  }
+
+  // ─── Builder SPK ─────────────────────────────────────────────
+  function _buildSpkContent(ctx, details, D) {
+    const { P, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, BorderStyle, Paragraph } = D;
+
+    const noBorder = { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } };
+
+    const headerPar = new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 40 },
+      children: [
+        new TextRun({ text: "SURAT PERJANJIAN KERJA (SPK)", bold: true, size: 28, font: "Times New Roman" }),
+      ]
+    });
+
+    const nomorPar = new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+      children: [
+        new TextRun({ text: ctx.NO_SPK || "", size: 24, font: "Times New Roman" }),
+      ]
+    });
+
+    const body = [
+      headerPar, nomorPar,
+      P(`Pada hari ini, ${ctx.HARI_TERBILANG || ""}, tanggal ${ctx.TANGGAL_TERBILANG || ""} bulan ${ctx.BULAN_TERBILANG || ""} tahun ${ctx.TAHUN_TERBILANG || ""}, kami yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
+      P("PIHAK PERTAMA:", { bold: true, spaceAfter: 60 }),
+      P(`Nama\t\t: ${ctx.NAMA_PPK || ""}`, { spaceAfter: 40 }),
+      P(`NIP\t\t: ${ctx.NIP_PPK || ""}`, { spaceAfter: 40 }),
+      P(`Jabatan\t\t: Pejabat Pembuat Komitmen BPS Kota Subulussalam`, { spaceAfter: 120 }),
+      P("PIHAK KEDUA:", { bold: true, spaceAfter: 60 }),
+      P(`Nama\t\t: ${ctx.NAMA_PETUGAS || ""}`, { spaceAfter: 40 }),
+      P(`NIK\t\t: ${ctx.NIK_PIHAK_PERTAMA || ""}`, { spaceAfter: 40 }),
+      P(`Jabatan\t\t: ${ctx.JABATAN_PETUGAS || ""}`, { spaceAfter: 120 }),
+      P("Kedua belah pihak telah sepakat untuk mengadakan perjanjian kerja dengan ketentuan sebagai berikut:", { spaceAfter: 120 }),
+      P("Pasal 1 — Jenis Pekerjaan", { bold: true, spaceAfter: 60 }),
+      P(`Pihak Pertama menugaskan Pihak Kedua untuk melaksanakan: ${ctx.JUDUL_PEKERJAAN_DOKUMEN || ""}`, { spaceAfter: 120 }),
+      P("Pasal 2 — Nilai Perjanjian", { bold: true, spaceAfter: 60 }),
+      P(`Nilai total perjanjian sebesar Rp ${ctx.TOTAL_HONOR || "0"} (${ctx.TERBILANG_TOTAL_HONOR || ""}).`, { spaceAfter: 120 }),
+      P("Demikian Surat Perjanjian Kerja ini dibuat untuk dipergunakan sebagaimana mestinya.", { spaceAfter: 200 }),
+    ];
+
+    // Tabel TTD
+    const ttdTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({ children: [
+          new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Pihak Pertama", bold: true, size: 22, font: "Times New Roman" })] })
+          ]}),
+          new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Pihak Kedua", bold: true, size: 22, font: "Times New Roman" })] })
+          ]}),
+        ]}),
+        new TableRow({ children: [
+          new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PPK || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PETUGAS || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        ]}),
+        new TableRow({ children: [
+          new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `NIP. ${ctx.NIP_PPK || ""}`, size: 22, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `NIK. ${ctx.NIK_PIHAK_PERTAMA || ""}`, size: 22, font: "Times New Roman" })] })] }),
+        ]}),
+      ]
+    });
+
+    body.push(ttdTable);
+    return body;
+  }
+
+  // ─── Builder BAST (generic) ───────────────────────────────────
+  function _buildBastContent(title, ctx, D) {
+    const { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } = D;
+    const noBorder = { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } };
+
+    const noDoc = ctx.NO_BAST_PPL_PML || ctx.NO_BAST_PPL_SM || ctx.NO_BAST_PML_SM || ctx.NO_BAST_SM_PPK || "";
+
+    const body = [
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 40 },
+        children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 28, font: "Times New Roman" })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 200 },
+        children: [new TextRun({ text: noDoc, size: 24, font: "Times New Roman" })]
+      }),
+      P(`Pada hari ini, ${ctx.HARI_TERBILANG || ""}, tanggal ${ctx.TANGGAL_TERBILANG || ""} bulan ${ctx.BULAN_TERBILANG || ""} tahun ${ctx.TAHUN_TERBILANG || ""}, kami yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
+      P("PIHAK PERTAMA:", { bold: true, spaceAfter: 60 }),
+      P(`Nama\t\t: ${ctx.NAMA_PIHAK_PERTAMA || ""}`, { spaceAfter: 40 }),
+      P(`NIK/NIP\t\t: ${ctx.NIK_PIHAK_PERTAMA || ctx.NIP_PIHAK_PERTAMA || ""}`, { spaceAfter: 40 }),
+      P(`Jabatan\t\t: ${ctx.JABATAN_PIHAK_PERTAMA || ""}`, { spaceAfter: 120 }),
+      P("PIHAK KEDUA:", { bold: true, spaceAfter: 60 }),
+      P(`Nama\t\t: ${ctx.NAMA_PIHAK_KEDUA || ctx.NAMA_KETUA_TIM || ctx.NAMA_PPK || ""}`, { spaceAfter: 40 }),
+      P(`NIP\t\t: ${ctx.NIP_PIHAK_KEDUA || ctx.NIP_KETUA_TIM || ctx.NIP_PPK || ""}`, { spaceAfter: 40 }),
+      P(`Jabatan\t\t: ${ctx.JABATAN_PIHAK_KEDUA || ctx.JABATAN_KETUA_TIM || ""}`, { spaceAfter: 120 }),
+      P(`Pihak Pertama menyerahkan kepada Pihak Kedua hasil pekerjaan: ${ctx.JUDUL_PEKERJAAN_DOKUMEN || ctx.URAIAN_PEKERJAAN || ""}`, { spaceAfter: 120 }),
+      P(`Nilai total pekerjaan: Rp ${ctx.TOTAL_HONOR || ctx.TERBILANG || ""}`, { spaceAfter: 200 }),
+      P("Demikian Berita Acara ini dibuat untuk dipergunakan sebagaimana mestinya.", { spaceAfter: 200 }),
+    ];
+
+    // Tabel TTD
+    const ttdTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({ children: [
+          new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Pihak Pertama", bold: true, size: 22, font: "Times New Roman" })] })
+          ]}),
+          new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Pihak Kedua", bold: true, size: 22, font: "Times New Roman" })] })
+          ]}),
+        ]}),
+        new TableRow({ children: [
+          new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_PERTAMA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_KEDUA || ctx.NAMA_KETUA_TIM || ctx.NAMA_PPK || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        ]}),
+      ]
+    });
+
+    body.push(ttdTable);
+    return body;
+  }
+
+  // ─── Delete ──────────────────────────────────────────────────
   function confirmDelete(docId) {
     _deleteDocId = docId;
     document.getElementById("delete-modal").classList.add("visible");
@@ -514,6 +778,7 @@
     _deleteDocId = null;
   }
 
+  // ─── Init ────────────────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
     setLoading(true);
     try {
@@ -542,12 +807,6 @@
 
       // Event listeners
       document.getElementById("search-input").addEventListener("input", applyFilters);
-      const exportNoInput = document.getElementById("export-no-surat");
-      if (exportNoInput) {
-        exportNoInput.addEventListener("input", function() {
-          validateExportNoSurat(this);
-        });
-      }
       document.querySelectorAll("[data-filter]").forEach(btn => {
         btn.addEventListener("click", function() {
           document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
@@ -557,7 +816,7 @@
         });
       });
 
-      // Confirm delete button
+      // Confirm delete
       document.getElementById("btn-confirm-delete").addEventListener("click", async () => {
         if (!_deleteDocId) return;
         setLoading(true);
@@ -584,3 +843,4 @@
 </script>
 </body>
 </html>
+

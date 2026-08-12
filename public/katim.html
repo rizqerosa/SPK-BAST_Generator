@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapping Petugas — Dokumen Keuangan Generator BPS Kota Subulussalam</title>
+  <meta name="description" content="Halaman Ketua Tim untuk mapping petugas (mitra/pegawai) ke kegiatan BPS Kota Subulussalam">
+  <link rel="stylesheet" href="css/style.css?v=4.2">
+  <style>
+    /* ── Hero Banner ── */
+    .hero-katim {
+      background: linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%);
+      border-radius: var(--radius-xl);
+      padding: 26px 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(180,83,9,.3);
+    }
+    .hero-katim::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.07);
+      border-radius: 50%;
+    }
+    .hero-katim::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: 80px;
+      width: 160px; height: 160px;
+      background: rgba(255,255,255,.04);
+      border-radius: 50%;
+    }
+    .hero-katim h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      position: relative;
+    }
+    .hero-katim p { font-size: .83rem; opacity: .88; position: relative; }
+    .hero-katim .hero-icon { font-size: 2.8rem; position: relative; z-index: 1; }
+
+    /* ── Info box ── */
+    .info-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: .84rem;
+      color: #92400e;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .info-box-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Filter Row ── */
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    /* ── Mapping Card ── */
+    .kegiatan-card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s;
+    }
+    .kegiatan-card:hover { box-shadow: var(--shadow-md); }
+
+    .kegiatan-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: linear-gradient(90deg, #fef3c7 0%, #fff 100%);
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      user-select: none;
+    }
+    .kegiatan-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      background: #fde68a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .kegiatan-title { font-weight: 700; font-size: .92rem; color: var(--gray-900); }
+    .kegiatan-meta  { font-size: .75rem; color: var(--gray-500); margin-top: 2px; }
+    .kegiatan-badge {
+      margin-left: auto;
+      background: #fde68a;
+      color: #78350f;
+      font-size: .72rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .kegiatan-chevron {
+      font-size: .9rem;
+      color: var(--gray-400);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .kegiatan-card.open .kegiatan-chevron { transform: rotate(180deg); }
+
+    .kegiatan-body {
+      display: none;
+      padding: 16px 20px;
+    }
+    .kegiatan-card.open .kegiatan-body { display: block; }
+
+    /* ── Petugas assigned list ── */
+    .petugas-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      min-height: 36px;
+    }
+    .petugas-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 20px;
+      padding: 4px 10px 4px 8px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #065f46;
+    }
+    .petugas-chip .avatar {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #059669;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .petugas-chip .remove-btn {
+      background: none; border: none;
+      color: #059669; cursor: pointer;
+      font-size: .85rem; padding: 0;
+      line-height: 1;
+      opacity: .7;
+      transition: opacity .15s;
+    }
+    .petugas-chip .remove-btn:hover { opacity: 1; color: #dc2626; }
+
+    .empty-assignment {
+      font-size: .8rem;
+      color: var(--gray-400);
+      font-style: italic;
+      padding: 4px 0;
+    }
+
+    /* ── Add Petugas Dropdown ── */
+    .add-petugas-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .sel-petugas-type {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: .82rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fff;
+      cursor: pointer;
+    }
+    .sel-petugas-add {
+      flex: 1;
+      min-width: 200px;
+      max-width: 320px;
+      padding: 6px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: .82rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fff;
+    }
+    .btn-assign {
+      padding: 6px 14px;
+      border-radius: var(--radius-md);
+      border: none;
+      background: #d97706;
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background .15s;
+    }
+    .btn-assign:hover { background: #b45309; }
+
+    /* ── Stats ── */
+    .stats-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat-card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 130px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .stat-icon.amber  { background: #fef3c7; }
+    .stat-icon.green  { background: #dcfce7; }
+    .stat-icon.blue   { background: #dbeafe; }
+    .stat-num   { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); line-height: 1; }
+    .stat-label { font-size: .73rem; color: var(--gray-500); margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Mapping Petugas
+        <small>Assign petugas ke kegiatan agar lebih mudah saat membuat dokumen</small>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" onclick="refreshData()">🔄 Refresh</button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Hero Banner -->
+      <div class="hero-katim">
+        <div class="hero-icon">🗺️</div>
+        <div>
+          <h1>Mapping Petugas ke Kegiatan</h1>
+          <p>Tentukan siapa (mitra/pegawai) yang bertanggung jawab untuk setiap kegiatan, sehingga Admin lebih mudah saat membuat dokumen SPK & BAST.</p>
+        </div>
+      </div>
+
+      <!-- Info Box -->
+      <div class="info-box">
+        <span class="info-box-icon">💡</span>
+        <div>
+          <strong>Cara Kerja Mapping:</strong>
+          Pilih kegiatan, lalu assign mitra atau pegawai. Data mapping disimpan di browser (localStorage) dan dapat dijadikan referensi oleh Admin saat membuat dokumen.
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon amber">📁</div>
+          <div>
+            <div class="stat-num" id="stat-kegiatan">—</div>
+            <div class="stat-label">Total Kegiatan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div>
+            <div class="stat-num" id="stat-mapped">—</div>
+            <div class="stat-label">Sudah di-assign</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👥</div>
+          <div>
+            <div class="stat-num" id="stat-total-petugas">—</div>
+            <div class="stat-label">Total Petugas Diassign</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-row">
+        <div class="search-box" style="max-width:280px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-kegiatan" class="form-control" placeholder="Cari nama kegiatan...">
+        </div>
+        <select id="filter-status" class="sel-petugas-type">
+          <option value="all">Semua Kegiatan</option>
+          <option value="mapped">✅ Sudah di-assign</option>
+          <option value="unmapped">⏳ Belum di-assign</option>
+        </select>
+      </div>
+
+      <!-- Kegiatan Cards -->
+      <div id="kegiatan-container">
+        <div style="text-align:center; padding:48px; color:var(--gray-400);">
+          <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+          Memuat data kegiatan...
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=4.2"></script>
+<script src="js/data.js?v=4.2"></script>
+<script src="js/auth.js?v=4.2"></script>
+<script src="js/utils.js?v=4.2"></script>
+<script src="js/render.js?v=4.2"></script>
+<script src="js/sidebar.js?v=4.2"></script>
+<script src="js/app.js?v=4.2"></script>
+
+<script>
+  // ─── State ───────────────────────────────────────────────────
+  const MAPPING_KEY = "katim_petugas_mapping"; // localStorage key
+  let _allKegiatan = [];
+  let _allMitra    = [];
+  let _allPegawai  = [];
+  let _mapping     = {};  // { kegiatanId: [{ id, nama, tipe }] }
+
+  // ─── LocalStorage Helpers ────────────────────────────────────
+  function loadMapping() {
+    try {
+      const raw = localStorage.getItem(MAPPING_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  }
+  function saveMapping() {
+    try {
+      localStorage.setItem(MAPPING_KEY, JSON.stringify(_mapping));
+    } catch(e) { console.warn("Gagal simpan mapping:", e); }
+  }
+
+  // ─── Toast helper (proxy ke app.js) ─────────────────────────
+  function _toast(msg, type = "default") { showToast(msg, type); }
+
+  // ─── Render kartu kegiatan ───────────────────────────────────
+  function renderKegiatanCards() {
+    const q = (document.getElementById("search-kegiatan")?.value || "").toLowerCase().trim();
+    const filterStatus = document.getElementById("filter-status")?.value || "all";
+
+    let filtered = _allKegiatan.filter(k => {
+      const name = String(k.Nama_Kegiatan || k.Uraian_Tugas || k.ID_Kegiatan || "");
+      const id = getKegiatanId(k);
+      const hasPetugas = (_mapping[id] || []).length > 0;
+
+      if (filterStatus === "mapped" && !hasPetugas) return false;
+      if (filterStatus === "unmapped" && hasPetugas) return false;
+      if (q && !name.toLowerCase().includes(q) && !id.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    const container = document.getElementById("kegiatan-container");
+    if (!container) return;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:48px; color:var(--gray-400);">
+        <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
+        Tidak ada kegiatan yang cocok dengan filter.
+      </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(k => {
+      const id = getKegiatanId(k);
+      const nama = k.Nama_Kegiatan || k.Uraian_Tugas || id;
+      const satuan = k.Satuan || "Dokumen";
+      const harga = formatRupiah(k.Harga_Satuan || 0);
+      const assignedList = _mapping[id] || [];
+
+      const chipsHTML = assignedList.length > 0
+        ? assignedList.map(p => `
+            <div class="petugas-chip" id="chip-${id}-${p.id}">
+              <div class="avatar">${(p.nama || "?")[0].toUpperCase()}</div>
+              <span>${p.nama}</span>
+              <span style="font-size:.68rem; opacity:.7; margin-left:2px;">(${p.tipe})</span>
+              <button class="remove-btn" onclick="removePetugas('${escapeHtml(id)}','${escapeHtml(p.id)}')" title="Hapus assignment">✕</button>
+            </div>`).join("")
+        : `<div class="empty-assignment">Belum ada petugas yang di-assign ke kegiatan ini</div>`;
+
+      return `
+        <div class="kegiatan-card" id="card-${escapeHtml(id)}">
+          <div class="kegiatan-header" onclick="toggleCard('${escapeHtml(id)}')">
+            <div class="kegiatan-icon">📋</div>
+            <div style="flex:1;">
+              <div class="kegiatan-title">${escapeHtml(nama)}</div>
+              <div class="kegiatan-meta">ID: ${escapeHtml(id)} · Satuan: ${escapeHtml(satuan)} · Harga: Rp ${harga}</div>
+            </div>
+            <span class="kegiatan-badge">${assignedList.length} Petugas</span>
+            <span class="kegiatan-chevron">▼</span>
+          </div>
+          <div class="kegiatan-body">
+            <div class="petugas-list" id="list-${escapeHtml(id)}">${chipsHTML}</div>
+            <div class="add-petugas-row">
+              <select class="sel-petugas-type" id="type-${escapeHtml(id)}" onchange="refreshAddOptions('${escapeHtml(id)}')">
+                <option value="mitra">Mitra</option>
+                <option value="pegawai">Pegawai</option>
+              </select>
+              <select class="sel-petugas-add" id="sel-${escapeHtml(id)}">
+                ${buildPetugasOptions("mitra", id)}
+              </select>
+              <button class="btn-assign" onclick="assignPetugas('${escapeHtml(id)}')">+ Assign</button>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+
+    updateStats();
+  }
+
+  // ─── Build options select ─────────────────────────────────────
+  function buildPetugasOptions(tipe, kegId) {
+    const assigned = (_mapping[kegId] || []).map(p => p.id);
+    const source = tipe === "mitra" ? _allMitra : _allPegawai;
+    return source.map(item => {
+      const id   = tipe === "mitra" ? getMitraId(item) : getPegawaiNip(item);
+      const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
+      const disabled = assigned.includes(id) ? "disabled" : "";
+      return `<option value="${escapeHtml(id)}" ${disabled}>${escapeHtml(nama)}</option>`;
+    }).join("");
+  }
+
+  function refreshAddOptions(kegId) {
+    const tipe = document.getElementById("type-" + kegId)?.value || "mitra";
+    const sel = document.getElementById("sel-" + kegId);
+    if (sel) sel.innerHTML = buildPetugasOptions(tipe, kegId);
+  }
+
+  // ─── Toggle card accordion ────────────────────────────────────
+  function toggleCard(kegId) {
+    const card = document.getElementById("card-" + kegId);
+    if (card) card.classList.toggle("open");
+  }
+
+  // ─── Assign petugas ──────────────────────────────────────────
+  function assignPetugas(kegId) {
+    const tipe = document.getElementById("type-" + kegId)?.value || "mitra";
+    const sel  = document.getElementById("sel-" + kegId);
+    const selectedId = sel?.value;
+    if (!selectedId) { _toast("Pilih petugas terlebih dahulu.", "warning"); return; }
+
+    const source = tipe === "mitra" ? _allMitra : _allPegawai;
+    const item = tipe === "mitra"
+      ? source.find(m => getMitraId(m) === selectedId)
+      : source.find(p => getPegawaiNip(p) === selectedId);
+    if (!item) { _toast("Petugas tidak ditemukan.", "danger"); return; }
+
+    const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
+
+    // Cek duplikasi
+    if (!_mapping[kegId]) _mapping[kegId] = [];
+    if (_mapping[kegId].some(p => p.id === selectedId)) {
+      _toast("Petugas sudah di-assign ke kegiatan ini.", "warning");
+      return;
+    }
+
+    _mapping[kegId].push({ id: selectedId, nama, tipe });
+    saveMapping();
+    renderKegiatanCards();
+    // Buka card lagi
+    const card = document.getElementById("card-" + kegId);
+    if (card && !card.classList.contains("open")) card.classList.add("open");
+    _toast(`✅ ${nama} berhasil di-assign ke kegiatan.`, "success");
+  }
+
+  // ─── Remove petugas ──────────────────────────────────────────
+  function removePetugas(kegId, petugasId) {
+    if (!_mapping[kegId]) return;
+    _mapping[kegId] = _mapping[kegId].filter(p => p.id !== petugasId);
+    if (_mapping[kegId].length === 0) delete _mapping[kegId];
+    saveMapping();
+    renderKegiatanCards();
+    // Buka card lagi
+    const card = document.getElementById("card-" + kegId);
+    if (card && !card.classList.contains("open")) card.classList.add("open");
+    _toast("Petugas dihapus dari assignment.", "default");
+  }
+
+  // ─── Update stats ────────────────────────────────────────────
+  function updateStats() {
+    const totalKeg = _allKegiatan.length;
+    const mapped = Object.keys(_mapping).filter(k => (_mapping[k] || []).length > 0).length;
+    const totalPetugas = Object.values(_mapping).reduce((s, arr) => s + arr.length, 0);
+
+    const el = n => document.getElementById(n);
+    if (el("stat-kegiatan"))      el("stat-kegiatan").textContent      = totalKeg;
+    if (el("stat-mapped"))        el("stat-mapped").textContent        = mapped;
+    if (el("stat-total-petugas")) el("stat-total-petugas").textContent = totalPetugas;
+  }
+
+  // ─── Refresh data ────────────────────────────────────────────
+  async function refreshData() {
+    clearCache("kegiatan");
+    clearCache("mitra");
+    clearCache("pegawai");
+    setLoading(true);
+    try {
+      await loadAll();
+      showToast("Data berhasil dimuat ulang.", "success");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadAll() {
+    const [kegiatan, mitra, pegawai] = await Promise.all([
+      getKegiatan(),
+      getMitra(),
+      getPegawai(),
+    ]);
+    _allKegiatan = kegiatan || [];
+    _allMitra    = mitra    || [];
+    _allPegawai  = pegawai  || [];
+    renderKegiatanCards();
+  }
+
+  // ─── Init ────────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", async () => {
+    _mapping = loadMapping();
+
+    setLoading(true);
+    try {
+      await loadAll();
+    } catch (err) {
+      showToast("Gagal memuat data: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+
+    // Event listeners filter
+    document.getElementById("search-kegiatan")?.addEventListener("input", renderKegiatanCards);
+    document.getElementById("filter-status")?.addEventListener("change", renderKegiatanCards);
+  });
+</script>
+</body>
+</html>
+

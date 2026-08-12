@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <link rel="stylesheet" href="css/style.css?v=4.2">
   <style>
     body {
       background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%);
@@ -282,9 +282,9 @@
   </div>
 </div>
 
-<script src="js/config.js?v=4.0"></script>
-<script src="js/data.js?v=4.0"></script>
-<script src="js/auth.js?v=4.0"></script>
+<script src="js/config.js?v=4.2"></script>
+<script src="js/data.js?v=4.2"></script>
+<script src="js/auth.js?v=4.2"></script>
 <script>
   document.getElementById("form-login").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -304,8 +304,10 @@
       const params = new URLSearchParams(window.location.search);
       const redirectTarget = params.get("redirect");
 
-      if (redirectTarget) {
+      if (redirectTarget && redirectTarget !== "admin.html" && loggedUser.role !== "ADMIN") {
         window.location.href = redirectTarget;
+      } else if (loggedUser.role === "ADMIN") {
+        window.location.href = "admin.html";
       } else if (loggedUser.role === "PPK") {
         window.location.href = "verifikasi-ppk.html";
       } else {
@@ -322,3 +324,4 @@
 </script>
 </body>
 </html>
+
