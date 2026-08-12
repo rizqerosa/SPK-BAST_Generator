@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil Saya — Dokumen Keuangan Generator BPS Kota Subulussalam</title>
+  <meta name="description" content="Halaman profil pengguna — ubah password akun Anda">
+  <link rel="stylesheet" href="css/style.css?v=4.2">
+  <style>
+    .hero-profil {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      color: #fff;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(30,58,138,.25);
+    }
+    .hero-profil::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 220px; height: 220px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .hero-profil h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      position: relative;
+    }
+    .hero-profil p { font-size: .83rem; opacity: .85; position: relative; }
+    .hero-profil .hero-icon { font-size: 2.8rem; position: relative; z-index: 1; }
+
+    /* Avatar besar */
+    .profile-avatar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .profile-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    }
+    .avatar-PENGGUNA { background: #dbeafe; color: #1e40af; }
+    .avatar-PPK      { background: #dcfce7; color: #166534; }
+    .avatar-KATIM    { background: #fef3c7; color: #78350f; }
+    .avatar-ADMIN    { background: #ede9fe; color: #5b21b6; }
+
+    .role-pill {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+    .pill-PENGGUNA { background: #dbeafe; color: #1e40af; }
+    .pill-PPK      { background: #dcfce7; color: #166534; }
+    .pill-KATIM    { background: #fef3c7; color: #78350f; }
+    .pill-ADMIN    { background: #ede9fe; color: #5b21b6; }
+
+    /* Info row */
+    .info-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+      font-size: .88rem;
+    }
+    .info-label {
+      flex: 0 0 120px;
+      color: var(--gray-500);
+      font-size: .8rem;
+    }
+    .info-value {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* Divider */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--gray-200);
+      margin: 24px 0;
+    }
+
+    /* Password strength */
+    .pwd-strength {
+      height: 4px;
+      border-radius: 4px;
+      margin-top: 6px;
+      transition: all .3s;
+      background: var(--gray-200);
+    }
+    .pwd-strength.weak   { background: #ef4444; width: 30%; }
+    .pwd-strength.medium { background: #f59e0b; width: 65%; }
+    .pwd-strength.strong { background: #10b981; width: 100%; }
+
+    .pwd-strength-label {
+      font-size: .72rem;
+      margin-top: 2px;
+      color: var(--gray-400);
+    }
+
+    /* Credentials card */
+    .creds-card {
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-size: .82rem;
+      color: var(--gray-700);
+    }
+    .creds-card code {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: .82rem;
+    }
+
+    /* Success animation */
+    @keyframes checkIn {
+      from { opacity: 0; transform: scale(.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .success-check {
+      display: none;
+      font-size: 1.5rem;
+      animation: checkIn .3s ease;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        Profil Saya
+        <small>Informasi akun dan keamanan</small>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Hero -->
+      <div class="hero-profil">
+        <div class="hero-icon">👤</div>
+        <div>
+          <h1>Profil Pengguna</h1>
+          <p>Lihat informasi akun dan ubah password Anda</p>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+
+        <!-- Kartu Info Akun -->
+        <div class="card">
+          <div class="card-header">
+            <h2>🪪 Informasi Akun</h2>
+          </div>
+          <div style="padding:20px 24px;">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="avatar-el">?</div>
+              <span class="role-pill" id="role-pill-el">—</span>
+            </div>
+
+            <div class="info-row">
+              <div class="info-label">Nama Lengkap</div>
+              <div class="info-value" id="info-nama">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Username</div>
+              <div class="info-value" id="info-username" style="font-family:monospace;">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">NIP</div>
+              <div class="info-value" id="info-nip" style="font-family:monospace;">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Jabatan</div>
+              <div class="info-value" id="info-jabatan">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Role</div>
+              <div class="info-value" id="info-role">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Login Sejak</div>
+              <div class="info-value" id="info-login">—</div>
+            </div>
+
+            <hr class="section-divider">
+
+            <div class="creds-card">
+              <div style="font-weight:700; margin-bottom:6px;">🔑 Kredensial Default</div>
+              <div>Username: <code id="cred-username">—</code></div>
+              <div style="margin-top:4px;">Password: <code id="cred-password">—</code> <span id="cred-custom-tag" style="display:none; font-size:.7rem; background:#dcfce7; color:#166534; padding:1px 6px; border-radius:8px; font-weight:700;">✦ Dikustom</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kartu Ganti Password -->
+        <div class="card">
+          <div class="card-header">
+            <h2>🔒 Ganti Password</h2>
+          </div>
+          <div style="padding:20px 24px;">
+            <div id="change-pwd-alert" style="display:none; padding:10px 14px; border-radius:var(--radius-md); margin-bottom:16px; font-size:.84rem;"></div>
+
+            <div class="form-group">
+              <label class="form-label" for="pwd-old">Password Saat Ini</label>
+              <input type="password" id="pwd-old" class="form-control" placeholder="Masukkan password lama...">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="pwd-new">Password Baru</label>
+              <input type="password" id="pwd-new" class="form-control" placeholder="Minimal 4 karakter..."
+                     oninput="checkPwdStrength(this.value)">
+              <div class="pwd-strength" id="pwd-strength-bar"></div>
+              <div class="pwd-strength-label" id="pwd-strength-label"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="pwd-confirm">Konfirmasi Password Baru</label>
+              <input type="password" id="pwd-confirm" class="form-control" placeholder="Ulangi password baru...">
+            </div>
+
+            <button type="button" class="btn btn-primary" id="btn-save-pwd" onclick="savePassword()"
+                    style="width:100%; margin-top:8px;">
+              💾 Simpan Password Baru
+            </button>
+
+            <hr class="section-divider">
+
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:var(--radius-md); padding:12px 14px; font-size:.81rem; color:#92400e;">
+              <strong>⚠️ Catatan:</strong> Password disimpan di browser (localStorage). Jika Anda bersihkan data browser, password akan kembali ke default.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /grid -->
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/config.js?v=4.2"></script>
+<script src="js/data.js?v=4.2"></script>
+<script src="js/auth.js?v=4.2"></script>
+<script src="js/utils.js?v=4.2"></script>
+<script src="js/render.js?v=4.2"></script>
+<script src="js/sidebar.js?v=4.2"></script>
+<script src="js/app.js?v=4.2"></script>
+
+<script>
+  // ─── Helper toast lokal ────────────────────────────────────
+  function _alert(msg, type = "info") {
+    const el = document.getElementById("change-pwd-alert");
+    if (!el) return;
+    const colors = {
+      success: { bg: "#f0fdf4", border: "#bbf7d0", color: "#166534" },
+      danger:  { bg: "#fef2f2", border: "#fca5a5", color: "#991b1b" },
+      info:    { bg: "#eff6ff", border: "#bfdbfe", color: "#1e40af" },
+    };
+    const c = colors[type] || colors.info;
+    el.style.display = "block";
+    el.style.background = c.bg;
+    el.style.border = `1px solid ${c.border}`;
+    el.style.color = c.color;
+    el.innerHTML = msg;
+    setTimeout(() => { el.style.display = "none"; }, 5000);
+  }
+
+  // ─── Password strength checker ─────────────────────────────
+  function checkPwdStrength(val) {
+    const bar   = document.getElementById("pwd-strength-bar");
+    const label = document.getElementById("pwd-strength-label");
+    if (!bar) return;
+    if (!val) { bar.className = "pwd-strength"; label.textContent = ""; return; }
+    if (val.length < 6) {
+      bar.className = "pwd-strength weak";
+      label.textContent = "Lemah";
+    } else if (val.length < 10 || !/[0-9]/.test(val)) {
+      bar.className = "pwd-strength medium";
+      label.textContent = "Sedang";
+    } else {
+      bar.className = "pwd-strength strong";
+      label.textContent = "Kuat";
+    }
+  }
+
+  // ─── Save password ─────────────────────────────────────────
+  function savePassword() {
+    const oldPwd = document.getElementById("pwd-old").value;
+    const newPwd = document.getElementById("pwd-new").value;
+    const cfmPwd = document.getElementById("pwd-confirm").value;
+
+    if (!oldPwd) { _alert("⚠️ Masukkan password saat ini", "danger"); return; }
+    if (!newPwd) { _alert("⚠️ Masukkan password baru", "danger"); return; }
+    if (newPwd !== cfmPwd) { _alert("⚠️ Konfirmasi password tidak cocok", "danger"); return; }
+
+    try {
+      Auth.changePassword(oldPwd, newPwd);
+      _alert("✅ Password berhasil diubah!", "success");
+      document.getElementById("pwd-old").value = "";
+      document.getElementById("pwd-new").value = "";
+      document.getElementById("pwd-confirm").value = "";
+      document.getElementById("pwd-strength-bar").className = "pwd-strength";
+      document.getElementById("pwd-strength-label").textContent = "";
+      // Update badge custom
+      document.getElementById("cred-custom-tag").style.display = "inline";
+      document.getElementById("cred-password").textContent = "••••••";
+    } catch(err) {
+      _alert("❌ " + err.message, "danger");
+    }
+  }
+
+  // ─── Render info user ──────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", () => {
+    const user = Auth.getUser();
+    if (!user) return;
+
+    const role = (user.role || "PENGGUNA").toUpperCase();
+
+    // Avatar
+    const avatarEl = document.getElementById("avatar-el");
+    if (avatarEl) {
+      avatarEl.textContent = (user.nama || user.username || "?")[0].toUpperCase();
+      avatarEl.className = `profile-avatar avatar-${role}`;
+    }
+
+    // Role pill
+    const pillEl = document.getElementById("role-pill-el");
+    if (pillEl) {
+      const roleLabels = { PENGGUNA: "Pengguna", PPK: "PPK", KATIM: "Ketua Tim", ADMIN: "Admin" };
+      pillEl.textContent = roleLabels[role] || role;
+      pillEl.className = `role-pill pill-${role}`;
+    }
+
+    // Info fields
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || "—"; };
+    set("info-nama",     user.nama);
+    set("info-username", user.username);
+    set("info-nip",      user.nip);
+    set("info-jabatan",  user.jabatan);
+
+    const roleLabels2 = { PENGGUNA: "Pengguna", PPK: "PPK — Pejabat Pembuat Komitmen", KATIM: "Ketua Tim", ADMIN: "Administrator" };
+    set("info-role", roleLabels2[role] || role);
+
+    // Login time
+    if (user.loginAt) {
+      const d = new Date(user.loginAt);
+      set("info-login", d.toLocaleString("id-ID", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }));
+    }
+
+    // Credentials
+    set("cred-username", user.username);
+
+    // Cek apakah sudah punya custom password
+    const customPwdKey = "spkbast_pwd_" + user.username;
+    const hasCustomPwd = !!localStorage.getItem(customPwdKey);
+
+    const credPwdEl = document.getElementById("cred-password");
+    const credCustomTag = document.getElementById("cred-custom-tag");
+    if (credPwdEl) credPwdEl.textContent = hasCustomPwd ? "••••••" : _getDefaultPwd(user.username, role);
+    if (credCustomTag) credCustomTag.style.display = hasCustomPwd ? "inline" : "none";
+  });
+
+  function _getDefaultPwd(username, role) {
+    // Tampilkan password default sesuai username
+    const defaults = { ppk: "ppk", admin: "admin", katim: "katim" };
+    return defaults[username] || "password";
+  }
+</script>
+</body>
+</html>

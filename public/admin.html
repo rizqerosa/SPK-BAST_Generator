@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -234,8 +234,9 @@
           <span class="info-box-icon">ℹ️</span>
           <div>
             <strong>Akun Otomatis dari Daftar Pegawai</strong><br>
-            Setiap pegawai dapat login dengan <strong>username = nama (tanpa gelar)</strong> dan <strong>password = <code>password</code></strong>.
-            Role default: <span class="role-badge role-pengguna">Pengguna</span>
+            Setiap pegawai login dengan <strong>username = nama (tanpa gelar)</strong> dan <strong>password = <code>password</code></strong>.
+            Role default: <span class="role-badge role-pengguna">Pengguna</span>.<br>
+            <span style="color:#1d4ed8;">💡 Admin bisa assign role berbeda dari kolom <strong>Role</strong> di bawah — tersimpan di browser.</span>
           </div>
         </div>
 
@@ -258,8 +259,8 @@
                   <th>Nama Pegawai</th>
                   <th>NIP</th>
                   <th>Username Login</th>
-                  <th>Password</th>
-                  <th>Role</th>
+                  <th>Password Default</th>
+                  <th style="width:160px;">Role</th>
                   <th>Jabatan</th>
                 </tr>
               </thead>
@@ -444,6 +445,15 @@
     document.getElementById("stat-admin").textContent    = totalAdmin;
   }
 
+  // ─── LocalStorage role override ───────────────────────────
+  const ROLE_PREFIX = "spkbast_role_";
+  function getAssignedRole(username) {
+    try { return localStorage.getItem(ROLE_PREFIX + username) || "PENGGUNA"; } catch { return "PENGGUNA"; }
+  }
+  function setAssignedRole(username, role) {
+    try { localStorage.setItem(ROLE_PREFIX + username, role); } catch {}
+  }
+
   // ─── Render tab Pengguna (dari pegawai) ───────────────────
   function renderPegawaiTab(data) {
     const tbody = document.getElementById("tbody-pegawai");
@@ -458,15 +468,19 @@
       return;
     }
     tbody.innerHTML = data.map((p, i) => {
-      const nama     = p.Nama_Pegawai || p.Nama || "—";
-      const inisial  = nama[0].toUpperCase();
-      const username = stripGelar(nama);
+      const nama        = p.Nama_Pegawai || p.Nama || "—";
+      const inisial     = nama[0].toUpperCase();
+      const username    = stripGelar(nama);
+      const currentRole = getAssignedRole(username);
+      const roleClass   = currentRole === "PPK" ? "role-ppk" : currentRole === "KATIM" ? "role-katim" : currentRole === "ADMIN" ? "role-admin" : "role-pengguna";
+      const avatarClass = currentRole === "PPK" ? "avatar-ppk" : currentRole === "KATIM" ? "avatar-katim" : currentRole === "ADMIN" ? "avatar-admin" : "avatar-pengguna";
+
       return `
         <tr>
           <td class="tc text-muted">${i + 1}</td>
           <td>
             <div class="user-cell">
-              <div class="user-avatar avatar-pengguna">${inisial}</div>
+              <div class="user-avatar ${avatarClass}" id="av-${username}">${inisial}</div>
               <div>
                 <div class="user-name">${nama}</div>
                 <div class="user-sub">${p.NIP || "—"}</div>
@@ -476,7 +490,19 @@
           <td style="font-family:monospace;font-size:.8rem;">${p.NIP || "—"}</td>
           <td><span class="username-chip">${username}</span></td>
           <td><span class="username-chip">password</span></td>
-          <td><span class="role-badge role-pengguna">Pengguna</span></td>
+          <td>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span class="role-badge ${roleClass}" id="role-badge-${username}">${currentRole}</span>
+              <select class="sel-role" id="sel-role-${username}"
+                onchange="applyRoleChange('${username}', this.value)"
+                style="font-size:.75rem;padding:3px 6px;border:1px solid var(--gray-300);border-radius:6px;cursor:pointer;">
+                <option value="PENGGUNA" ${currentRole === 'PENGGUNA' ? 'selected' : ''}>Pengguna</option>
+                <option value="PPK"      ${currentRole === 'PPK'      ? 'selected' : ''}>PPK</option>
+                <option value="KATIM"    ${currentRole === 'KATIM'    ? 'selected' : ''}>Ketua Tim</option>
+                <option value="ADMIN"    ${currentRole === 'ADMIN'    ? 'selected' : ''}>Admin</option>
+              </select>
+            </div>
+          </td>
           <td style="font-size:.85rem;">${p.Jabatan || "—"}</td>
         </tr>`;
     }).join("");
@@ -484,7 +510,8 @@
 
     // Search
     const searchEl = document.getElementById("search-pegawai");
-    if (searchEl) {
+    if (searchEl && !searchEl.dataset.bound) {
+      searchEl.dataset.bound = "1";
       searchEl.addEventListener("input", () => {
         const q = searchEl.value.toLowerCase().trim();
         const filtered = q
@@ -493,6 +520,19 @@
         renderPegawaiTab(filtered);
       });
     }
+  }
+
+  // ─── Apply role change ─────────────────────────────────────
+  function applyRoleChange(username, newRole) {
+    setAssignedRole(username, newRole);
+    // Update badge warna
+    const badge = document.getElementById("role-badge-" + username);
+    const avatar = document.getElementById("av-" + username);
+    const roleClass = newRole === "PPK" ? "role-ppk" : newRole === "KATIM" ? "role-katim" : newRole === "ADMIN" ? "role-admin" : "role-pengguna";
+    const avatarClass = newRole === "PPK" ? "avatar-ppk" : newRole === "KATIM" ? "avatar-katim" : newRole === "ADMIN" ? "avatar-admin" : "avatar-pengguna";
+    if (badge) { badge.className = "role-badge " + roleClass; badge.textContent = newRole; }
+    if (avatar) { avatar.className = "user-avatar " + avatarClass; }
+    showToast(`Role ${username} → ${newRole} berhasil disimpan`, "success");
   }
 
   // ─── Render tab Akun Khusus ────────────────────────────────

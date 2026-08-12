@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -286,6 +286,14 @@
 <script src="js/data.js?v=4.2"></script>
 <script src="js/auth.js?v=4.2"></script>
 <script>
+  // Jika sudah login, langsung redirect ke halaman sesuai role
+  document.addEventListener("DOMContentLoaded", function() {
+    if (Auth.isLoggedIn()) {
+      Auth._redirectByRole(Auth.getRole());
+      return;
+    }
+  });
+
   document.getElementById("form-login").addEventListener("submit", async (e) => {
     e.preventDefault();
     const userVal = document.getElementById("login-username").value;
@@ -301,18 +309,11 @@
     try {
       const loggedUser = await Auth.login(userVal, passVal, rememberVal);
       // Redirect sesuai role
-      const params = new URLSearchParams(window.location.search);
-      const redirectTarget = params.get("redirect");
-
-      if (redirectTarget && redirectTarget !== "admin.html" && loggedUser.role !== "ADMIN") {
-        window.location.href = redirectTarget;
-      } else if (loggedUser.role === "ADMIN") {
-        window.location.href = "admin.html";
-      } else if (loggedUser.role === "PPK") {
-        window.location.href = "verifikasi-ppk.html";
-      } else {
-        window.location.href = "index.html";
-      }
+      const role = loggedUser.role ? loggedUser.role.toUpperCase() : "PENGGUNA";
+      if      (role === "ADMIN") window.location.replace("admin.html");
+      else if (role === "PPK")   window.location.replace("verifikasi-ppk.html");
+      else if (role === "KATIM") window.location.replace("katim.html");
+      else                       window.location.replace("index.html");
     } catch (err) {
       errBox.style.display = "flex";
       document.getElementById("login-error-msg").textContent = err.message;

@@ -27,6 +27,8 @@
     { icon: "🏛️", label: "Daftar Pegawai",  href: "pegawai.html" },
     { icon: "🤝", label: "Daftar Mitra",    href: "mitra.html"   },
     { icon: "📋", label: "Daftar Dokumen",  href: "dokumen.html" },
+    { section: "Akun" },
+    { icon: "👤", label: "Profil Saya",     href: "profil.html"  },
   ];
 
   function buildSidebar() {
