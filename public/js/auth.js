@@ -1,55 +1,32 @@
 // ============================================================
 // AUTH.JS — Sistem Autentikasi & Manajemen Sesi Pengguna
 // Role: PENGGUNA | PPK | KATIM | ADMIN
+//
+// PERFORMA: DEFAULT_USERS (admin/ppk/katim) dicek PERTAMA
+// secara sinkron sebelum network call apapun → login instan.
 // ============================================================
 
 const AUTH_SESSION_KEY = "spkbast_user_session";
 
 // ─── Default Fallback Users ───────────────────────────────────
 const DEFAULT_USERS = [
-  {
-    username: "ppk",
-    password: "ppk",
-    nama: "Pejabat Pembuat Komitmen",
-    nip: "198501012010011001",
-    role: "PPK",
-    jabatan: "Pejabat Pembuat Komitmen BPS Subulussalam"
-  },
-  {
-    username: "admin",
-    password: "admin",
-    nama: "Administrator Sistem",
-    nip: "198001012005011001",
-    role: "ADMIN",
-    jabatan: "Admin Sistem SPK/BAST"
-  },
-  {
-    username: "katim",
-    password: "katim",
-    nama: "Ketua Tim",
-    nip: "197501012000011001",
-    role: "KATIM",
-    jabatan: "Ketua Tim BPS Kota Subulussalam"
-  }
+  { username: "ppk",   password: "ppk",   nama: "Pejabat Pembuat Komitmen", nip: "198501012010011001", role: "PPK",   jabatan: "Pejabat Pembuat Komitmen BPS Subulussalam" },
+  { username: "admin", password: "admin", nama: "Administrator Sistem",     nip: "198001012005011001", role: "ADMIN", jabatan: "Admin Sistem SPK/BAST" },
+  { username: "katim", password: "katim", nama: "Ketua Tim",                nip: "197501012000011001", role: "KATIM", jabatan: "Ketua Tim BPS Kota Subulussalam" },
 ];
 
-// ─── Helper: deteksi nama halaman saat ini ────────────────────
-// Menghandle cleanUrls Vercel (URL tanpa .html) maupun dengan .html
+// ─── Helper: deteksi nama halaman saat ini ───────────────────
+// Handle Vercel cleanUrls (URL tanpa .html) maupun dengan .html
 function _getCurrentPage() {
   const pathname = window.location.pathname || "/";
-  // Ambil segmen terakhir
   const segments = pathname.split("/").filter(Boolean);
   const last = segments[segments.length - 1] || "";
-
-  // Jika ada ekstensi .html
   if (last.endsWith(".html")) return last.toLowerCase();
-
-  // cleanUrls: tambahkan .html
-  if (last === "") return "index.html";   // root "/"
+  if (last === "") return "login.html"; // root → default ke login
   return last.toLowerCase() + ".html";
 }
 
-// ─── Helper: strip gelar ──────────────────────────────────────
+// ─── Helper: strip gelar & pangkat dari nama ─────────────────
 function _stripGelardanPangkat(nama) {
   if (!nama) return "";
   let n = String(nama).trim();
@@ -60,12 +37,20 @@ function _stripGelardanPangkat(nama) {
 }
 
 // ─── Helper: password kustom di localStorage ─────────────────
-const _PWD_PREFIX = "spkbast_pwd_";
+const _PWD_PREFIX  = "spkbast_pwd_";
+const _ROLE_PREFIX = "spkbast_role_";
+
 function _getCustomPwd(username) {
   try { return localStorage.getItem(_PWD_PREFIX + username) || null; } catch { return null; }
 }
 function _setCustomPwd(username, password) {
   try { localStorage.setItem(_PWD_PREFIX + username, password); } catch {}
+}
+function _getAssignedRole(username) {
+  try {
+    const r = localStorage.getItem(_ROLE_PREFIX + username);
+    return (r && ["PENGGUNA","PPK","KATIM","ADMIN"].includes(r)) ? r : null;
+  } catch { return null; }
 }
 
 const Auth = {
@@ -100,8 +85,22 @@ const Auth = {
 
     let userFound = null;
 
-    // 1. Sheet "pengguna"
-    if (typeof getPengguna === "function") {
+    // ── LANGKAH 1: Cek DEFAULT_USERS dulu (SINKRON, instan) ──
+    // Ini yang buat login admin/ppk/katim jadi cepat
+    const matchDefault = DEFAULT_USERS.find(d => d.username === u);
+    if (matchDefault) {
+      const customPwd = _getCustomPwd(u);
+      const validPwd  = customPwd !== null ? customPwd : matchDefault.password;
+      if (validPwd === p) {
+        userFound = { ...matchDefault };
+      } else {
+        // Username ada di DEFAULT_USERS tapi password salah → langsung error
+        throw new Error("Username atau Password salah!");
+      }
+    }
+
+    // ── LANGKAH 2: Sheet "pengguna" (hanya jika bukan DEFAULT_USER) ──
+    if (!userFound && typeof getPengguna === "function") {
       try {
         const usersFromSheet = await getPengguna();
         if (Array.isArray(usersFromSheet) && usersFromSheet.length > 0) {
@@ -113,10 +112,10 @@ const Auth = {
           if (match) {
             userFound = {
               username: (match.Username || match.username || u).toLowerCase(),
-              nama: match.Nama_Lengkap || match.Nama || match.nama || u,
-              nip: match.NIP || match.nip || "",
-              role: String(match.Role || match.role || "PENGGUNA").toUpperCase(),
-              jabatan: match.Jabatan || match.jabatan || ""
+              nama:     match.Nama_Lengkap || match.Nama || match.nama || u,
+              nip:      match.NIP || match.nip || "",
+              role:     String(match.Role || match.role || "PENGGUNA").toUpperCase(),
+              jabatan:  match.Jabatan || match.jabatan || ""
             };
           }
         }
@@ -125,47 +124,27 @@ const Auth = {
       }
     }
 
-    // 2. DEFAULT_USERS (ppk, admin, katim) — cek custom pwd dulu
-    if (!userFound) {
-      const matchDefault = DEFAULT_USERS.find(d => d.username === u);
-      if (matchDefault) {
-        const customPwd = _getCustomPwd(u);
-        const validPwd  = customPwd !== null ? customPwd : matchDefault.password;
-        if (validPwd === p) {
-          userFound = { ...matchDefault };
-        }
-      }
-    }
-
-    // 3. Sheet "pegawai" — login dengan nama bersih + "password" atau custom pwd
+    // ── LANGKAH 3: Sheet "pegawai" (nama bersih + password) ──
     if (!userFound && typeof getPegawai === "function") {
       try {
         const pegawaiData = await getPegawai();
         if (Array.isArray(pegawaiData) && pegawaiData.length > 0) {
-          const match = pegawaiData.find(pg => {
-            const namaBersih = _stripGelardanPangkat(pg.Nama_Pegawai || pg.Nama || "");
-            return namaBersih === u;
-          });
+          const match = pegawaiData.find(pg =>
+            _stripGelardanPangkat(pg.Nama_Pegawai || pg.Nama || "") === u
+          );
           if (match) {
             const namaBersih = _stripGelardanPangkat(match.Nama_Pegawai || match.Nama || "");
             const customPwd  = _getCustomPwd(namaBersih);
             const validPwd   = customPwd !== null ? customPwd : "password";
             if (validPwd === p) {
-              // Cek apakah Admin sudah assign role khusus untuk pegawai ini
-              let assignedRole = "PENGGUNA";
-              try {
-                const savedRole = localStorage.getItem("spkbast_role_" + namaBersih);
-                if (savedRole && ["PENGGUNA","PPK","KATIM","ADMIN"].includes(savedRole)) {
-                  assignedRole = savedRole;
-                }
-              } catch {}
-
+              // Cek role yang di-assign Admin, fallback ke PENGGUNA
+              const assignedRole = _getAssignedRole(namaBersih) || "PENGGUNA";
               userFound = {
                 username: namaBersih,
-                nama: match.Nama_Pegawai || match.Nama || u,
-                nip:  match.NIP || match.nip || "",
-                role: assignedRole,
-                jabatan: match.Jabatan || match.jabatan || ""
+                nama:     match.Nama_Pegawai || match.Nama || u,
+                nip:      match.NIP || match.nip || "",
+                role:     assignedRole,
+                jabatan:  match.Jabatan || match.jabatan || ""
               };
             }
           }
@@ -189,25 +168,16 @@ const Auth = {
   // ─── Change Password ───────────────────────────────────────
   changePassword(oldPassword, newPassword) {
     const user = this.getUser();
-    if (!user) throw new Error("Belum login");
+    if (!user)            throw new Error("Belum login");
     if (!oldPassword || !newPassword) throw new Error("Password tidak boleh kosong");
-    if (newPassword.length < 4) throw new Error("Password baru minimal 4 karakter");
+    if (newPassword.length < 4)       throw new Error("Password baru minimal 4 karakter");
 
-    const u = user.username;
+    const u         = user.username;
     const customPwd = _getCustomPwd(u);
-
-    // Tentukan password aktif saat ini
-    let currentPwd;
-    if (customPwd !== null) {
-      currentPwd = customPwd;
-    } else {
-      // Cek default users
-      const def = DEFAULT_USERS.find(d => d.username === u);
-      currentPwd = def ? def.password : "password";
-    }
+    const def       = DEFAULT_USERS.find(d => d.username === u);
+    const currentPwd = customPwd !== null ? customPwd : (def ? def.password : "password");
 
     if (oldPassword !== currentPwd) throw new Error("Password lama tidak sesuai");
-
     _setCustomPwd(u, newPassword);
     return true;
   },
@@ -231,29 +201,22 @@ const Auth = {
   requireAuth(allowedRoles = []) {
     const page = _getCurrentPage();
     if (page === "login.html") return true;
-    if (!this.isLoggedIn()) {
-      window.location.replace("login.html");
-      return false;
-    }
+    if (!this.isLoggedIn()) { window.location.replace("login.html"); return false; }
     if (allowedRoles.length > 0) {
       const role = this.getRole();
-      if (!allowedRoles.includes(role)) {
-        this._redirectByRole(role);
-        return false;
-      }
+      if (!allowedRoles.includes(role)) { this._redirectByRole(role); return false; }
     }
     return true;
   }
 };
 
-// ─── Page Guard (dipanggil HANYA sekali saat DOMContentLoaded) ─
+// ─── Page Guard ───────────────────────────────────────────────
+// Dipanggil HANYA SATU KALI saat DOMContentLoaded.
+// ADMIN boleh akses semua halaman (kecuali index.html beranda pengguna).
 function checkPageAuth() {
   const page = _getCurrentPage();
-
-  // Login page → skip
   if (page === "login.html") return;
 
-  // Belum login → ke login
   if (!Auth.isLoggedIn()) {
     window.location.replace("login.html");
     return;
@@ -261,44 +224,38 @@ function checkPageAuth() {
 
   const role = Auth.getRole();
 
-  // ── Guard halaman eksklusif ─────────────────────────────────
+  // ── Halaman eksklusif — hanya role tertentu ───────────────
   if (page === "admin.html") {
     if (role !== "ADMIN") Auth._redirectByRole(role);
     return;
   }
-
   if (page === "verifikasi-ppk.html") {
     if (role !== "PPK" && role !== "ADMIN") Auth._redirectByRole(role);
     return;
   }
-
   if (page === "katim.html") {
     if (role !== "KATIM" && role !== "ADMIN") Auth._redirectByRole(role);
     return;
   }
 
-  // Form: PENGGUNA tidak boleh
-  if (page === "form.html") {
-    if (role === "PENGGUNA") { window.location.replace("dokumen.html"); return; }
+  // ── Halaman yang butuh akses khusus ───────────────────────
+  // Form buat dokumen: PENGGUNA tidak boleh
+  if (page === "form.html" && role === "PENGGUNA") {
+    window.location.replace("dokumen.html"); return;
   }
 
-  // Profile: semua yang sudah login boleh
-  if (page === "profil.html") return;
+  // Profile & preview: semua boleh
+  if (page === "profil.html" || page === "preview.html") return;
 
-  // Halaman umum: ADMIN → admin.html
-  if (role === "ADMIN" && page !== "preview.html") {
-    window.location.replace("admin.html");
-    return;
+  // index.html (dashboard pengguna): ADMIN & PPK diarahkan ke halaman masing-masing
+  if (page === "index.html") {
+    if (role === "ADMIN") { window.location.replace("admin.html"); return; }
+    if (role === "PPK")   { window.location.replace("verifikasi-ppk.html"); return; }
   }
 
-  // KATIM hanya boleh di halaman ini (selain katim.html yang sudah di-handle)
-  const allowedForKatim = [
-    "index.html", "dokumen.html", "kegiatan.html",
-    "pegawai.html", "mitra.html", "preview.html", "profil.html"
-  ];
-  if (role === "KATIM" && !allowedForKatim.includes(page)) {
-    window.location.replace("katim.html");
-  }
+  // Halaman data & dokumen (kegiatan, pegawai, mitra, dokumen):
+  // ADMIN boleh semua, KATIM boleh semua, PPK boleh semua, PENGGUNA boleh semua
+  // → tidak ada restriksi tambahan, semua role yang sudah login boleh akses
 }
 
 // Panggil SATU KALI saja saat DOMContentLoaded

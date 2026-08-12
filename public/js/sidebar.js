@@ -17,8 +17,17 @@
 // ============================================================
 
 (function () {
-  // Deteksi halaman aktif dari URL
-  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  // Deteksi halaman aktif — handle Vercel cleanUrls (tanpa .html)
+  function _getCurrentPageName() {
+    const p = window.location.pathname || "/";
+    const seg = p.split("/").filter(Boolean);
+    const last = seg[seg.length - 1] || "";
+    if (last.endsWith(".html")) return last.toLowerCase();
+    if (!last) return "login.html";
+    return last.toLowerCase() + ".html";
+  }
+
+  const currentPage = _getCurrentPageName();
 
   // ─── Shared nav items (muncul di semua role) ──────────────
   const NAV_SHARED = [
@@ -40,8 +49,8 @@
     if (role === "ADMIN") {
       extraNavItems = [
         { section: "Administrasi" },
-        { icon: "👥", label: "Manajemen User", href: "admin.html",  badge: "ADMIN" },
-        { icon: "➕", label: "Buat Dokumen",   href: "form.html"                   },
+        { icon: "👥", label: "Manajemen User",     href: "admin.html",         badge: "ADMIN" },
+        { icon: "➕", label: "Buat Dokumen",        href: "form.html"           },
       ];
     } else if (role === "PPK") {
       extraNavItems = [
@@ -51,7 +60,7 @@
     } else if (role === "KATIM") {
       extraNavItems = [
         { section: "Ketua Tim" },
-        { icon: "🗺️", label: "Mapping Petugas", href: "katim.html", badge: "KATIM" },
+        { icon: "🗺️", label: "Mapping Petugas",   href: "katim.html",          badge: "KATIM" },
       ];
     }
 
