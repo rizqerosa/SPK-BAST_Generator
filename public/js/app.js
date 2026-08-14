@@ -2216,16 +2216,16 @@ function initDashboardHonorMitra(spkBastData, mitraData) {
 
       if (sisaHonor < 0) {
         sisaClass = "text-danger";
-        badgeHtml = `<span class="badge badge-danger">⚠️ Melebihi SBM</span>`;
+        badgeHtml = `<span class="badge badge-danger">Melebihi SBM</span>`;
       } else if (sisaHonor === 0) {
         sisaClass = "text-warning";
-        badgeHtml = `<span class="badge badge-warning">Penuh (Pas SBM)</span>`;
+        badgeHtml = `<span class="badge badge-warning">Pas SBM</span>`;
       } else if (honor === 0) {
         sisaClass = "text-muted";
         badgeHtml = `<span class="badge badge-gray">Belum Ada Honor</span>`;
       } else {
         sisaClass = "text-success";
-        badgeHtml = `<span class="badge badge-success">Aman</span>`;
+        badgeHtml = `<span class="badge badge-success">Di Bawah SBM</span>`;
       }
 
       const formattedHonor = `Rp ${formatRupiah(honor)}`;
