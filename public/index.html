@@ -164,19 +164,25 @@
         </div>
       </div>
 
-      <!-- Split Layout Container (Rekap Honor Mitra 50-60% | Quick Actions 40-50%) -->
+      <!-- Split Layout Container (Rekap Honor Mitra 55-60% | Quick Actions 40-45%) -->
       <style>
         .dashboard-split-grid {
           display: grid;
-          grid-template-columns: 1.3fr 1fr;
-          gap: 24px;
+          grid-template-columns: 1.35fr 1fr;
+          gap: 20px;
           align-items: start;
           margin-bottom: 28px;
         }
         .dashboard-table-scroll {
           max-height: 420px;
           overflow-y: auto;
+          overflow-x: hidden;
           border-radius: var(--radius-md);
+        }
+        .dashboard-table-scroll table.data-table {
+          width: 100%;
+          table-layout: fixed;
+          border-collapse: collapse;
         }
         .dashboard-table-scroll th {
           position: sticky;
@@ -184,10 +190,20 @@
           z-index: 5;
           background: var(--gray-50);
           box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          padding: 8px 6px;
+          font-size: 0.7rem;
+        }
+        .dashboard-table-scroll td {
+          padding: 8px 6px;
+          font-size: 0.78rem;
+          word-break: break-word;
         }
         @media (max-width: 1024px) {
           .dashboard-split-grid {
             grid-template-columns: 1fr;
+          }
+          .dashboard-table-scroll {
+            overflow-x: auto;
           }
         }
       </style>
@@ -196,20 +212,20 @@
 
         <!-- KIRI: Rekap Honor Mitra per Bulan -->
         <div class="card" style="margin: 0;">
-          <div class="card-header" style="flex-wrap: wrap; gap: 12px; padding: 16px 20px;">
-            <div style="display:flex; align-items:center; gap:10px; flex: 1; min-width: 200px;">
-              <div style="width:38px; height:38px; border-radius:var(--radius-md); background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.25rem;">
+          <div class="card-header" style="flex-wrap: wrap; gap: 12px; padding: 14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px; flex: 1; min-width: 180px;">
+              <div style="width:36px; height:36px; border-radius:var(--radius-md); background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
                 💰
               </div>
               <div>
-                <h2 style="margin:0; font-size:1rem; font-weight:700; color:var(--gray-800);">Rekap Honor Mitra</h2>
-                <p style="font-size:0.72rem; color:var(--gray-500); margin:1px 0 0 0;">Monitoring honor &amp; SBM (Max Rp 3.500.000)</p>
+                <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--gray-800);">Rekap Honor Mitra</h2>
+                <p style="font-size:0.7rem; color:var(--gray-500); margin:1px 0 0 0;">Monitoring honor &amp; SBM (Max Rp 3.500.000)</p>
               </div>
             </div>
 
             <!-- Controls -->
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <select id="select-bulan-honor" class="form-control" style="padding:5px 10px; font-size:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <select id="select-bulan-honor" class="form-control" style="padding:4px 8px; font-size:0.78rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
                 <option value="Januari">Januari</option>
                 <option value="Februari">Februari</option>
                 <option value="Maret">Maret</option>
@@ -224,24 +240,24 @@
                 <option value="Desember">Desember</option>
               </select>
 
-              <select id="select-tahun-honor" class="form-control" style="padding:5px 10px; font-size:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
+              <select id="select-tahun-honor" class="form-control" style="padding:4px 8px; font-size:0.78rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
                 <!-- Diisi otomatis via JS -->
               </select>
 
-              <input type="text" id="search-mitra-honor" placeholder="🔍 Cari..." class="form-control" style="padding:5px 10px; font-size:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); width:110px;">
+              <input type="text" id="search-mitra-honor" placeholder="🔍 Cari..." class="form-control" style="padding:4px 8px; font-size:0.78rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); width:100px;">
             </div>
           </div>
 
-          <div class="card-body" style="padding: 16px;">
+          <div class="card-body" style="padding: 14px;">
             <!-- Mini Stats Bar -->
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; padding: 12px 14px; background: var(--gray-50); border-radius: var(--radius-md); border: 1px solid var(--gray-200);">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; padding: 10px 12px; background: var(--gray-50); border-radius: var(--radius-md); border: 1px solid var(--gray-200);">
               <div>
-                <div style="font-size:0.65rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Mitra Aktif (<span id="label-bulan-terpilih">Bulan</span>)</div>
-                <div id="stat-honor-mitra-aktif" style="font-size:1.05rem; font-weight:800; color:var(--brand-primary); margin-top:1px;">—</div>
+                <div style="font-size:0.62rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Mitra Aktif (<span id="label-bulan-terpilih">Bulan</span>)</div>
+                <div id="stat-honor-mitra-aktif" style="font-size:1rem; font-weight:800; color:var(--brand-primary); margin-top:1px;">—</div>
               </div>
               <div>
-                <div style="font-size:0.65rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Total Honor Terbayar</div>
-                <div id="stat-honor-total-rp" style="font-size:1.05rem; font-weight:800; color:var(--success); margin-top:1px;">—</div>
+                <div style="font-size:0.62rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Total Honor Terbayar</div>
+                <div id="stat-honor-total-rp" style="font-size:1rem; font-weight:800; color:var(--success); margin-top:1px;">—</div>
               </div>
             </div>
 
@@ -250,11 +266,11 @@
               <table class="data-table" id="table-honor-mitra">
                 <thead>
                   <tr>
-                    <th style="width: 36px; text-align: center;">No</th>
-                    <th>Nama Mitra</th>
-                    <th style="text-align: right;">Honor Bulan Ini</th>
-                    <th style="text-align: right;">Sisa SBM</th>
-                    <th style="text-align: center; width: 110px;">Status</th>
+                    <th style="width: 26px; text-align: center;">No</th>
+                    <th style="width: auto;">Nama Mitra</th>
+                    <th style="width: 95px; text-align: right;">Honor</th>
+                    <th style="width: 95px; text-align: right;">Sisa SBM</th>
+                    <th style="width: 92px; text-align: center;">Status</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-honor-mitra">

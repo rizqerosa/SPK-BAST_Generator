@@ -2241,7 +2241,6 @@ function initDashboardHonorMitra(spkBastData, mitraData) {
           </td>
           <td style="text-align: right; font-weight: 700; color: ${honor > 0 ? 'var(--gray-900)' : 'var(--gray-400)'};">
             ${formattedHonor}
-            ${m.jumlahDokumen > 0 ? `<div style="font-size:0.72rem; font-weight: normal; color:var(--gray-500);">${m.jumlahDokumen} dokumen SPK</div>` : ''}
           </td>
           <td style="text-align: right; font-weight: 700;" class="${sisaClass}">
             ${formattedSisa}
