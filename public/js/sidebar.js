@@ -139,9 +139,9 @@
               <line x1="14.5" y1="21" x2="19" y2="21" stroke="#34D399" stroke-width="1.8" stroke-linecap="round"/>
               <defs>
                 <linearGradient id="sidebar_logo_grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#0284C7"/>
-                  <stop offset="0.6" stop-color="#4F46E5"/>
-                  <stop offset="1" stop-color="#0F172A"/>
+                  <stop stop-color="#10B981"/>
+                  <stop offset="0.6" stop-color="#047857"/>
+                  <stop offset="1" stop-color="#064E3B"/>
                 </linearGradient>
               </defs>
             </svg>
