@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -164,24 +164,52 @@
         </div>
       </div>
 
-      <!-- Rekap Honor Mitra per Bulan -->
-      <div class="card" style="margin-bottom: 28px;">
-        <div class="card-header" style="flex-wrap: wrap; gap: 16px; padding: 18px 24px;">
-          <div style="display:flex; align-items:center; gap:12px; flex: 1; min-width: 250px;">
-            <div style="width:42px; height:42px; border-radius:var(--radius-md); background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
-              💰
-            </div>
-            <div>
-              <h2 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--gray-800);">Rekap Honor Mitra per Bulan</h2>
-              <p style="font-size:0.78rem; color:var(--gray-500); margin:2px 0 0 0;">Monitoring honor mitra &amp; sisa SBM (Maksimal Rp 3.500.000 / bulan)</p>
-            </div>
-          </div>
+      <!-- Split Layout Container (Rekap Honor Mitra 50-60% | Quick Actions 40-50%) -->
+      <style>
+        .dashboard-split-grid {
+          display: grid;
+          grid-template-columns: 1.3fr 1fr;
+          gap: 24px;
+          align-items: start;
+          margin-bottom: 28px;
+        }
+        .dashboard-table-scroll {
+          max-height: 420px;
+          overflow-y: auto;
+          border-radius: var(--radius-md);
+        }
+        .dashboard-table-scroll th {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          background: var(--gray-50);
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        @media (max-width: 1024px) {
+          .dashboard-split-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
 
-          <!-- Controls -->
-          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <label for="select-bulan-honor" style="font-size:0.82rem; font-weight:600; color:var(--gray-600);">Bulan:</label>
-              <select id="select-bulan-honor" class="form-control" style="padding:6px 12px; font-size:0.85rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
+      <div class="dashboard-split-grid">
+
+        <!-- KIRI: Rekap Honor Mitra per Bulan -->
+        <div class="card" style="margin: 0;">
+          <div class="card-header" style="flex-wrap: wrap; gap: 12px; padding: 16px 20px;">
+            <div style="display:flex; align-items:center; gap:10px; flex: 1; min-width: 200px;">
+              <div style="width:38px; height:38px; border-radius:var(--radius-md); background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.25rem;">
+                💰
+              </div>
+              <div>
+                <h2 style="margin:0; font-size:1rem; font-weight:700; color:var(--gray-800);">Rekap Honor Mitra</h2>
+                <p style="font-size:0.72rem; color:var(--gray-500); margin:1px 0 0 0;">Monitoring honor &amp; SBM (Max Rp 3.500.000)</p>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <select id="select-bulan-honor" class="form-control" style="padding:5px 10px; font-size:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
                 <option value="Januari">Januari</option>
                 <option value="Februari">Februari</option>
                 <option value="Maret">Maret</option>
@@ -195,109 +223,102 @@
                 <option value="November">November</option>
                 <option value="Desember">Desember</option>
               </select>
-            </div>
 
-            <div style="display:flex; align-items:center; gap:6px;">
-              <label for="select-tahun-honor" style="font-size:0.82rem; font-weight:600; color:var(--gray-600);">Tahun:</label>
-              <select id="select-tahun-honor" class="form-control" style="padding:6px 12px; font-size:0.85rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
+              <select id="select-tahun-honor" class="form-control" style="padding:5px 10px; font-size:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); background-color:#fff; cursor:pointer;">
                 <!-- Diisi otomatis via JS -->
               </select>
+
+              <input type="text" id="search-mitra-honor" placeholder="🔍 Cari..." class="form-control" style="padding:5px 10px; font-size:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); width:110px;">
+            </div>
+          </div>
+
+          <div class="card-body" style="padding: 16px;">
+            <!-- Mini Stats Bar -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; padding: 12px 14px; background: var(--gray-50); border-radius: var(--radius-md); border: 1px solid var(--gray-200);">
+              <div>
+                <div style="font-size:0.65rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Mitra Aktif (<span id="label-bulan-terpilih">Bulan</span>)</div>
+                <div id="stat-honor-mitra-aktif" style="font-size:1.05rem; font-weight:800; color:var(--brand-primary); margin-top:1px;">—</div>
+              </div>
+              <div>
+                <div style="font-size:0.65rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Total Honor Terbayar</div>
+                <div id="stat-honor-total-rp" style="font-size:1.05rem; font-weight:800; color:var(--success); margin-top:1px;">—</div>
+              </div>
             </div>
 
-            <div style="position:relative;">
-              <input type="text" id="search-mitra-honor" placeholder="🔍 Cari mitra..." class="form-control" style="padding:6px 12px; font-size:0.85rem; border-radius:var(--radius-sm); border:1px solid var(--gray-300); width:170px;">
+            <!-- Table View dengan Scroll Control -->
+            <div class="table-wrapper dashboard-table-scroll">
+              <table class="data-table" id="table-honor-mitra">
+                <thead>
+                  <tr>
+                    <th style="width: 36px; text-align: center;">No</th>
+                    <th>Nama Mitra</th>
+                    <th style="text-align: right;">Honor Bulan Ini</th>
+                    <th style="text-align: right;">Sisa SBM</th>
+                    <th style="text-align: center; width: 110px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-honor-mitra">
+                  <tr>
+                    <td colspan="5" class="text-center text-muted" style="padding: 24px;">
+                      Memuat data honor mitra...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <div class="card-body" style="padding: 20px 24px;">
-          <!-- Mini Stats Bar -->
-          <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; padding: 14px 18px; background: var(--gray-50); border-radius: var(--radius-md); border: 1px solid var(--gray-200);">
-            <div style="flex:1; min-width:140px;">
-              <div style="font-size:0.7rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Total Mitra Master</div>
-              <div id="stat-honor-total-mitra" style="font-size:1.15rem; font-weight:800; color:var(--gray-800); margin-top:2px;">—</div>
-            </div>
-            <div style="flex:1; min-width:140px;">
-              <div style="font-size:0.7rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Mitra Memiliki Honor (<span id="label-bulan-terpilih">Bulan</span>)</div>
-              <div id="stat-honor-mitra-aktif" style="font-size:1.15rem; font-weight:800; color:var(--brand-primary); margin-top:2px;">—</div>
-            </div>
-            <div style="flex:1; min-width:140px;">
-              <div style="font-size:0.7rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Total Honor Terbayar</div>
-              <div id="stat-honor-total-rp" style="font-size:1.15rem; font-weight:800; color:var(--success); margin-top:2px;">—</div>
-            </div>
-            <div style="flex:1; min-width:140px;">
-              <div style="font-size:0.7rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Batas SBM / Bulan</div>
-              <div style="font-size:1.15rem; font-weight:800; color:var(--gray-700); margin-top:2px;">Rp 3.500.000</div>
-            </div>
+        <!-- KANAN: Akses Cepat Navigasi (Kotak-kotak) -->
+        <div>
+          <div style="font-size:0.9rem; font-weight:700; color:var(--gray-700); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+            <span>⚡</span> Akses Cepat Navigasi
           </div>
-
-          <!-- Table View -->
-          <div class="table-wrapper">
-            <table class="data-table" id="table-honor-mitra">
-              <thead>
-                <tr>
-                  <th style="width: 50px; text-align: center;">No</th>
-                  <th>Nama Mitra</th>
-                  <th style="text-align: right; min-width: 150px;">Honor Bulan Ini</th>
-                  <th style="text-align: right; min-width: 170px;">Sisa Honor (SBM - Honor)</th>
-                  <th style="text-align: center; width: 140px;">Status SBM</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-honor-mitra">
-                <tr>
-                  <td colspan="5" class="text-center text-muted" style="padding: 30px;">
-                    Memuat data honor mitra...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="quick-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-top: 0;">
+            <a href="form.html" class="quick-card" style="padding: 16px;">
+              <div class="qc-icon qc-blue" style="width:40px; height:40px; font-size:1.2rem;">➕</div>
+              <div>
+                <div class="qc-label" style="font-size:0.85rem;">Buat Dokumen</div>
+                <div class="qc-desc" style="font-size:0.72rem;">Generate SPK &amp; BAST</div>
+              </div>
+              <span class="qc-arrow">›</span>
+            </a>
+            <a href="dokumen.html" class="quick-card" style="padding: 16px;">
+              <div class="qc-icon qc-green" style="width:40px; height:40px; font-size:1.2rem;">📋</div>
+              <div>
+                <div class="qc-label" style="font-size:0.85rem;">Daftar Dokumen</div>
+                <div class="qc-desc" style="font-size:0.72rem;">Lihat semua dokumen</div>
+              </div>
+              <span class="qc-arrow">›</span>
+            </a>
+            <a href="mitra.html" class="quick-card" style="padding: 16px;">
+              <div class="qc-icon qc-purple" style="width:40px; height:40px; font-size:1.2rem;">👥</div>
+              <div>
+                <div class="qc-label" style="font-size:0.85rem;">Daftar Mitra</div>
+                <div class="qc-desc" style="font-size:0.72rem;">Data mitra &amp; PPL</div>
+              </div>
+              <span class="qc-arrow">›</span>
+            </a>
+            <a href="pegawai.html" class="quick-card" style="padding: 16px;">
+              <div class="qc-icon qc-orange" style="width:40px; height:40px; font-size:1.2rem;">🏛️</div>
+              <div>
+                <div class="qc-label" style="font-size:0.85rem;">Daftar Pegawai</div>
+                <div class="qc-desc" style="font-size:0.72rem;">Data pegawai BPS</div>
+              </div>
+              <span class="qc-arrow">›</span>
+            </a>
+            <a href="kegiatan.html" class="quick-card" style="padding: 16px;">
+              <div class="qc-icon" style="background:#fef3c7; width:40px; height:40px; font-size:1.2rem;">📁</div>
+              <div>
+                <div class="qc-label" style="font-size:0.85rem;">Daftar Kegiatan</div>
+                <div class="qc-desc" style="font-size:0.72rem;">Master kegiatan &amp; tarif</div>
+              </div>
+              <span class="qc-arrow">›</span>
+            </a>
           </div>
         </div>
-      </div>
 
-      <!-- Quick Actions -->
-      <div class="quick-grid">
-        <a href="form.html" class="quick-card">
-          <div class="qc-icon qc-blue">➕</div>
-          <div>
-            <div class="qc-label">Buat Dokumen Baru</div>
-            <div class="qc-desc">Generate SPK &amp; BAST baru</div>
-          </div>
-          <span class="qc-arrow">›</span>
-        </a>
-        <a href="dokumen.html" class="quick-card">
-          <div class="qc-icon qc-green">📋</div>
-          <div>
-            <div class="qc-label">Daftar Dokumen</div>
-            <div class="qc-desc">Lihat &amp; unduh semua dokumen</div>
-          </div>
-          <span class="qc-arrow">›</span>
-        </a>
-        <a href="mitra.html" class="quick-card">
-          <div class="qc-icon qc-purple">👥</div>
-          <div>
-            <div class="qc-label">Daftar Mitra</div>
-            <div class="qc-desc">Data mitra &amp; PPL lapangan</div>
-          </div>
-          <span class="qc-arrow">›</span>
-        </a>
-        <a href="pegawai.html" class="quick-card">
-          <div class="qc-icon qc-orange">🏛️</div>
-          <div>
-            <div class="qc-label">Daftar Pegawai</div>
-            <div class="qc-desc">Data pegawai BPS</div>
-          </div>
-          <span class="qc-arrow">›</span>
-        </a>
-        <a href="kegiatan.html" class="quick-card">
-          <div class="qc-icon" style="background:#fef3c7;">📁</div>
-          <div>
-            <div class="qc-label">Daftar Kegiatan</div>
-            <div class="qc-desc">Master kegiatan &amp; harga satuan</div>
-          </div>
-          <span class="qc-arrow">›</span>
-        </a>
-      </div>
+      </div><!-- /dashboard-split-grid -->
 
     </div><!-- /page-body -->
   </div><!-- /main-content -->
