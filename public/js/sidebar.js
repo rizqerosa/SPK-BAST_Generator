@@ -31,6 +31,8 @@
 
   // ─── Shared nav items (muncul di semua role) ──────────────
   const NAV_SHARED = [
+    { section: "Utama" },
+    { icon: "📊", label: "Dashboard",       href: "index.html"   },
     { section: "Data Referensi" },
     { icon: "📁", label: "Daftar Kegiatan", href: "kegiatan.html" },
     { icon: "🏛️", label: "Daftar Pegawai",  href: "pegawai.html" },
@@ -64,8 +66,8 @@
       ];
     }
 
-    // Gabungkan extra + shared
-    const allNavItems = [...extraNavItems, ...NAV_SHARED];
+    // Gabungkan extra + shared (Dashboard & shared items)
+    const allNavItems = [...NAV_SHARED.slice(0, 2), ...extraNavItems, ...NAV_SHARED.slice(2)];
 
     let navHTML = "";
     for (const item of allNavItems) {
@@ -73,7 +75,7 @@
         navHTML += `<div class="nav-section-label">${item.section}</div>`;
         continue;
       }
-      const isActive = currentPage === item.href;
+      const isActive = currentPage === item.href || (item.href === "index.html" && (currentPage === "" || currentPage === "index.html"));
       const badgeHTML = item.badge
         ? `<span style="margin-left:auto; background:${_badgeBg(item.badge)}; color:${_badgeColor(item.badge)}; font-size:0.68rem; font-weight:800; padding:2px 6px; border-radius:10px;">${item.badge}</span>`
         : "";
@@ -129,13 +131,13 @@
   function _buildSidebarWrapper(navHTML, userFooterHTML) {
     return `
       <aside class="sidebar" id="app-sidebar">
-        <div class="sidebar-logo">
+        <a href="index.html" class="sidebar-logo" style="text-decoration: none; color: inherit;">
           <div class="logo-icon">📜</div>
           <div class="logo-text">
             <div class="title">WEBPADKU</div>
             <div class="sub">BPS Kota Subulussalam</div>
           </div>
-        </div>
+        </a>
         <nav class="sidebar-nav">${navHTML}</nav>
         ${userFooterHTML}
         <div class="sidebar-footer">BPS Kota Subulussalam &copy; 2026</div>
@@ -147,11 +149,24 @@
     const placeholder = document.getElementById("app-sidebar-placeholder");
     if (placeholder) {
       placeholder.outerHTML = buildSidebar();
-      return;
+    } else {
+      const existingSidebar = document.querySelector("aside.sidebar");
+      if (existingSidebar) {
+        existingSidebar.outerHTML = buildSidebar();
+      }
     }
-    const existingSidebar = document.querySelector("aside.sidebar");
-    if (existingSidebar) {
-      existingSidebar.outerHTML = buildSidebar();
+
+    // Auto-inject tombol Kembali ke Dashboard pada topbar-actions halaman non-index
+    if (currentPage !== "index.html" && currentPage !== "login.html") {
+      const topbarActions = document.querySelector(".topbar-actions");
+      if (topbarActions && !topbarActions.querySelector(".btn-back-dashboard")) {
+        const btnDash = document.createElement("a");
+        btnDash.href = "index.html";
+        btnDash.className = "btn btn-sm btn-outline btn-back-dashboard";
+        btnDash.style.cssText = "display:inline-flex; align-items:center; gap:5px; font-weight:600; text-decoration:none;";
+        btnDash.innerHTML = "<span>📊</span> Dashboard";
+        topbarActions.insertBefore(btnDash, topbarActions.firstChild);
+      }
     }
   });
 })();
