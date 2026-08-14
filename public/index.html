@@ -176,12 +176,12 @@
         .dashboard-table-scroll {
           max-height: 420px;
           overflow-y: auto;
-          overflow-x: hidden;
+          overflow-x: auto;
           border-radius: var(--radius-md);
         }
         .dashboard-table-scroll table.data-table {
           width: 100%;
-          table-layout: fixed;
+          min-width: 500px;
           border-collapse: collapse;
         }
         .dashboard-table-scroll th {
@@ -190,13 +190,14 @@
           z-index: 5;
           background: var(--gray-50);
           box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-          padding: 8px 6px;
-          font-size: 0.7rem;
+          padding: 9px 10px;
+          font-size: 0.72rem;
+          white-space: nowrap;
         }
         .dashboard-table-scroll td {
-          padding: 8px 6px;
-          font-size: 0.78rem;
-          word-break: break-word;
+          padding: 10px 10px;
+          font-size: 0.82rem;
+          white-space: nowrap;
         }
         @media (max-width: 1024px) {
           .dashboard-split-grid {
@@ -266,11 +267,11 @@
               <table class="data-table" id="table-honor-mitra">
                 <thead>
                   <tr>
-                    <th style="width: 26px; text-align: center;">No</th>
-                    <th style="width: auto;">Nama Mitra</th>
-                    <th style="width: 95px; text-align: right;">Honor</th>
-                    <th style="width: 95px; text-align: right;">Sisa SBM</th>
-                    <th style="width: 92px; text-align: center;">Status</th>
+                    <th style="width: 36px; text-align: center;">No</th>
+                    <th>Nama Mitra</th>
+                    <th style="text-align: right;">Honor Bulan Ini</th>
+                    <th style="text-align: right;">Sisa SBM</th>
+                    <th style="text-align: center; min-width: 100px;">Status</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-honor-mitra">
