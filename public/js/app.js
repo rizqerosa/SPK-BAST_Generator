@@ -2106,7 +2106,7 @@ function initDashboardHonorMitra(spkBastData, mitraData) {
         mitrasMap.set(key, {
           id: id,
           name: name,
-          sobatId: m.Sobat_ID || m["SOBAT ID"] || m.NIK || "",
+          sobatId: m.Sobat_ID || m["Sobat ID"] || m["SOBAT ID"] || m.ID_Mitra || m.NIK || "",
           posisi: getMitraPosisi(m),
           totalHonor: 0,
           jumlahDokumen: 0
@@ -2230,7 +2230,7 @@ function initDashboardHonorMitra(spkBastData, mitraData) {
 
       const formattedHonor = `Rp ${formatRupiah(honor)}`;
       const formattedSisa  = `Rp ${formatRupiah(sisaHonor)}`;
-      const subInfo = m.sobatId ? `<div style="font-size:0.75rem; color:var(--gray-500); font-weight:normal;">Sobat ID / NIK: ${escapeHtml(m.sobatId)}</div>` : "";
+      const subInfo = m.sobatId ? `<div style="font-size:0.75rem; color:var(--gray-500); font-weight:normal;">Sobat ID: ${escapeHtml(m.sobatId)}</div>` : "";
 
       return `
         <tr>
