@@ -352,12 +352,14 @@ async function loadEditDocument(editDocId) {
           <td class="tr nilai-cell">Rp ${formatRupiah(nilai)}</td>
           <td style="font-size:.7rem;">${d.Beban_Anggaran || (keg ? keg.Beban_Anggaran : '')}</td>
           <td class="tc"><button type="button" class="btn btn-danger btn-sm"
-               onclick="hapusDetailRow('${rowId}')">✕</button></td>`;
+               onclick="hapusDetailRow('${rowId}')" title="Hapus pekerjaan ini">🗑️ Hapus</button></td>`;
         tbody.appendChild(tr);
       });
 
       renumberDetailRows();
       updateTotalHonor();
+      updateSelectedKegiatanChips();
+      syncSearchableSelect("sel-kegiatan");
     }
   } catch (err) {
     console.error("Gagal memuat detail pekerjaan untuk edit:", err);
@@ -1244,6 +1246,16 @@ function initSearchableSelect(selectId) {
     optionsList.innerHTML = "";
     const query = (searchInput.value || "").toLowerCase().trim();
     let count = 0;
+    const isKegSelect = (sel.id === "sel-kegiatan");
+
+    // Himpun id kegiatan yang sudah ditambahkan di tabel detail
+    const addedKegIds = new Set();
+    if (isKegSelect) {
+      document.querySelectorAll("#detail-tbody tr[data-keg-id]").forEach(tr => {
+        const id = tr.getAttribute("data-keg-id");
+        if (id) addedKegIds.add(id);
+      });
+    }
 
     Array.from(sel.children).forEach(child => {
       if (child.tagName === "OPTGROUP") {
@@ -1262,16 +1274,26 @@ function initSearchableSelect(selectId) {
 
           opts.forEach(opt => {
             count++;
+            const isAdded = isKegSelect && opt.value && addedKegIds.has(opt.value);
             const div = document.createElement("div");
-            div.className = `ss-option ${sel.value === opt.value ? 'selected' : ''}`;
-            div.textContent = opt.textContent;
+            div.className = `ss-option ${sel.value === opt.value ? 'selected' : ''} ${isAdded ? 'is-added-item' : ''}`;
             div.dataset.value = opt.value;
-            div.addEventListener("click", () => {
-              sel.value = opt.value;
-              sel.dispatchEvent(new Event("change"));
-              updateTriggerText();
-              closeDropdown();
-            });
+
+            if (isAdded) {
+              div.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:8px;";
+              div.innerHTML = `
+                <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">✓ ${escapeHtml(opt.textContent)}</span>
+                <button type="button" title="Hapus dari pilihan pekerjaan" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:4px; padding:2px 8px; font-size:0.72rem; font-weight:600; cursor:pointer; flex-shrink:0;" onclick="event.stopPropagation(); hapusDetailRowByKegId('${escapeHtml(opt.value)}');">🗑️ Hapus</button>
+              `;
+            } else {
+              div.textContent = opt.textContent;
+              div.addEventListener("click", () => {
+                sel.value = opt.value;
+                sel.dispatchEvent(new Event("change"));
+                updateTriggerText();
+                closeDropdown();
+              });
+            }
             optionsList.appendChild(div);
           });
         }
@@ -1280,16 +1302,26 @@ function initSearchableSelect(selectId) {
         if (isPlaceholder && query) return;
         if (!query || child.textContent.toLowerCase().includes(query) || child.value.toLowerCase().includes(query)) {
           count++;
+          const isAdded = isKegSelect && child.value && addedKegIds.has(child.value);
           const div = document.createElement("div");
-          div.className = `ss-option ${sel.value === child.value ? 'selected' : ''}`;
-          div.textContent = child.textContent;
+          div.className = `ss-option ${sel.value === child.value ? 'selected' : ''} ${isAdded ? 'is-added-item' : ''}`;
           div.dataset.value = child.value;
-          div.addEventListener("click", () => {
-            sel.value = child.value;
-            sel.dispatchEvent(new Event("change"));
-            updateTriggerText();
-            closeDropdown();
-          });
+
+          if (isAdded) {
+            div.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:8px;";
+            div.innerHTML = `
+              <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">✓ ${escapeHtml(child.textContent)}</span>
+              <button type="button" title="Hapus dari pilihan pekerjaan" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:4px; padding:2px 8px; font-size:0.72rem; font-weight:600; cursor:pointer; flex-shrink:0;" onclick="event.stopPropagation(); hapusDetailRowByKegId('${escapeHtml(child.value)}');">🗑️ Hapus</button>
+            `;
+          } else {
+            div.textContent = child.textContent;
+            div.addEventListener("click", () => {
+              sel.value = child.value;
+              sel.dispatchEvent(new Event("change"));
+              updateTriggerText();
+              closeDropdown();
+            });
+          }
           optionsList.appendChild(div);
         }
       }
@@ -1365,6 +1397,61 @@ function syncSearchableSelect(selectId) {
   }
 }
 
+function hapusDetailRowByKegId(kegId) {
+  const tr = document.querySelector(`#detail-tbody tr[data-keg-id="${kegId}"]`);
+  if (tr) {
+    hapusDetailRow(tr.id);
+  }
+}
+
+function updateSelectedKegiatanChips() {
+  let container = document.getElementById("selected-kegiatan-chips");
+  if (!container) {
+    const selEl = document.getElementById("sel-kegiatan");
+    if (!selEl) return;
+    const parentCard = selEl.closest(".form-card-body");
+    if (!parentCard) return;
+
+    container = document.createElement("div");
+    container.id = "selected-kegiatan-chips";
+    container.className = "selected-kegiatan-chips-wrap";
+
+    const flexRow = selEl.closest("div[style*='flex']");
+    if (flexRow && flexRow.parentNode) {
+      flexRow.parentNode.insertBefore(container, flexRow.nextSibling);
+    }
+  }
+
+  const rows = document.querySelectorAll("#detail-tbody tr[data-keg-id]");
+  if (rows.length === 0) {
+    container.style.display = "none";
+    container.innerHTML = "";
+    return;
+  }
+
+  container.style.display = "block";
+  let html = `<div style="font-size: 0.78rem; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+    <span>📌 Pekerjaan yang Telah Dipilih (${rows.length}):</span>
+  </div><div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+
+  rows.forEach(tr => {
+    const kegId = tr.getAttribute("data-keg-id");
+    const rowId = tr.id;
+    const keg = cariKegiatan(kegId, AppState.kegiatan);
+    const title = keg ? (keg.Uraian_Tugas || kegId) : kegId;
+
+    html += `
+      <div class="keg-chip" style="display:inline-flex; align-items:center; gap:6px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:16px; padding:4px 10px; font-size:0.78rem; color:#1e40af; font-weight:500;">
+        <span><strong>[${escapeHtml(kegId)}]</strong> ${escapeHtml(title)}</span>
+        <button type="button" onclick="hapusDetailRow('${rowId}')" title="Hapus Pekerjaan Ini" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:0.85rem; padding:0 2px; line-height:1;">✕</button>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
 let _detailCounter = 0;
 function tambahDetailRow() {
   const selKeg = document.getElementById("sel-kegiatan");
@@ -1401,12 +1488,13 @@ function tambahDetailRow() {
     <td class="tr nilai-cell">Rp ${formatRupiah(keg.Harga_Satuan || 0)}</td>
     <td style="font-size:.7rem;">${keg.Beban_Anggaran || ""}</td>
     <td class="tc"><button type="button" class="btn btn-danger btn-sm"
-         onclick="hapusDetailRow('${rowId}')">✕</button></td>`;
+         onclick="hapusDetailRow('${rowId}')" title="Hapus pekerjaan ini">🗑️ Hapus</button></td>`;
   tbody.appendChild(tr);
 
   renumberDetailRows();
   updateTotalHonor();
   autoGenerateJudul();
+  updateSelectedKegiatanChips();
   selKeg.value = "";
   syncSearchableSelect("sel-kegiatan");
 }
@@ -1451,6 +1539,8 @@ function hapusDetailRow(rowId) {
   renumberDetailRows();
   updateTotalHonor();
   autoGenerateJudul();
+  updateSelectedKegiatanChips();
+  syncSearchableSelect("sel-kegiatan");
 }
 
 function renumberDetailRows() {
@@ -1473,6 +1563,7 @@ function renumberDetailRows() {
       if (firstTd) firstTd.textContent = i + 1;
     });
   }
+  updateSelectedKegiatanChips();
 }
 
 function updateTotalHonor() {
@@ -1959,6 +2050,216 @@ function renderDashboardTable(data, mitraArr) {
   }).join("");
 }
 
+// ============================================================
+// DASHBOARD MONITORS — Rekap Honor & Sisa SBM Mitra per Bulan
+// ============================================================
+
+const SBM_LIMIT = 3500000;
+const NAMA_BULAN_LIST = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
+function initDashboardHonorMitra(spkBastData, mitraData) {
+  const selBulan = document.getElementById("select-bulan-honor");
+  const selTahun = document.getElementById("select-tahun-honor");
+  const inputSearch = document.getElementById("search-mitra-honor");
+  const tbody = document.getElementById("tbody-honor-mitra");
+
+  if (!tbody || !selBulan) return;
+
+  const now = new Date();
+  const currentMonthName = NAMA_BULAN_LIST[now.getMonth()];
+  const currentYear = now.getFullYear();
+
+  // Populate opsi tahun
+  if (selTahun && selTahun.options.length === 0) {
+    const yearsSet = new Set([currentYear, currentYear - 1, currentYear + 1, 2026]);
+    (spkBastData || []).forEach(r => {
+      if (r.Tahun && !isNaN(r.Tahun)) yearsSet.add(Number(r.Tahun));
+    });
+    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+    selTahun.innerHTML = sortedYears.map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join("");
+  }
+
+  // Default pilih bulan saat ini jika belum ada value
+  if (!selBulan.value) {
+    selBulan.value = currentMonthName;
+  }
+
+  function renderTable() {
+    const selectedBulan = selBulan.value || currentMonthName;
+    const selectedTahun = selTahun ? Number(selTahun.value) : currentYear;
+    const query = inputSearch ? inputSearch.value.trim().toLowerCase() : "";
+
+    const labelBulan = document.getElementById("label-bulan-terpilih");
+    if (labelBulan) labelBulan.textContent = `${selectedBulan} ${selectedTahun}`;
+
+    // Map kumpulkan mitra master
+    const mitrasMap = new Map();
+
+    (mitraData || []).forEach(m => {
+      const id = getMitraId(m) || m.ID_Mitra || m.NIK || m.Sobat_ID;
+      const name = getMitraName(m) || "Tanpa Nama";
+      if (id || name) {
+        const key = id ? String(id).trim() : name.toLowerCase();
+        mitrasMap.set(key, {
+          id: id,
+          name: name,
+          sobatId: m.Sobat_ID || m["SOBAT ID"] || m.NIK || "",
+          posisi: getMitraPosisi(m),
+          totalHonor: 0,
+          jumlahDokumen: 0
+        });
+      }
+    });
+
+    // Proses data spkBast untuk akumulasi honor bulan & tahun terpilih
+    (spkBastData || []).forEach(r => {
+      let rBulan = String(r.Bulan || "").trim();
+      let rTahun = Number(r.Tahun || 0);
+
+      // Fallback bulan & tahun dari tanggal jika kosong
+      const rawDate = r["Tanggal SPK"] || r.Tanggal_SPK || r.Tanggal_Mulai;
+      if (rawDate && (!rBulan || !rTahun)) {
+        const parts = String(rawDate).split("-");
+        if (parts.length === 3) {
+          const y = Number(parts[0]);
+          const mIdx = Number(parts[1]) - 1;
+          if (!rTahun && !isNaN(y)) rTahun = y;
+          if (!rBulan && mIdx >= 0 && mIdx < 12) rBulan = NAMA_BULAN_LIST[mIdx];
+        }
+      }
+
+      // Cocokkan Bulan (case-insensitive) & Tahun
+      if (rBulan.toLowerCase() === selectedBulan.toLowerCase() && (!selectedTahun || rTahun === selectedTahun)) {
+        const honorVal = Number(r.Total_Honor) || 0;
+        
+        let matchedKey = null;
+        for (const [key, item] of mitrasMap.entries()) {
+          if (
+            (r.ID_Mitra && String(r.ID_Mitra).trim() === String(item.id).trim()) ||
+            (r.ID_Mitra && String(r.ID_Mitra).trim() === String(item.sobatId).trim()) ||
+            (r.Nama_Mitra && r.Nama_Mitra.toLowerCase() === item.name.toLowerCase())
+          ) {
+            matchedKey = key;
+            break;
+          }
+        }
+
+        if (matchedKey) {
+          const item = mitrasMap.get(matchedKey);
+          item.totalHonor += honorVal;
+          item.jumlahDokumen += 1;
+        } else if (r.ID_Mitra || r.Nama_Mitra) {
+          const newId = r.ID_Mitra || r.Nama_Mitra;
+          mitrasMap.set(String(newId).trim(), {
+            id: r.ID_Mitra || "",
+            name: r.Nama_Mitra || r.ID_Mitra || "Mitra Lapangan",
+            sobatId: r.ID_Mitra || "",
+            posisi: r.Jenis_Petugas || "Mitra",
+            totalHonor: honorVal,
+            jumlahDokumen: 1
+          });
+        }
+      }
+    });
+
+    let list = Array.from(mitrasMap.values());
+
+    // Filter pencarian nama / ID jika diketik
+    if (query) {
+      list = list.filter(m =>
+        m.name.toLowerCase().includes(query) ||
+        String(m.sobatId).toLowerCase().includes(query) ||
+        String(m.id).toLowerCase().includes(query)
+      );
+    }
+
+    // URUTKAN TERBESAR KE TERKECIL berdasarkan total honor
+    list.sort((a, b) => {
+      if (b.totalHonor !== a.totalHonor) {
+        return b.totalHonor - a.totalHonor;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    // Update stat card ringkasan
+    const totalMitraCount = list.length;
+    const activeMitraCount = list.filter(m => m.totalHonor > 0).length;
+    const grandTotalHonor = list.reduce((sum, m) => sum + m.totalHonor, 0);
+
+    const statTotalMitra = document.getElementById("stat-honor-total-mitra");
+    const statMitraAktif = document.getElementById("stat-honor-mitra-aktif");
+    const statTotalRp    = document.getElementById("stat-honor-total-rp");
+
+    if (statTotalMitra) statTotalMitra.textContent = `${totalMitraCount} Mitra`;
+    if (statMitraAktif) statMitraAktif.textContent = `${activeMitraCount} Mitra`;
+    if (statTotalRp)    statTotalRp.textContent    = `Rp ${formatRupiah(grandTotalHonor)}`;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted" style="padding: 32px;">
+            Tidak ada data mitra untuk bulan <strong>${escapeHtml(selectedBulan)} ${selectedTahun}</strong>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map((m, idx) => {
+      const honor = m.totalHonor;
+      const sisaHonor = SBM_LIMIT - honor;
+      
+      let sisaClass = "text-success";
+      let badgeHtml = "";
+
+      if (sisaHonor < 0) {
+        sisaClass = "text-danger";
+        badgeHtml = `<span class="badge badge-danger">⚠️ Melebihi SBM</span>`;
+      } else if (sisaHonor === 0) {
+        sisaClass = "text-warning";
+        badgeHtml = `<span class="badge badge-warning">Penuh (Pas SBM)</span>`;
+      } else if (honor === 0) {
+        sisaClass = "text-muted";
+        badgeHtml = `<span class="badge badge-gray">Belum Ada Honor</span>`;
+      } else {
+        sisaClass = "text-success";
+        badgeHtml = `<span class="badge badge-success">Aman</span>`;
+      }
+
+      const formattedHonor = `Rp ${formatRupiah(honor)}`;
+      const formattedSisa  = `Rp ${formatRupiah(sisaHonor)}`;
+      const subInfo = m.sobatId ? `<div style="font-size:0.75rem; color:var(--gray-500); font-weight:normal;">Sobat ID / NIK: ${escapeHtml(m.sobatId)}</div>` : "";
+
+      return `
+        <tr>
+          <td style="text-align: center; font-weight: 600; color: var(--gray-500);">${idx + 1}</td>
+          <td style="font-weight: 600; color: var(--gray-800);">
+            ${escapeHtml(m.name)}
+            ${subInfo}
+          </td>
+          <td style="text-align: right; font-weight: 700; color: ${honor > 0 ? 'var(--gray-900)' : 'var(--gray-400)'};">
+            ${formattedHonor}
+            ${m.jumlahDokumen > 0 ? `<div style="font-size:0.72rem; font-weight: normal; color:var(--gray-500);">${m.jumlahDokumen} dokumen SPK</div>` : ''}
+          </td>
+          <td style="text-align: right; font-weight: 700;" class="${sisaClass}">
+            ${formattedSisa}
+          </td>
+          <td style="text-align: center;">
+            ${badgeHtml}
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  selBulan.addEventListener("change", renderTable);
+  if (selTahun) selTahun.addEventListener("change", renderTable);
+  if (inputSearch) inputSearch.addEventListener("input", renderTable);
+
+  renderTable();
+}
+
 // ─── Init on DOMContentLoaded ─────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -1969,3 +2270,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("[app.js] Error in initForm:", err);
   }
 });
+
