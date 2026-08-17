@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapping Petugas — WEBPADKU BPS Kota Subulussalam</title>
-  <meta name="description" content="Halaman Ketua Tim untuk mapping petugas (mitra/pegawai) ke kegiatan BPS Kota Subulussalam">
-  <link rel="stylesheet" href="css/style.css?v=4.2">
+  <title>Penugasan Petugas — WEBPADKU BPS Kota Subulussalam</title>
+  <meta name="description" content="Halaman Ketua Tim untuk menugaskan petugas (mitra/pegawai) ke kegiatan dengan tanggal pelaksanaan">
+  <link rel="stylesheet" href="css/style.css?v=4.3">
   <style>
     /* ── Hero Banner ── */
     .hero-katim {
@@ -29,204 +29,226 @@
       background: rgba(255,255,255,.07);
       border-radius: 50%;
     }
-    .hero-katim::after {
-      content: '';
-      position: absolute;
-      bottom: -60px; right: 80px;
-      width: 160px; height: 160px;
-      background: rgba(255,255,255,.04);
-      border-radius: 50%;
-    }
     .hero-katim h1 {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin-bottom: 4px;
-      position: relative;
+      font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; position: relative;
     }
     .hero-katim p { font-size: .83rem; opacity: .88; position: relative; }
     .hero-katim .hero-icon { font-size: 2.8rem; position: relative; z-index: 1; }
 
-    /* ── Info box ── */
-    .info-box {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
+    /* ── Wizard Step Tabs ── */
+    .wizard-tabs {
+      display: flex;
+      gap: 0;
+      background: var(--gray-100);
       border-radius: var(--radius-md);
-      padding: 14px 16px;
-      margin-bottom: 20px;
-      font-size: .84rem;
-      color: #92400e;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
+      padding: 4px;
+      margin-bottom: 24px;
+      width: 100%;
     }
-    .info-box-icon { font-size: 1.1rem; flex-shrink: 0; }
-
-    /* ── Filter Row ── */
-    .filter-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-      align-items: center;
-    }
-
-    /* ── Mapping Card ── */
-    .kegiatan-card {
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      margin-bottom: 16px;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow .2s;
-    }
-    .kegiatan-card:hover { box-shadow: var(--shadow-md); }
-
-    .kegiatan-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 16px 20px;
-      background: linear-gradient(90deg, #fef3c7 0%, #fff 100%);
-      border-bottom: 1px solid var(--gray-100);
-      cursor: pointer;
-      user-select: none;
-    }
-    .kegiatan-icon {
-      width: 40px; height: 40px;
-      border-radius: var(--radius-md);
-      background: #fde68a;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-    .kegiatan-title { font-weight: 700; font-size: .92rem; color: var(--gray-900); }
-    .kegiatan-meta  { font-size: .75rem; color: var(--gray-500); margin-top: 2px; }
-    .kegiatan-badge {
-      margin-left: auto;
-      background: #fde68a;
-      color: #78350f;
-      font-size: .72rem;
-      font-weight: 800;
-      padding: 3px 10px;
-      border-radius: 20px;
-    }
-    .kegiatan-chevron {
-      font-size: .9rem;
-      color: var(--gray-400);
-      transition: transform .2s;
-      flex-shrink: 0;
-    }
-    .kegiatan-card.open .kegiatan-chevron { transform: rotate(180deg); }
-
-    .kegiatan-body {
-      display: none;
-      padding: 16px 20px;
-    }
-    .kegiatan-card.open .kegiatan-body { display: block; }
-
-    /* ── Petugas assigned list ── */
-    .petugas-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-      min-height: 36px;
-    }
-    .petugas-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      border-radius: 20px;
-      padding: 4px 10px 4px 8px;
-      font-size: .78rem;
-      font-weight: 600;
-      color: #065f46;
-    }
-    .petugas-chip .avatar {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      background: #059669;
-      color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .7rem; font-weight: 800;
-      flex-shrink: 0;
-    }
-    .petugas-chip .remove-btn {
-      background: none; border: none;
-      color: #059669; cursor: pointer;
-      font-size: .85rem; padding: 0;
-      line-height: 1;
-      opacity: .7;
-      transition: opacity .15s;
-    }
-    .petugas-chip .remove-btn:hover { opacity: 1; color: #dc2626; }
-
-    .empty-assignment {
-      font-size: .8rem;
-      color: var(--gray-400);
-      font-style: italic;
-      padding: 4px 0;
-    }
-
-    /* ── Add Petugas Dropdown ── */
-    .add-petugas-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-    .sel-petugas-type {
-      padding: 6px 10px;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--radius-md);
-      font-size: .82rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: #fff;
-      cursor: pointer;
-    }
-    .sel-petugas-add {
+    .wizard-tab {
       flex: 1;
-      min-width: 200px;
-      max-width: 320px;
-      padding: 6px 10px;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--radius-md);
-      font-size: .82rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: #fff;
-    }
-    .btn-assign {
-      padding: 6px 14px;
-      border-radius: var(--radius-md);
+      padding: 10px 8px;
+      border-radius: calc(var(--radius-md) - 2px);
       border: none;
-      background: #d97706;
-      color: #fff;
-      font-size: .82rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: .8rem;
       font-weight: 700;
       cursor: pointer;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: background .15s;
+      background: transparent;
+      color: var(--gray-400);
+      transition: all .2s ease;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
-    .btn-assign:hover { background: #b45309; }
+    .wizard-tab.active {
+      background: #fff;
+      color: #78350f;
+      box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+    .wizard-tab.done { color: #059669; }
+    .wizard-tab .step-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      font-size: .7rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .wizard-tab.active .step-num { background: #b45309; color: #fff; }
+    .wizard-tab.done .step-num   { background: #059669; color: #fff; }
+
+    /* ── Wizard Panels ── */
+    .wizard-panel { display: none; }
+    .wizard-panel.active { display: block; }
+
+    /* ── Form Card ── */
+    .form-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .form-card-header {
+      padding: 14px 22px;
+      background: linear-gradient(135deg, #78350f 0%, #b45309 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: .92rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .form-card-body { padding: 22px; }
+
+    /* ── Petugas search & selected ── */
+    .petugas-search-wrap { position: relative; margin-bottom: 12px; }
+    .petugas-search-wrap input { padding-left: 36px; }
+    .petugas-search-wrap .s-ico {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px; color: var(--gray-400);
+    }
+    .live-results {
+      position: absolute; top: 100%; left: 0; right: 0;
+      z-index: 1000;
+      max-height: 280px; overflow-y: auto;
+      background: #fff;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0,0,0,.15);
+      margin-top: 4px;
+      display: none;
+    }
+    .live-results.visible { display: block; }
+    .live-result-item {
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .live-result-item:last-child { border-bottom: none; }
+    .live-result-item:hover { background: #fffbeb; }
+    .lri-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #fef3c7; color: #78350f;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .85rem; flex-shrink: 0;
+    }
+    .lri-avatar.mitra  { background: #fef3c7; color: #78350f; }
+    .lri-avatar.pegawai { background: #ede9fe; color: #6d28d9; }
+    .lri-name { font-weight: 600; font-size: .88rem; color: var(--gray-800); }
+    .lri-meta { font-size: .75rem; color: var(--gray-500); }
+
+    .selected-card {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: var(--radius-md);
+      margin-top: 10px;
+    }
+    .selected-card.visible { display: flex; }
+    .selected-card .sc-name { font-weight: 700; color: #78350f; }
+    .selected-card .sc-meta { font-size: .78rem; color: #92400e; }
+    .selected-card button { margin-left: auto; }
+
+    /* ── Kegiatan table ── */
+    .kegiatan-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .kegiatan-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 140px 140px 140px 36px;
+      gap: 8px;
+      align-items: end;
+      background: var(--gray-50);
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+    }
+    .kegiatan-row label {
+      font-size: .72rem; font-weight: 700;
+      color: var(--gray-500); text-transform: uppercase;
+      margin-bottom: 4px; display: block;
+    }
+    .kegiatan-row .form-control { font-size: .84rem; }
+    .btn-remove-row {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #fca5a5;
+      background: #fee2e2; color: #dc2626;
+      cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .btn-remove-row:hover { background: #dc2626; color: #fff; }
+
+    .empty-kegiatan {
+      text-align: center;
+      padding: 28px;
+      color: var(--gray-400);
+      font-size: .84rem;
+      border: 2px dashed var(--gray-200);
+      border-radius: var(--radius-md);
+    }
+
+    /* ── Summary Card ── */
+    .summary-section {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .summary-petugas {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: #fff;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-md);
+      margin-bottom: 14px;
+    }
+    .summary-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #fef3c7; color: #78350f;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 800; flex-shrink: 0;
+    }
+    .summary-kegiatan-list { display: flex; flex-direction: column; gap: 6px; }
+    .summary-keg-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      background: #fff;
+      border-left: 3px solid #d97706;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: .83rem;
+    }
+    .summary-keg-item .sk-name { font-weight: 600; color: var(--gray-800); flex: 1; }
+    .summary-keg-item .sk-meta { font-size: .72rem; color: var(--gray-500); }
+    .peran-badge {
+      padding: 2px 8px; border-radius: 20px;
+      font-size: .68rem; font-weight: 800;
+    }
+    .peran-ppl { background: #dbeafe; color: #1e40af; }
+    .peran-pml { background: #dcfce7; color: #166534; }
 
     /* ── Stats ── */
     .stats-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
     .stat-card {
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 130px;
-      box-shadow: var(--shadow-sm);
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg); padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px;
+      flex: 1; min-width: 130px; box-shadow: var(--shadow-sm);
     }
     .stat-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
     .stat-icon.amber  { background: #fef3c7; }
@@ -234,6 +256,66 @@
     .stat-icon.blue   { background: #dbeafe; }
     .stat-num   { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); line-height: 1; }
     .stat-label { font-size: .73rem; color: var(--gray-500); margin-top: 2px; }
+
+    /* ── Daftar Mapping ── */
+    .mapping-list { display: flex; flex-direction: column; gap: 12px; }
+    .mapping-card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .mapping-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px;
+      background: linear-gradient(90deg, #fffbeb 0%, #fff 100%);
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+    }
+    .mapping-header .mh-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #fef3c7; color: #78350f;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .9rem; flex-shrink: 0;
+    }
+    .mapping-header .mh-name { font-weight: 700; font-size: .9rem; color: var(--gray-900); }
+    .mapping-header .mh-meta { font-size: .73rem; color: var(--gray-500); }
+    .mapping-header .mh-count {
+      margin-left: auto;
+      background: #fde68a; color: #78350f;
+      font-size: .72rem; font-weight: 800;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .mapping-header .mh-actions { display: flex; gap: 6px; margin-left: 8px; }
+    .mapping-body { display: none; padding: 14px 18px; }
+    .mapping-card.open .mapping-body { display: block; }
+    .mapping-keg-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .83rem;
+    }
+    .mapping-keg-row:last-child { border-bottom: none; }
+    .mkr-name { flex: 1; font-weight: 600; color: var(--gray-800); }
+    .mkr-dates { font-size: .72rem; color: var(--gray-500); }
+    .mkr-kepka { font-size: .72rem; color: var(--gray-500); }
+
+    /* ── Info box ── */
+    .info-box {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: var(--radius-md); padding: 14px 16px;
+      margin-bottom: 20px; font-size: .84rem; color: #92400e;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .info-box-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Nav btns ── */
+    .wizard-nav {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-top: 24px;
+    }
+    .wizard-nav-right { display: flex; gap: 10px; }
   </style>
 </head>
 <body>
@@ -246,10 +328,13 @@
   <div class="main-content">
     <header class="topbar">
       <div class="topbar-title">
-        Mapping Petugas
-        <small>Assign petugas ke kegiatan agar lebih mudah saat membuat dokumen</small>
+        Penugasan Petugas
+        <small>Tentukan petugas, kegiatan, tanggal pelaksanaan, dan Kepka</small>
       </div>
       <div class="topbar-actions">
+        <button class="btn btn-primary" id="btn-buat-penugasan" onclick="startWizard()">
+          ➕ Buat Penugasan Baru
+        </button>
         <button class="btn btn-outline btn-sm" onclick="refreshData()">🔄 Refresh</button>
       </div>
     </header>
@@ -260,65 +345,237 @@
       <div class="hero-katim">
         <div class="hero-icon">🗺️</div>
         <div>
-          <h1>Mapping Petugas ke Kegiatan</h1>
-          <p>Tentukan siapa (mitra/pegawai) yang bertanggung jawab untuk setiap kegiatan, sehingga Admin lebih mudah saat membuat dokumen SPK & BAST.</p>
+          <h1>Penugasan Petugas ke Kegiatan</h1>
+          <p>Pilih petugas, tambahkan kegiatan yang dikerjakan beserta tanggal mulai–selesai, lalu tentukan Nomor Kepka dan tanggal. Data tersimpan ke Google Sheets dan digunakan Admin saat membuat SPK.</p>
         </div>
       </div>
 
-      <!-- Info Box -->
-      <div class="info-box">
-        <span class="info-box-icon">💡</span>
-        <div>
-          <strong>Cara Kerja Mapping:</strong>
-          Pilih kegiatan, lalu assign mitra atau pegawai. Data mapping disimpan di browser (localStorage) dan dapat dijadikan referensi oleh Admin saat membuat dokumen.
+      <!-- Wizard (tersembunyi awalnya) -->
+      <div id="wizard-section" style="display:none;">
+        <!-- Wizard Tabs -->
+        <div class="wizard-tabs" id="wizard-tabs">
+          <button class="wizard-tab active" id="wtab-1" onclick="goToStep(1)">
+            <span class="step-num">1</span> Pilih Petugas
+          </button>
+          <button class="wizard-tab" id="wtab-2" onclick="goToStep(2)">
+            <span class="step-num">2</span> Tambah Kegiatan
+          </button>
+          <button class="wizard-tab" id="wtab-3" onclick="goToStep(3)">
+            <span class="step-num">3</span> Kepka & Konfirmasi
+          </button>
         </div>
-      </div>
 
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-icon amber">📁</div>
-          <div>
-            <div class="stat-num" id="stat-kegiatan">—</div>
-            <div class="stat-label">Total Kegiatan</div>
+        <!-- Step 1: Pilih Petugas -->
+        <div class="wizard-panel active" id="wpanel-1">
+          <div class="form-card">
+            <div class="form-card-header">
+              <span>👤 Langkah 1 — Pilih Petugas</span>
+            </div>
+            <div class="form-card-body">
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Sumber Petugas</label>
+                <div style="display:flex; gap:20px; align-items:center;">
+                  <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.88rem; font-weight:600;">
+                    <input type="radio" name="wiz-sumber" value="mitra" checked onchange="onSumberChange()"> 👥 Mitra Lapangan
+                  </label>
+                  <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.88rem; font-weight:600;">
+                    <input type="radio" name="wiz-sumber" value="pegawai" onchange="onSumberChange()"> 🏛️ Pegawai BPS
+                  </label>
+                </div>
+              </div>
+
+              <div class="petugas-search-wrap">
+                <span class="s-ico">🔍</span>
+                <input type="text" id="wiz-search-petugas" class="form-control"
+                       placeholder="Cari nama petugas..." autocomplete="off">
+                <div id="wiz-live-results" class="live-results"></div>
+              </div>
+
+              <div class="selected-card" id="wiz-selected-card">
+                <div class="lri-avatar mitra" id="wiz-sc-avatar">?</div>
+                <div>
+                  <div class="sc-name" id="wiz-sc-name">—</div>
+                  <div class="sc-meta" id="wiz-sc-meta">—</div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="clearSelectedPetugas()">
+                  🔄 Ganti
+                </button>
+              </div>
+
+              <input type="hidden" id="wiz-petugas-id">
+              <input type="hidden" id="wiz-petugas-nama">
+              <input type="hidden" id="wiz-petugas-tipe">
+
+              <div class="wizard-nav">
+                <button type="button" class="btn btn-outline" onclick="cancelWizard()">✕ Batal</button>
+                <div class="wizard-nav-right">
+                  <button type="button" class="btn btn-primary" onclick="goToStep(2)" id="btn-next-1">
+                    Lanjut: Tambah Kegiatan →
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon green">✅</div>
-          <div>
-            <div class="stat-num" id="stat-mapped">—</div>
-            <div class="stat-label">Sudah di-assign</div>
+
+        <!-- Step 2: Tambah Kegiatan -->
+        <div class="wizard-panel" id="wpanel-2">
+          <div class="form-card">
+            <div class="form-card-header">
+              <span>📋 Langkah 2 — Tambah Kegiatan & Tanggal Pelaksanaan</span>
+            </div>
+            <div class="form-card-body">
+              <div class="info-box">
+                <span class="info-box-icon">💡</span>
+                <div>
+                  Tambahkan satu per satu kegiatan yang dikerjakan petugas ini. Isi tanggal mulai & selesai per kegiatan.
+                  <strong>Batas terlambat</strong> otomatis diisi tanggal 25 bulan yang sama (editable).
+                </div>
+              </div>
+
+              <!-- Tombol tambah baris -->
+              <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:14px;">
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                  <label class="form-label">Pilih Kegiatan untuk Ditambahkan</label>
+                  <select class="form-control" id="wiz-sel-kegiatan">
+                    <option value="">-- Pilih Kegiatan --</option>
+                  </select>
+                </div>
+                <div class="form-group" style="width:130px; margin-bottom:0;">
+                  <label class="form-label">Peran Petugas</label>
+                  <select class="form-control" id="wiz-sel-peran">
+                    <option value="ppl">PPL (Pendataan)</option>
+                    <option value="pml">PML (Pemeriksaan)</option>
+                  </select>
+                </div>
+                <button type="button" class="btn btn-primary" style="height:42px; padding:0 20px; white-space:nowrap;" onclick="tambahKegiatanRow()">
+                  ➕ Tambah
+                </button>
+              </div>
+
+              <!-- Daftar kegiatan yang ditambahkan -->
+              <div id="kegiatan-rows-container">
+                <div class="empty-kegiatan" id="empty-keg-msg">
+                  Belum ada kegiatan. Pilih dari dropdown di atas lalu klik "➕ Tambah".
+                </div>
+              </div>
+
+              <!-- Summary periode otomatis -->
+              <div id="periode-summary" style="display:none; margin-top:14px; padding:12px 16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-md); font-size:.84rem; color:#166534;">
+                📅 <strong>Periode keseluruhan:</strong>
+                <span id="periode-range">—</span>
+                &nbsp;|&nbsp;
+                🔴 <strong>Batas terlambat:</strong> <span id="batas-terlambat-global">—</span>
+              </div>
+
+              <div class="wizard-nav">
+                <button type="button" class="btn btn-outline" onclick="goToStep(1)">← Kembali</button>
+                <div class="wizard-nav-right">
+                  <button type="button" class="btn btn-primary" onclick="goToStep(3)" id="btn-next-2">
+                    Lanjut: Kepka & Konfirmasi →
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon blue">👥</div>
-          <div>
-            <div class="stat-num" id="stat-total-petugas">—</div>
-            <div class="stat-label">Total Petugas Diassign</div>
+
+        <!-- Step 3: Kepka & Konfirmasi -->
+        <div class="wizard-panel" id="wpanel-3">
+          <div class="form-card">
+            <div class="form-card-header">
+              <span>🏛️ Langkah 3 — Nomor Kepka & Konfirmasi</span>
+            </div>
+            <div class="form-card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="wiz-no-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="wiz-no-kepka"
+                         placeholder="Nomor xx Tahun xxxx">
+                  <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;">Contoh: Nomor 12 Tahun 2026</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="wiz-tgl-kepka">Tanggal SK Kepala <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="wiz-tgl-kepka">
+                  <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="tgl-kepka-display">—</div>
+                </div>
+              </div>
+
+              <hr style="border:none; border-top:1px dashed var(--gray-200); margin:20px 0;">
+
+              <!-- Summary Preview -->
+              <div style="font-weight:700; color:var(--gray-700); margin-bottom:12px; font-size:.88rem;">📋 Ringkasan Penugasan</div>
+              <div class="summary-section">
+                <div class="summary-petugas" id="summary-petugas-card">
+                  <div class="summary-avatar" id="sum-avatar">?</div>
+                  <div>
+                    <div style="font-weight:700; color:#78350f;" id="sum-nama">—</div>
+                    <div style="font-size:.75rem; color:#92400e;" id="sum-meta">—</div>
+                  </div>
+                </div>
+                <div class="summary-kegiatan-list" id="summary-keg-list">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+
+              <div class="wizard-nav">
+                <button type="button" class="btn btn-outline" onclick="goToStep(2)">← Kembali</button>
+                <div class="wizard-nav-right">
+                  <button type="button" class="btn btn-primary btn-xl" id="btn-simpan-penugasan" onclick="simpanPenugasan()">
+                    💾 Simpan Penugasan
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </div><!-- /wizard-section -->
 
-      <!-- Filter -->
-      <div class="filter-row">
-        <div class="search-box" style="max-width:280px;">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="search-kegiatan" class="form-control" placeholder="Cari nama kegiatan...">
-        </div>
-        <select id="filter-status" class="sel-petugas-type">
-          <option value="all">Semua Kegiatan</option>
-          <option value="mapped">✅ Sudah di-assign</option>
-          <option value="unmapped">⏳ Belum di-assign</option>
-        </select>
-      </div>
+      <!-- ─── Daftar Mapping yang sudah ada ─── -->
+      <div id="daftar-section">
 
-      <!-- Kegiatan Cards -->
-      <div id="kegiatan-container">
-        <div style="text-align:center; padding:48px; color:var(--gray-400);">
-          <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
-          Memuat data kegiatan...
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon amber">👤</div>
+            <div>
+              <div class="stat-num" id="stat-petugas">—</div>
+              <div class="stat-label">Total Petugas Ditugaskan</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">📋</div>
+            <div>
+              <div class="stat-num" id="stat-kegiatan">—</div>
+              <div class="stat-label">Total Penugasan Kegiatan</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">📅</div>
+            <div>
+              <div class="stat-num" id="stat-bulan">—</div>
+              <div class="stat-label">Bulan Aktif</div>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <!-- Filter -->
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+          <div class="search-box" style="max-width:280px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-mapping" class="form-control" placeholder="Cari nama petugas atau kegiatan...">
+          </div>
+        </div>
+
+        <!-- Daftar mapping cards -->
+        <div class="mapping-list" id="mapping-list-container">
+          <div style="text-align:center; padding:48px; color:var(--gray-400);">
+            <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+            Memuat data penugasan...
+          </div>
+        </div>
+
+      </div><!-- /daftar-section -->
 
     </div><!-- /page-body -->
   </div><!-- /main-content -->
@@ -327,222 +584,25 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.2"></script>
-<script src="js/data.js?v=4.2"></script>
-<script src="js/auth.js?v=4.2"></script>
-<script src="js/utils.js?v=4.2"></script>
-<script src="js/render.js?v=4.2"></script>
-<script src="js/sidebar.js?v=4.2"></script>
-<script src="js/app.js?v=4.2"></script>
+<script src="js/config.js?v=4.3"></script>
+<script src="js/data.js?v=4.3"></script>
+<script src="js/auth.js?v=4.3"></script>
+<script src="js/utils.js?v=4.3"></script>
+<script src="js/render.js?v=4.3"></script>
+<script src="js/sidebar.js?v=4.3"></script>
+<script src="js/app.js?v=4.3"></script>
 
 <script>
   // ─── State ───────────────────────────────────────────────────
-  const MAPPING_KEY = "katim_petugas_mapping"; // localStorage key
-  let _allKegiatan = [];
   let _allMitra    = [];
   let _allPegawai  = [];
-  let _mapping     = {};  // { kegiatanId: [{ id, nama, tipe }] }
-
-  // ─── LocalStorage Helpers ────────────────────────────────────
-  function loadMapping() {
-    try {
-      const raw = localStorage.getItem(MAPPING_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-  }
-  function saveMapping() {
-    try {
-      localStorage.setItem(MAPPING_KEY, JSON.stringify(_mapping));
-    } catch(e) { console.warn("Gagal simpan mapping:", e); }
-  }
-
-  // ─── Toast helper (proxy ke app.js) ─────────────────────────
-  function _toast(msg, type = "default") { showToast(msg, type); }
-
-  // ─── Render kartu kegiatan ───────────────────────────────────
-  function renderKegiatanCards() {
-    const q = (document.getElementById("search-kegiatan")?.value || "").toLowerCase().trim();
-    const filterStatus = document.getElementById("filter-status")?.value || "all";
-
-    let filtered = _allKegiatan.filter(k => {
-      const name = String(k.Nama_Kegiatan || k.Uraian_Tugas || k.ID_Kegiatan || "");
-      const id = getKegiatanId(k);
-      const hasPetugas = (_mapping[id] || []).length > 0;
-
-      if (filterStatus === "mapped" && !hasPetugas) return false;
-      if (filterStatus === "unmapped" && hasPetugas) return false;
-      if (q && !name.toLowerCase().includes(q) && !id.toLowerCase().includes(q)) return false;
-      return true;
-    });
-
-    const container = document.getElementById("kegiatan-container");
-    if (!container) return;
-
-    if (filtered.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:48px; color:var(--gray-400);">
-        <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
-        Tidak ada kegiatan yang cocok dengan filter.
-      </div>`;
-      return;
-    }
-
-    container.innerHTML = filtered.map(k => {
-      const id = getKegiatanId(k);
-      const nama = k.Nama_Kegiatan || k.Uraian_Tugas || id;
-      const satuan = k.Satuan || "Dokumen";
-      const harga = formatRupiah(k.Harga_Satuan || 0);
-      const assignedList = _mapping[id] || [];
-
-      const chipsHTML = assignedList.length > 0
-        ? assignedList.map(p => `
-            <div class="petugas-chip" id="chip-${id}-${p.id}">
-              <div class="avatar">${(p.nama || "?")[0].toUpperCase()}</div>
-              <span>${p.nama}</span>
-              <span style="font-size:.68rem; opacity:.7; margin-left:2px;">(${p.tipe})</span>
-              <button class="remove-btn" onclick="removePetugas('${escapeHtml(id)}','${escapeHtml(p.id)}')" title="Hapus assignment">✕</button>
-            </div>`).join("")
-        : `<div class="empty-assignment">Belum ada petugas yang di-assign ke kegiatan ini</div>`;
-
-      return `
-        <div class="kegiatan-card" id="card-${escapeHtml(id)}">
-          <div class="kegiatan-header" onclick="toggleCard('${escapeHtml(id)}')">
-            <div class="kegiatan-icon">📋</div>
-            <div style="flex:1;">
-              <div class="kegiatan-title">${escapeHtml(nama)}</div>
-              <div class="kegiatan-meta">ID: ${escapeHtml(id)} · Satuan: ${escapeHtml(satuan)} · Harga: Rp ${harga}</div>
-            </div>
-            <span class="kegiatan-badge">${assignedList.length} Petugas</span>
-            <span class="kegiatan-chevron">▼</span>
-          </div>
-          <div class="kegiatan-body">
-            <div class="petugas-list" id="list-${escapeHtml(id)}">${chipsHTML}</div>
-            <div class="add-petugas-row">
-              <select class="sel-petugas-type" id="type-${escapeHtml(id)}" onchange="refreshAddOptions('${escapeHtml(id)}')">
-                <option value="mitra">Mitra</option>
-                <option value="pegawai">Pegawai</option>
-              </select>
-              <select class="sel-petugas-add" id="sel-${escapeHtml(id)}">
-                ${buildPetugasOptions("mitra", id)}
-              </select>
-              <button class="btn-assign" onclick="assignPetugas('${escapeHtml(id)}')">+ Assign</button>
-            </div>
-          </div>
-        </div>`;
-    }).join("");
-
-    updateStats();
-  }
-
-  // ─── Build options select ─────────────────────────────────────
-  function buildPetugasOptions(tipe, kegId) {
-    const assigned = (_mapping[kegId] || []).map(p => p.id);
-    const source = tipe === "mitra" ? _allMitra : _allPegawai;
-    return source.map(item => {
-      const id   = tipe === "mitra" ? getMitraId(item) : getPegawaiNip(item);
-      const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
-      const disabled = assigned.includes(id) ? "disabled" : "";
-      return `<option value="${escapeHtml(id)}" ${disabled}>${escapeHtml(nama)}</option>`;
-    }).join("");
-  }
-
-  function refreshAddOptions(kegId) {
-    const tipe = document.getElementById("type-" + kegId)?.value || "mitra";
-    const sel = document.getElementById("sel-" + kegId);
-    if (sel) sel.innerHTML = buildPetugasOptions(tipe, kegId);
-  }
-
-  // ─── Toggle card accordion ────────────────────────────────────
-  function toggleCard(kegId) {
-    const card = document.getElementById("card-" + kegId);
-    if (card) card.classList.toggle("open");
-  }
-
-  // ─── Assign petugas ──────────────────────────────────────────
-  function assignPetugas(kegId) {
-    const tipe = document.getElementById("type-" + kegId)?.value || "mitra";
-    const sel  = document.getElementById("sel-" + kegId);
-    const selectedId = sel?.value;
-    if (!selectedId) { _toast("Pilih petugas terlebih dahulu.", "warning"); return; }
-
-    const source = tipe === "mitra" ? _allMitra : _allPegawai;
-    const item = tipe === "mitra"
-      ? source.find(m => getMitraId(m) === selectedId)
-      : source.find(p => getPegawaiNip(p) === selectedId);
-    if (!item) { _toast("Petugas tidak ditemukan.", "danger"); return; }
-
-    const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
-
-    // Cek duplikasi
-    if (!_mapping[kegId]) _mapping[kegId] = [];
-    if (_mapping[kegId].some(p => p.id === selectedId)) {
-      _toast("Petugas sudah di-assign ke kegiatan ini.", "warning");
-      return;
-    }
-
-    _mapping[kegId].push({ id: selectedId, nama, tipe });
-    saveMapping();
-    renderKegiatanCards();
-    // Buka card lagi
-    const card = document.getElementById("card-" + kegId);
-    if (card && !card.classList.contains("open")) card.classList.add("open");
-    _toast(`✅ ${nama} berhasil di-assign ke kegiatan.`, "success");
-  }
-
-  // ─── Remove petugas ──────────────────────────────────────────
-  function removePetugas(kegId, petugasId) {
-    if (!_mapping[kegId]) return;
-    _mapping[kegId] = _mapping[kegId].filter(p => p.id !== petugasId);
-    if (_mapping[kegId].length === 0) delete _mapping[kegId];
-    saveMapping();
-    renderKegiatanCards();
-    // Buka card lagi
-    const card = document.getElementById("card-" + kegId);
-    if (card && !card.classList.contains("open")) card.classList.add("open");
-    _toast("Petugas dihapus dari assignment.", "default");
-  }
-
-  // ─── Update stats ────────────────────────────────────────────
-  function updateStats() {
-    const totalKeg = _allKegiatan.length;
-    const mapped = Object.keys(_mapping).filter(k => (_mapping[k] || []).length > 0).length;
-    const totalPetugas = Object.values(_mapping).reduce((s, arr) => s + arr.length, 0);
-
-    const el = n => document.getElementById(n);
-    if (el("stat-kegiatan"))      el("stat-kegiatan").textContent      = totalKeg;
-    if (el("stat-mapped"))        el("stat-mapped").textContent        = mapped;
-    if (el("stat-total-petugas")) el("stat-total-petugas").textContent = totalPetugas;
-  }
-
-  // ─── Refresh data ────────────────────────────────────────────
-  async function refreshData() {
-    clearCache("kegiatan");
-    clearCache("mitra");
-    clearCache("pegawai");
-    setLoading(true);
-    try {
-      await loadAll();
-      showToast("Data berhasil dimuat ulang.", "success");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadAll() {
-    const [kegiatan, mitra, pegawai] = await Promise.all([
-      getKegiatan(),
-      getMitra(),
-      getPegawai(),
-    ]);
-    _allKegiatan = kegiatan || [];
-    _allMitra    = mitra    || [];
-    _allPegawai  = pegawai  || [];
-    renderKegiatanCards();
-  }
+  let _allKegiatan = [];
+  let _allMapping  = [];
+  let _wizKegiatan = []; // kegiatan rows di wizard
+  let _currentStep = 1;
 
   // ─── Init ────────────────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    _mapping = loadMapping();
-
     setLoading(true);
     try {
       await loadAll();
@@ -552,11 +612,535 @@
       setLoading(false);
     }
 
-    // Event listeners filter
-    document.getElementById("search-kegiatan")?.addEventListener("input", renderKegiatanCards);
-    document.getElementById("filter-status")?.addEventListener("change", renderKegiatanCards);
+    // Search listener
+    document.getElementById("search-mapping")?.addEventListener("input", renderMappingList);
+
+    // Petugas search
+    const searchEl = document.getElementById("wiz-search-petugas");
+    if (searchEl) {
+      searchEl.addEventListener("input", onSearchPetugas);
+      searchEl.addEventListener("focus", onSearchPetugas);
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".petugas-search-wrap")) {
+          document.getElementById("wiz-live-results")?.classList.remove("visible");
+        }
+      });
+    }
+
+    // Tanggal Kepka display
+    document.getElementById("wiz-tgl-kepka")?.addEventListener("change", function() {
+      const el = document.getElementById("tgl-kepka-display");
+      if (el && this.value) {
+        const tgl = tanggalTerbilang(this.value);
+        el.textContent = `${tgl.hari}, ${tgl.tanggalFormat}`;
+      } else if (el) {
+        el.textContent = "—";
+      }
+    });
   });
+
+  async function loadAll() {
+    const [mitra, pegawai, kegiatan, mapping] = await Promise.all([
+      getMitra(),
+      getPegawai(),
+      getKegiatan(),
+      getMappingPetugas().catch(() => []),
+    ]);
+    _allMitra    = mitra    || [];
+    _allPegawai  = pegawai  || [];
+    _allKegiatan = kegiatan || [];
+    _allMapping  = mapping  || [];
+
+    populateKegiatanSelect();
+    renderMappingList();
+    updateStats();
+  }
+
+  async function refreshData() {
+    clearCache("mitra");
+    clearCache("pegawai");
+    clearCache("kegiatan");
+    clearCache("mappingPetugas");
+    setLoading(true);
+    try {
+      await loadAll();
+      showToast("Data berhasil dimuat ulang.", "success");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ─── Kegiatan dropdown ───────────────────────────────────────
+  function populateKegiatanSelect() {
+    const sel = document.getElementById("wiz-sel-kegiatan");
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Pilih Kegiatan --</option>' +
+      _allKegiatan.map(k => {
+        const id = getKegiatanId(k);
+        const nama = k.Uraian_Tugas || k.Nama_Kegiatan || id;
+        return `<option value="${escapeHtml(id)}" data-nama="${escapeHtml(nama)}">${escapeHtml(nama.substring(0, 70))}${nama.length > 70 ? '…' : ''}</option>`;
+      }).join("");
+  }
+
+  // ─── Wizard control ──────────────────────────────────────────
+  function startWizard() {
+    _wizKegiatan = [];
+    _currentStep = 1;
+    document.getElementById("wizard-section").style.display = "block";
+    document.getElementById("daftar-section").style.display = "none";
+    document.getElementById("btn-buat-penugasan").style.display = "none";
+    clearSelectedPetugas();
+    renderKegiatanRows();
+    goToStep(1);
+  }
+
+  function cancelWizard() {
+    document.getElementById("wizard-section").style.display = "none";
+    document.getElementById("daftar-section").style.display = "block";
+    document.getElementById("btn-buat-penugasan").style.display = "";
+    _wizKegiatan = [];
+  }
+
+  function goToStep(step) {
+    // Validasi sebelum lanjut
+    if (step > _currentStep) {
+      if (_currentStep === 1 && !document.getElementById("wiz-petugas-id").value) {
+        showToast("Pilih petugas terlebih dahulu!", "warning"); return;
+      }
+      if (_currentStep === 2 && _wizKegiatan.length === 0) {
+        showToast("Tambahkan minimal 1 kegiatan!", "warning"); return;
+      }
+    }
+
+    _currentStep = step;
+    [1, 2, 3].forEach(s => {
+      document.getElementById(`wpanel-${s}`)?.classList.toggle("active", s === step);
+      const tab = document.getElementById(`wtab-${s}`);
+      if (tab) {
+        tab.classList.toggle("active", s === step);
+        tab.classList.toggle("done", s < step);
+      }
+    });
+
+    if (step === 3) buildSummary();
+  }
+
+  // ─── Petugas search ──────────────────────────────────────────
+  function onSumberChange() {
+    clearSelectedPetugas();
+    document.getElementById("wiz-search-petugas").value = "";
+    document.getElementById("wiz-live-results").classList.remove("visible");
+  }
+
+  function onSearchPetugas() {
+    const q = (document.getElementById("wiz-search-petugas")?.value || "").toLowerCase().trim();
+    const sumber = document.querySelector('input[name="wiz-sumber"]:checked')?.value || "mitra";
+    const source = sumber === "mitra" ? _allMitra : _allPegawai;
+    const resultsEl = document.getElementById("wiz-live-results");
+    if (!resultsEl) return;
+
+    const filtered = source.filter(item => {
+      const nama = sumber === "mitra" ? getMitraName(item) : getPegawaiName(item);
+      const id   = sumber === "mitra" ? getMitraId(item) : getPegawaiNip(item);
+      return !q || nama.toLowerCase().includes(q) || String(id).toLowerCase().includes(q);
+    }).slice(0, 15);
+
+    if (filtered.length === 0) {
+      resultsEl.innerHTML = `<div class="live-result-item" style="color:var(--gray-400);">Tidak ada hasil.</div>`;
+    } else {
+      resultsEl.innerHTML = filtered.map(item => {
+        const nama = sumber === "mitra" ? getMitraName(item) : getPegawaiName(item);
+        const id   = sumber === "mitra" ? getMitraId(item) : getPegawaiNip(item);
+        const meta = sumber === "mitra"
+          ? `Mitra · ${item.Asal || item.asal || "—"}`
+          : `NIP: ${item.NIP || id}`;
+        const initial = (nama || "?")[0].toUpperCase();
+        return `<div class="live-result-item" onclick="selectPetugas('${escapeHtml(id)}','${escapeHtml(nama)}','${sumber}')">
+          <div class="lri-avatar ${sumber}">${initial}</div>
+          <div>
+            <div class="lri-name">${escapeHtml(nama)}</div>
+            <div class="lri-meta">${escapeHtml(meta)}</div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    resultsEl.classList.add("visible");
+  }
+
+  function selectPetugas(id, nama, tipe) {
+    document.getElementById("wiz-petugas-id").value   = id;
+    document.getElementById("wiz-petugas-nama").value = nama;
+    document.getElementById("wiz-petugas-tipe").value = tipe;
+    document.getElementById("wiz-search-petugas").value = nama;
+    document.getElementById("wiz-live-results").classList.remove("visible");
+
+    const card = document.getElementById("wiz-selected-card");
+    const av   = document.getElementById("wiz-sc-avatar");
+    const nm   = document.getElementById("wiz-sc-name");
+    const mt   = document.getElementById("wiz-sc-meta");
+    if (card) { card.classList.add("visible"); }
+    if (av) { av.textContent = (nama || "?")[0].toUpperCase(); av.className = `lri-avatar ${tipe}`; }
+    if (nm) { nm.textContent = nama; }
+    if (mt) { mt.textContent = tipe === "mitra" ? "Mitra Lapangan" : "Pegawai BPS"; }
+  }
+
+  function clearSelectedPetugas() {
+    document.getElementById("wiz-petugas-id").value   = "";
+    document.getElementById("wiz-petugas-nama").value = "";
+    document.getElementById("wiz-petugas-tipe").value = "";
+    document.getElementById("wiz-search-petugas").value = "";
+    document.getElementById("wiz-selected-card")?.classList.remove("visible");
+  }
+
+  // ─── Tambah baris kegiatan ───────────────────────────────────
+  function tambahKegiatanRow() {
+    const selKeg  = document.getElementById("wiz-sel-kegiatan");
+    const selPeran = document.getElementById("wiz-sel-peran");
+    const kegId  = selKeg?.value;
+    const kegNama = selKeg?.options[selKeg.selectedIndex]?.dataset?.nama || kegId;
+    const peran  = selPeran?.value || "ppl";
+
+    if (!kegId) { showToast("Pilih kegiatan terlebih dahulu!", "warning"); return; }
+
+    // Cek duplikasi kegiatan + peran yang sama
+    if (_wizKegiatan.some(k => k.id === kegId && k.peran === peran)) {
+      showToast("Kegiatan ini dengan peran yang sama sudah ditambahkan!", "warning"); return;
+    }
+
+    _wizKegiatan.push({
+      id: kegId,
+      nama: kegNama,
+      peran: peran,
+      tglMulai: "",
+      tglSelesai: "",
+      batasTerlambat: "",
+    });
+
+    renderKegiatanRows();
+    selKeg.value = "";
+  }
+
+  function hapusKegiatanRow(idx) {
+    _wizKegiatan.splice(idx, 1);
+    renderKegiatanRows();
+  }
+
+  function renderKegiatanRows() {
+    const container = document.getElementById("kegiatan-rows-container");
+    const emptyMsg  = document.getElementById("empty-keg-msg");
+    const summaryEl = document.getElementById("periode-summary");
+    if (!container) return;
+
+    if (_wizKegiatan.length === 0) {
+      container.innerHTML = `<div class="empty-kegiatan" id="empty-keg-msg">
+        Belum ada kegiatan. Pilih dari dropdown di atas lalu klik "➕ Tambah".
+      </div>`;
+      if (summaryEl) summaryEl.style.display = "none";
+      return;
+    }
+
+    container.innerHTML = `<div class="kegiatan-rows" id="kegiatan-rows">` +
+      _wizKegiatan.map((k, i) => `
+        <div class="kegiatan-row" id="krow-${i}">
+          <div>
+            <label>Uraian Kegiatan</label>
+            <div style="font-size:.84rem; font-weight:600; color:var(--gray-800); padding:8px 10px; background:#fff; border:1px solid var(--gray-200); border-radius:var(--radius-sm); min-height:36px;">
+              ${escapeHtml(k.nama)}
+              <span class="peran-badge peran-${k.peran}" style="margin-left:6px;">${k.peran.toUpperCase()}</span>
+            </div>
+          </div>
+          <div>
+            <label>Peran</label>
+            <select class="form-control" onchange="updateKegField(${i},'peran',this.value)">
+              <option value="ppl" ${k.peran==='ppl'?'selected':''}>PPL</option>
+              <option value="pml" ${k.peran==='pml'?'selected':''}>PML</option>
+            </select>
+          </div>
+          <div>
+            <label>Tanggal Mulai <span class="required">*</span></label>
+            <input type="date" class="form-control" value="${k.tglMulai}"
+                   onchange="updateKegField(${i},'tglMulai',this.value)">
+          </div>
+          <div>
+            <label>Tanggal Selesai <span class="required">*</span></label>
+            <input type="date" class="form-control" value="${k.tglSelesai}"
+                   onchange="updateKegField(${i},'tglSelesai',this.value)">
+          </div>
+          <div>
+            <label>Batas Terlambat</label>
+            <input type="date" class="form-control" value="${k.batasTerlambat}"
+                   onchange="updateKegField(${i},'batasTerlambat',this.value)">
+          </div>
+          <button type="button" class="btn-remove-row" onclick="hapusKegiatanRow(${i})" title="Hapus baris">✕</button>
+        </div>
+      `).join("") + `</div>`;
+
+    updatePeriodeSummary();
+    if (summaryEl) summaryEl.style.display = "flex";
+  }
+
+  function updateKegField(idx, field, val) {
+    _wizKegiatan[idx][field] = val;
+
+    // Auto-set batas terlambat: tanggal 25 bulan yang sama dengan tglSelesai
+    if (field === "tglSelesai" && val && !_wizKegiatan[idx].batasTerlambat) {
+      const d = new Date(val);
+      if (!isNaN(d)) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        _wizKegiatan[idx].batasTerlambat = `${y}-${m}-25`;
+        renderKegiatanRows();
+        return;
+      }
+    }
+    updatePeriodeSummary();
+  }
+
+  function updatePeriodeSummary() {
+    const dates = _wizKegiatan
+      .filter(k => k.tglMulai && k.tglSelesai)
+      .flatMap(k => [new Date(k.tglMulai), new Date(k.tglSelesai)])
+      .filter(d => !isNaN(d));
+
+    const rangeEl  = document.getElementById("periode-range");
+    const batasEl  = document.getElementById("batas-terlambat-global");
+    if (!dates.length) {
+      if (rangeEl) rangeEl.textContent = "—";
+      if (batasEl) batasEl.textContent = "—";
+      return;
+    }
+
+    const min = new Date(Math.min(...dates));
+    const max = new Date(Math.max(...dates));
+    const formatTgl = d => d.toLocaleDateString("id-ID", {day:"2-digit", month:"long", year:"numeric"});
+
+    if (rangeEl) rangeEl.textContent = `${formatTgl(min)} s/d ${formatTgl(max)}`;
+
+    // Cari batas terlambat terbesar
+    const batasDates = _wizKegiatan
+      .filter(k => k.batasTerlambat)
+      .map(k => new Date(k.batasTerlambat))
+      .filter(d => !isNaN(d));
+    if (batasDates.length && batasEl) {
+      batasEl.textContent = formatTgl(new Date(Math.max(...batasDates)));
+    }
+  }
+
+  // ─── Build summary step 3 ────────────────────────────────────
+  function buildSummary() {
+    const nama = document.getElementById("wiz-petugas-nama").value;
+    const tipe = document.getElementById("wiz-petugas-tipe").value;
+
+    document.getElementById("sum-avatar").textContent = (nama || "?")[0].toUpperCase();
+    document.getElementById("sum-nama").textContent   = nama || "—";
+    document.getElementById("sum-meta").textContent   = tipe === "mitra" ? "Mitra Lapangan" : "Pegawai BPS";
+
+    const listEl = document.getElementById("summary-keg-list");
+    if (!listEl) return;
+
+    if (_wizKegiatan.length === 0) {
+      listEl.innerHTML = `<div class="empty-kegiatan">Tidak ada kegiatan.</div>`;
+      return;
+    }
+
+    const formatTgl = str => {
+      if (!str) return "—";
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short", year:"numeric"});
+    };
+
+    listEl.innerHTML = _wizKegiatan.map(k => `
+      <div class="summary-keg-item">
+        <span class="sk-name">${escapeHtml(k.nama)}</span>
+        <span class="peran-badge peran-${k.peran}">${k.peran.toUpperCase()}</span>
+        <span class="sk-meta">${formatTgl(k.tglMulai)} – ${formatTgl(k.tglSelesai)}</span>
+        ${k.batasTerlambat ? `<span class="sk-meta" style="color:#dc2626;">⏰ Terlambat: ${formatTgl(k.batasTerlambat)}</span>` : ""}
+      </div>
+    `).join("");
+  }
+
+  // ─── Simpan penugasan ke Sheets ─────────────────────────────
+  async function simpanPenugasan() {
+    const petugasId   = document.getElementById("wiz-petugas-id").value;
+    const petugasNama = document.getElementById("wiz-petugas-nama").value;
+    const petugasTipe = document.getElementById("wiz-petugas-tipe").value;
+    const noKepka     = document.getElementById("wiz-no-kepka").value.trim();
+    const tglKepka    = document.getElementById("wiz-tgl-kepka").value;
+
+    if (!petugasId)  { showToast("Pilih petugas terlebih dahulu!", "warning"); return; }
+    if (_wizKegiatan.length === 0) { showToast("Tambahkan minimal 1 kegiatan!", "warning"); return; }
+    if (!noKepka)    { showToast("Isi Nomor Kepka!", "warning"); return; }
+    if (!tglKepka)   { showToast("Isi Tanggal Kepka!", "warning"); return; }
+
+    // Validasi tanggal kegiatan
+    for (const k of _wizKegiatan) {
+      if (!k.tglMulai || !k.tglSelesai) {
+        showToast(`Isi tanggal mulai & selesai untuk kegiatan: ${k.nama.substring(0,40)}`, "warning");
+        return;
+      }
+    }
+
+    const currUser = (typeof Auth !== "undefined" && Auth.getUser) ? Auth.getUser() : {};
+
+    setLoading(true);
+    try {
+      // Simpan setiap kegiatan sebagai satu baris di mapping_petugas
+      for (const k of _wizKegiatan) {
+        const record = {
+          ID_Mapping:          generateId(),
+          ID_Mitra_atau_NIP:   petugasId,
+          Tipe_Petugas:        petugasTipe,
+          Nama_Petugas:        petugasNama,
+          ID_Kegiatan:         k.id,
+          Uraian_Kegiatan:     k.nama,
+          Peran:               k.peran,
+          Tanggal_Mulai:       k.tglMulai,
+          Tanggal_Selesai:     k.tglSelesai,
+          Batas_Terlambat:     k.batasTerlambat || "",
+          Nomor_Kepka:         noKepka,
+          Tanggal_Kepka:       tglKepka,
+          Dibuat_Oleh:         currUser.username || "",
+          Tanggal_Dibuat:      new Date().toISOString(),
+        };
+        await appendToSheet("mappingPetugas", record);
+      }
+
+      clearCache("mappingPetugas");
+      showToast(`✅ Berhasil menyimpan ${_wizKegiatan.length} penugasan untuk ${petugasNama}!`, "success", 5000);
+      cancelWizard();
+
+      // Reload mapping
+      setLoading(true);
+      _allMapping = await getMappingPetugas().catch(() => []);
+      renderMappingList();
+      updateStats();
+    } catch (err) {
+      showToast("Gagal menyimpan: " + err.message, "danger");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ─── Helper: generateId ──────────────────────────────────────
+  function generateId() {
+    return "MAP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).substr(2,4).toUpperCase();
+  }
+
+  // ─── Hapus mapping ───────────────────────────────────────────
+  async function hapusMapping(mappingId) {
+    if (!confirm("Hapus penugasan ini?")) return;
+    setLoading(true);
+    try {
+      await deleteFromSheet("mappingPetugas", "ID_Mapping", mappingId);
+      clearCache("mappingPetugas");
+      _allMapping = await getMappingPetugas().catch(() => []);
+      renderMappingList();
+      updateStats();
+      showToast("Penugasan dihapus.", "success");
+    } catch (err) {
+      showToast("Gagal hapus: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ─── Render daftar mapping ───────────────────────────────────
+  function renderMappingList() {
+    const container = document.getElementById("mapping-list-container");
+    if (!container) return;
+
+    const q = (document.getElementById("search-mapping")?.value || "").toLowerCase().trim();
+
+    let filtered = _allMapping;
+    if (q) {
+      filtered = filtered.filter(m => {
+        const n = String(m.Nama_Petugas || "").toLowerCase();
+        const k = String(m.Uraian_Kegiatan || "").toLowerCase();
+        return n.includes(q) || k.includes(q);
+      });
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:48px; color:var(--gray-400);">
+          <div style="font-size:2.5rem; margin-bottom:12px;">🗺️</div>
+          <div style="font-weight:600; margin-bottom:4px;">Belum ada data penugasan</div>
+          <div style="font-size:.84rem;">Klik tombol "Buat Penugasan Baru" untuk memulai.</div>
+        </div>`;
+      return;
+    }
+
+    // Group by petugas (ID_Mitra_atau_NIP)
+    const grouped = {};
+    filtered.forEach(m => {
+      const key = m.ID_Mitra_atau_NIP || m.Nama_Petugas;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(m);
+    });
+
+    const formatTgl = str => {
+      if (!str) return "—";
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short", year:"numeric"});
+    };
+
+    container.innerHTML = Object.entries(grouped).map(([key, items]) => {
+      const nama  = items[0].Nama_Petugas || key;
+      const tipe  = items[0].Tipe_Petugas || "mitra";
+      const noKepka = items[0].Nomor_Kepka || "—";
+      const initial = (nama || "?")[0].toUpperCase();
+
+      const rowsHTML = items.map(m => `
+        <div class="mapping-keg-row">
+          <span class="peran-badge peran-${m.Peran || 'ppl'}" style="flex-shrink:0;">${(m.Peran||'ppl').toUpperCase()}</span>
+          <span class="mkr-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</span>
+          <span class="mkr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+          ${m.Batas_Terlambat ? `<span class="mkr-dates" style="color:#dc2626;">⏰ ${formatTgl(m.Batas_Terlambat)}</span>` : ""}
+          <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-200); flex-shrink:0; padding:2px 8px; font-size:.75rem;"
+                  onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}')">🗑️</button>
+        </div>
+      `).join("");
+
+      return `
+        <div class="mapping-card" id="mcard-${escapeHtml(key)}">
+          <div class="mapping-header" onclick="toggleMappingCard('${escapeHtml(key)}')">
+            <div class="mh-avatar">${initial}</div>
+            <div>
+              <div class="mh-name">${escapeHtml(nama)}</div>
+              <div class="mh-meta">${tipe === 'mitra' ? '👥 Mitra' : '🏛️ Pegawai'} · Kepka: ${escapeHtml(noKepka)}</div>
+            </div>
+            <span class="mh-count">${items.length} Kegiatan</span>
+            <div class="mh-actions" onclick="event.stopPropagation()">
+            </div>
+            <span style="color:var(--gray-400); font-size:.9rem;">▼</span>
+          </div>
+          <div class="mapping-body">
+            ${rowsHTML}
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function toggleMappingCard(key) {
+    const card = document.getElementById(`mcard-${key}`);
+    if (card) card.classList.toggle("open");
+  }
+
+  // ─── Stats ───────────────────────────────────────────────────
+  function updateStats() {
+    const uniquePetugas = new Set(_allMapping.map(m => m.ID_Mitra_atau_NIP)).size;
+    const uniqueBulan   = new Set(_allMapping.map(m => {
+      const d = m.Tanggal_Mulai ? new Date(m.Tanggal_Mulai) : null;
+      return d && !isNaN(d) ? `${d.getFullYear()}-${d.getMonth()}` : "";
+    }).filter(Boolean)).size;
+
+    const set = n => { const el = document.getElementById(n); if (el) el.textContent = el._loading ? "—" : ""; };
+    document.getElementById("stat-petugas") && (document.getElementById("stat-petugas").textContent = uniquePetugas);
+    document.getElementById("stat-kegiatan") && (document.getElementById("stat-kegiatan").textContent = _allMapping.length);
+    document.getElementById("stat-bulan") && (document.getElementById("stat-bulan").textContent = uniqueBulan || "—");
+  }
 </script>
 </body>
 </html>
-

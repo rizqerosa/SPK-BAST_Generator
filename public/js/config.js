@@ -21,5 +21,6 @@ const CONFIG = {
     BAST_SM_PPK: "bast_sm_ppk",      // BAST kumpulan kegiatan besar (SM-PPK)
     PARAMETER: "parameter",        // Konfigurasi sistem
     PENGGUNA: "pengguna",          // Akun pengguna & role (Operator, PPK, Admin)
+    MAPPING_PETUGAS: "mapping_petugas", // Mapping KATIM: petugas → kegiatan + tanggal
   },
 };

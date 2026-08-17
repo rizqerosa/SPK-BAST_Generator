@@ -62,7 +62,7 @@
     } else if (role === "KATIM") {
       extraNavItems = [
         { section: "Ketua Tim" },
-        { icon: "🗺️", label: "Mapping Petugas",   href: "katim.html",          badge: "KATIM" },
+        { icon: "🗺️", label: "Penugasan Petugas",   href: "katim.html",          badge: "KATIM" },
       ];
     }
 

@@ -205,9 +205,15 @@
         <div class="card-header">
           <h2>📋 Daftar Semua Dokumen</h2>
           <div class="list-controls">
+            <!-- Filter Jenis Dokumen -->
+            <div class="filter-bar" id="jenis-filter-bar">
+              <button class="btn btn-outline btn-sm active" data-jenis="all">Semua</button>
+              <button class="btn btn-outline btn-sm" data-jenis="SPK">📜 SPK</button>
+              <button class="btn btn-outline btn-sm" data-jenis="BAST">📄 BAST</button>
+            </div>
             <!-- Filter status -->
             <div class="filter-bar">
-              <button class="btn btn-outline btn-sm active" data-filter="all">Semua</button>
+              <button class="btn btn-outline btn-sm active" data-filter="all">Semua Status</button>
               <button class="btn btn-outline btn-sm" data-filter="Menunggu_Verifikasi">🟡 Menunggu PPK</button>
               <button class="btn btn-outline btn-sm" data-filter="Disetujui">🟢 Disetujui PPK</button>
               <button class="btn btn-outline btn-sm" data-filter="Ditolak">🔴 Ditolak</button>
@@ -226,11 +232,12 @@
               <tr>
                 <th style="width:40px;">No</th>
                 <th>Nama Petugas / PPL</th>
+                <th style="width:80px;">Jenis</th>
                 <th>Judul Pekerjaan</th>
                 <th style="width:110px;">Bulan / Tahun</th>
                 <th style="width:115px;" class="tr">Total Honor</th>
                 <th style="width:145px;">Status Verif PPK</th>
-                <th style="width:230px;" class="tc">Aksi</th>
+                <th style="width:200px;" class="tc">Aksi</th>
               </tr>
             </thead>
             <tbody id="doc-tbody">
@@ -315,13 +322,13 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.2"></script>
-<script src="js/data.js?v=4.2"></script>
-<script src="js/auth.js?v=4.2"></script>
-<script src="js/utils.js?v=4.2"></script>
-<script src="js/render.js?v=4.2"></script>
-<script src="js/sidebar.js?v=4.2"></script>
-<script src="js/app.js?v=4.2"></script>
+<script src="js/config.js?v=4.3"></script>
+<script src="js/data.js?v=4.3"></script>
+<script src="js/auth.js?v=4.3"></script>
+<script src="js/utils.js?v=4.3"></script>
+<script src="js/render.js?v=4.3"></script>
+<script src="js/sidebar.js?v=4.3"></script>
+<script src="js/app.js?v=4.3"></script>
 
 <!-- docx.js library untuk export Word -->
 <script src="https://unpkg.com/docx@8/build/index.min.js"></script>
@@ -333,6 +340,7 @@
   let _allKegiatan = [];
   let _allDetail   = [];
   let _activeFilter = "all";
+  let _activeJenisFilter = "all";
   let _selectedDocId = null;
   let _deleteDocId   = null;
 
@@ -367,6 +375,16 @@
     if (heroDesc && !_canEdit) {
       heroDesc.textContent = "Lihat dan preview dokumen SPK & BAST yang telah dibuat.";
     }
+
+    // Jenis filter listener
+    document.querySelectorAll("[data-jenis]").forEach(btn => {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("[data-jenis]").forEach(b => b.classList.remove("active"));
+        this.classList.add("active");
+        _activeJenisFilter = this.dataset.jenis;
+        applyFilters();
+      });
+    });
   });
 
   // ─── Render tabel ───────────────────────────────────────────
@@ -440,6 +458,11 @@
         <tr>
           <td class="tc text-muted">${i + 1}</td>
           <td><div style="font-weight:600; font-size:.88rem;">${namaPetugas}</div></td>
+          <td>
+            ${doc.Jenis_Dokumen === 'BAST'
+              ? '<span style="background:#dcfce7; color:#166534; font-size:.68rem; font-weight:800; padding:2px 7px; border-radius:20px;">📄 BAST</span>'
+              : '<span style="background:#dbeafe; color:#1e40af; font-size:.68rem; font-weight:800; padding:2px 7px; border-radius:20px;">📜 SPK</span>'}
+          </td>
           <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
           <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
           <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
@@ -452,6 +475,12 @@
   function applyFilters() {
     const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
     const data = _allDocs.filter(d => {
+      // Jenis filter
+      if (_activeJenisFilter !== "all") {
+        const jenis = d.Jenis_Dokumen || "SPK";
+        if (jenis !== _activeJenisFilter) return false;
+      }
+      // Status filter
       const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
       let matchStatus = false;
       if (_activeFilter === "all") matchStatus = true;

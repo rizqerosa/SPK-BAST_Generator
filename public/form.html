@@ -4,11 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buat Dokumen — WEBPADKU BPS Kota Subulussalam</title>
-  <meta name="description" content="Form input lengkap untuk generate dokumen SPK dan BAST petugas lapangan BPS Kota Subulussalam">
+  <meta name="description" content="Form pembuatan dokumen SPK dan BAST petugas lapangan BPS Kota Subulussalam">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="css/style.css?v=4.2">
+  <link rel="stylesheet" href="css/style.css?v=4.3">
   <style>
-    /* ─── Form card components ─── */
+    /* ── Mode Selector ── */
+    .mode-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .mode-card {
+      position: relative;
+      border: 2.5px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      cursor: pointer;
+      background: #fff;
+      transition: all .2s ease;
+      text-align: center;
+    }
+    .mode-card:hover { border-color: var(--brand-primary); box-shadow: 0 4px 16px rgba(26,86,219,.1); }
+    .mode-card.selected {
+      border-color: var(--brand-primary);
+      background: var(--brand-light);
+      box-shadow: 0 4px 16px rgba(26,86,219,.15);
+    }
+    .mode-card.selected-spk { border-color: #1d4ed8; background: #eff6ff; }
+    .mode-card.selected-bast { border-color: #059669; background: #f0fdf4; }
+    .mode-card.selected-bast-sm { border-color: #7c3aed; background: #f5f3ff; }
+    .mode-card .mc-icon { font-size: 2rem; margin-bottom: 8px; }
+    .mode-card .mc-title { font-weight: 800; font-size: .92rem; color: var(--gray-800); margin-bottom: 4px; }
+    .mode-card .mc-desc { font-size: .75rem; color: var(--gray-500); line-height: 1.4; }
+    .mode-badge {
+      position: absolute; top: 10px; right: 10px;
+      font-size: .65rem; font-weight: 800;
+      padding: 2px 7px; border-radius: 20px;
+    }
+    .badge-ppk { background: #dcfce7; color: #166534; }
+
+    /* ── Form Cards ── */
     .form-card {
       background: #fff;
       border-radius: var(--radius-lg);
@@ -16,287 +52,228 @@
       border: 1px solid var(--gray-200);
       margin-bottom: 20px;
       overflow: hidden;
-      transition: box-shadow .2s ease;
     }
-    .form-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.08); }
-
     .form-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 14px 22px;
-      background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
-      color: #fff;
-      font-weight: 700;
-      font-size: .95rem;
-      letter-spacing: -.01em;
+      font-weight: 700; font-size: .95rem; color: #fff;
     }
+    .fc-blue   { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); }
+    .fc-green  { background: linear-gradient(135deg, #064e3b 0%, #059669 100%); }
+    .fc-purple { background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%); }
     .step-badge {
       background: rgba(255,255,255,.2);
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: .72rem;
-      font-weight: 600;
-      letter-spacing: .3px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: .72rem; font-weight: 600;
     }
     .form-card-body { padding: 22px; }
 
-    /* ─── Banner ─── */
+    /* ── Banner ── */
     .form-page-banner {
       background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
       border-radius: var(--radius-xl);
       padding: 22px 28px;
-      color: #fff;
-      margin-bottom: 22px;
-      display: flex;
-      align-items: center;
-      gap: 18px;
+      color: #fff; margin-bottom: 22px;
+      display: flex; align-items: center; gap: 18px;
       box-shadow: 0 8px 30px rgba(30,58,138,.2);
-      position: relative;
-      overflow: hidden;
+      position: relative; overflow: hidden;
     }
     .form-page-banner::after {
-      content: '';
-      position: absolute;
+      content: ''; position: absolute;
       right: -30px; top: -40px;
       width: 180px; height: 180px;
-      background: rgba(255,255,255,.05);
-      border-radius: 50%;
+      background: rgba(255,255,255,.05); border-radius: 50%;
     }
     .form-page-banner h1 {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 800;
-      margin-bottom: 4px;
+      font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;
     }
     .form-page-banner p { font-size: .82rem; opacity: .85; }
 
-    /* ─── Radio cards selector ─── */
-    .radio-card-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .radio-card-option {
-      position: relative;
-    }
-    .radio-card-option input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-    .radio-card-label {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      background: #fff;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-    .radio-card-option input[type="radio"]:checked + .radio-card-label {
-      border-color: var(--brand-primary);
-      background: var(--brand-light);
-      box-shadow: 0 4px 12px rgba(26,86,219,.12);
-    }
-    .radio-card-label .rc-icon {
-      font-size: 1.4rem;
-    }
-    .radio-card-label .rc-title {
-      font-weight: 700;
-      font-size: .88rem;
-      color: var(--gray-800);
-    }
-    .radio-card-label .rc-desc {
-      font-size: .75rem;
-      color: var(--gray-500);
-    }
-
-    /* ─── Mitra search & Live Results ─── */
+    /* ── Petugas search ── */
     .mitra-search-wrap {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      position: relative;
+      display: flex; gap: 10px; margin-bottom: 8px;
+      flex-wrap: wrap; position: relative;
     }
     .mitra-search-wrap .search-input-wrap {
-      flex: 1;
-      min-width: 200px;
-      position: relative;
+      flex: 1; min-width: 200px; position: relative;
     }
     .mitra-search-wrap .search-input-wrap input { padding-left: 34px; }
     .mitra-search-wrap .search-input-wrap .ico {
-      position: absolute;
-      left: 11px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 13px;
-      color: var(--gray-400);
+      position: absolute; left: 11px; top: 50%;
+      transform: translateY(-50%); font-size: 13px; color: var(--gray-400);
     }
     .live-search-results {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      max-height: 280px;
-      overflow-y: auto;
-      background: #fff;
-      border: 1px solid var(--gray-300);
+      position: absolute; top: 100%; left: 0; right: 0;
+      z-index: 1000; max-height: 280px; overflow-y: auto;
+      background: #fff; border: 1px solid var(--gray-300);
       border-radius: var(--radius-md);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-      margin-top: 4px;
-      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,.15);
+      margin-top: 4px; display: none;
     }
-    .live-search-results.visible {
-      display: block;
-    }
+    .live-search-results.visible { display: block; }
     .live-search-item {
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid var(--gray-100);
-      cursor: pointer;
-      transition: background 0.15s ease;
+      padding: 10px 14px; display: flex; align-items: center;
+      gap: 12px; border-bottom: 1px solid var(--gray-100);
+      cursor: pointer; transition: background .15s;
     }
-    .live-search-item:last-child {
-      border-bottom: none;
-    }
-    .live-search-item:hover {
-      background: var(--brand-light);
-    }
+    .live-search-item:last-child { border-bottom: none; }
+    .live-search-item:hover { background: var(--brand-light); }
     .live-search-item .item-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #dbeafe;
-      color: var(--brand-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.85rem;
-      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #dbeafe; color: var(--brand-primary);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; flex-shrink: 0;
     }
-    .live-search-item .item-info {
-      flex: 1;
-    }
-    .live-search-item .item-name {
-      font-weight: 600;
-      font-size: 0.88rem;
-      color: var(--gray-800);
-      line-height: 1.2;
-    }
-    .live-search-item .item-meta {
-      font-size: 0.76rem;
-      color: var(--gray-500);
-      margin-top: 2px;
-    }
+    .live-search-item .item-name { font-weight: 600; font-size: .88rem; color: var(--gray-800); line-height: 1.2; }
+    .live-search-item .item-meta { font-size: .76rem; color: var(--gray-500); }
+
     .selected-petugas-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 12px 16px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md); margin-top: 10px;
+    }
+    .selected-petugas-info { display: flex; align-items: center; gap: 10px; }
+    .selected-petugas-info .name { font-weight: 700; font-size: .9rem; color: #166534; }
+    .selected-petugas-info .meta { font-size: .78rem; color: #15803d; }
+
+    /* ── No dokumen format hint ── */
+    .format-hint {
+      font-size: .73rem; color: var(--gray-400);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* ── Kegiatan dari Mapping ── */
+    .mapping-kegiatan-list {
+      display: flex; flex-direction: column; gap: 8px;
+      margin-bottom: 14px;
+    }
+    .mapping-keg-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
-      border-radius: var(--radius-md);
-      margin-top: 10px;
+      border-left: 3px solid #059669;
+      border-radius: var(--radius-sm);
+      font-size: .84rem;
     }
-    .selected-petugas-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .mapping-keg-item .mki-name { flex: 1; font-weight: 600; color: var(--gray-800); }
+    .mapping-keg-item .mki-meta { font-size: .73rem; color: var(--gray-500); }
+    .mki-badge {
+      padding: 2px 8px; border-radius: 20px;
+      font-size: .68rem; font-weight: 800;
     }
-    .selected-petugas-info .name {
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: #166534;
-    }
-    .selected-petugas-info .meta {
-      font-size: 0.78rem;
-      color: #15803d;
+    .mki-ppl { background: #dbeafe; color: #1e40af; }
+    .mki-pml { background: #dcfce7; color: #166534; }
+
+    .empty-mapping-notice {
+      padding: 20px; text-align: center;
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: var(--radius-md); color: #92400e; font-size: .84rem;
     }
 
-    /* ─── Section divider ─── */
-    .sec-divider {
-      border: none;
-      border-top: 1px dashed var(--gray-300);
-      margin: 20px 0;
-    }
-    .sec-label {
-      font-size: .82rem;
-      font-weight: 700;
-      color: var(--brand-dark);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    /* ─── Honor preview ─── */
+    /* ── Honor Box ── */
     .honor-box {
-      margin-top: 18px;
-      padding: 16px 20px;
+      margin-top: 18px; padding: 16px 20px;
       background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
-      border: 1px solid #bfdbfe;
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
+      border: 1px solid #bfdbfe; border-radius: var(--radius-md);
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
     }
     .honor-box .hb-label { font-size: .78rem; color: var(--gray-600); font-weight: 600; }
     .honor-box .hb-amount {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--brand-primary);
+      font-size: 1.4rem; font-weight: 800; color: var(--brand-primary);
     }
     .honor-box .hb-terb { font-size: .8rem; color: var(--gray-500); font-style: italic; flex: 1; }
 
-    /* ─── Submit bar ─── */
+    /* ── Submit bar ── */
     .submit-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 28px;
-      margin-bottom: 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 28px; margin-bottom: 48px;
       padding: 20px 24px;
       background: linear-gradient(135deg, #f8fafc, #fff);
       border: 1px solid var(--gray-200);
       border-radius: var(--radius-lg);
       box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
-    .submit-bar .note {
-      font-size: .82rem;
-      color: var(--gray-500);
-    }
+    .submit-bar .note { font-size: .82rem; color: var(--gray-500); }
     .btn-xl {
-      padding: 13px 30px;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: -.01em;
+      padding: 13px 30px; font-size: 1rem;
+      font-weight: 700; letter-spacing: -.01em;
       box-shadow: 0 4px 16px rgba(26,86,219,.3);
     }
     .btn-xl:hover { box-shadow: 0 6px 22px rgba(26,86,219,.45); transform: translateY(-1px); }
+
+    /* ── Info/warning boxes ── */
+    .info-box {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: var(--radius-md); padding: 14px 16px;
+      margin-bottom: 16px; font-size: .84rem; color: #1e40af;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .warn-box {
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: var(--radius-md); padding: 14px 16px;
+      margin-bottom: 16px; font-size: .84rem; color: #92400e;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .info-box-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Sec label ── */
+    .sec-label {
+      font-size: .82rem; font-weight: 700; color: var(--brand-dark);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+    }
+    .sec-divider {
+      border: none; border-top: 1px dashed var(--gray-300); margin: 20px 0;
+    }
+
+    /* ── BAST kegiatan selector ── */
+    .bast-keg-selector {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .bast-keg-option {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px;
+      background: #fff; border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      cursor: pointer; transition: all .15s;
+    }
+    .bast-keg-option:hover { border-color: #059669; background: #f0fdf4; }
+    .bast-keg-option.selected { border-color: #059669; background: #f0fdf4; }
+    .bko-check {
+      width: 20px; height: 20px; border-radius: 4px;
+      border: 2px solid var(--gray-300); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; background: #fff;
+      transition: all .15s;
+    }
+    .bast-keg-option.selected .bko-check {
+      background: #059669; border-color: #059669; color: #fff;
+    }
+    .bko-info { flex: 1; }
+    .bko-name { font-weight: 600; font-size: .88rem; color: var(--gray-800); }
+    .bko-meta { font-size: .73rem; color: var(--gray-500); margin-top: 2px; }
+
+    /* ─── hidden when no mode ─── */
+    .form-body { display: none; }
+    .form-body.visible { display: block; }
   </style>
 </head>
 <body>
 <div class="app-layout">
-
-  <!-- ─── SIDEBAR (diisi sidebar.js) ─── -->
+  <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar" id="app-sidebar"></aside>
 
   <!-- ─── MAIN ─── -->
   <div class="main-content">
     <header class="topbar">
-      <div class="topbar-title">
-        Buat Dokumen Baru
-        <small>Isi lengkap sekali — ekspor per template di halaman preview</small>
+      <div class="topbar-title" id="page-title">
+        Buat Dokumen
+        <small id="page-subtitle">Pilih jenis dokumen yang ingin dibuat</small>
       </div>
       <div class="topbar-actions">
         <a href="dokumen.html" class="btn btn-outline btn-sm">← Daftar Dokumen</a>
@@ -309,414 +286,1135 @@
       <div class="form-page-banner">
         <div style="font-size: 2.4rem;">📜</div>
         <div>
-          <h1>Form Input Data SPK &amp; BAST</h1>
-          <p>Lengkapi 5 langkah di bawah untuk membuat bundling dokumen SPK dan BAST resmi BPS Kota Subulussalam.</p>
+          <h1 id="banner-title">Buat Dokumen Baru</h1>
+          <p id="banner-desc">Pilih jenis dokumen: SPK untuk pertama kali, atau BAST setelah SPK disetujui PPK.</p>
         </div>
       </div>
 
-      <form id="form-spk-bast" method="POST" action="javascript:void(0);" novalidate>
-
-        <!-- ══ SEKSI 1: JENIS BUNDLING ══ -->
-        <div class="form-card">
-          <div class="form-card-header">
-            <span>📋 1. Pilih Jenis Bundling Dokumen</span>
-            <span class="step-badge">Langkah 1 / 5</span>
+      <!-- Pilih Mode -->
+      <div id="mode-selector">
+        <div style="font-weight:700; color:var(--gray-700); margin-bottom:12px; font-size:.95rem;">
+          Pilih Jenis Dokumen yang Ingin Dibuat:
+        </div>
+        <div class="mode-cards">
+          <div class="mode-card" id="mc-spk" onclick="selectMode('spk')">
+            <span class="mode-badge badge-ppk">Perlu Acc PPK</span>
+            <div class="mc-icon">📜</div>
+            <div class="mc-title">Surat Perjanjian Kerja (SPK)</div>
+            <div class="mc-desc">Dokumen kontrak antara PPK dan petugas. Harus disetujui PPK sebelum BAST bisa dibuat.</div>
           </div>
-          <div class="form-card-body">
-            <div class="radio-card-group">
-              <div class="radio-card-option">
-                <input type="radio" id="bundling-petugas" name="target_doc_type" value="spk_bast" checked>
-                <label for="bundling-petugas" class="radio-card-label">
-                  <span class="rc-icon">📜</span>
-                  <div>
-                    <div class="rc-title">Bundling SPK &amp; BAST Petugas</div>
-                    <div class="rc-desc">Untuk Petugas Pendata (PPL) atau Pemeriksa (PML)</div>
-                  </div>
-                </label>
-              </div>
-
-              <div class="radio-card-option">
-                <input type="radio" id="bundling-sm-ppk" name="target_doc_type" value="sm_ppk">
-                <label for="bundling-sm-ppk" class="radio-card-label">
-                  <span class="rc-icon">🏛️</span>
-                  <div>
-                    <div class="rc-title">BAST Subtim / SM ke PPK</div>
-                    <div class="rc-desc">Penyerahan dari Supervisor Madya (SM) ke PPK</div>
-                  </div>
-                </label>
-              </div>
-            </div>
+          <div class="mode-card" id="mc-bast" onclick="selectMode('bast')">
+            <div class="mc-icon">📄</div>
+            <div class="mc-title">BAST Petugas</div>
+            <div class="mc-desc">Berita Acara Serah Terima hasil pekerjaan (PPL→PML, PPL→SM, PML→SM). Hanya untuk petugas yang SPK-nya sudah disetujui PPK.</div>
+          </div>
+          <div class="mode-card" id="mc-bast-sm" onclick="selectMode('bast_sm')">
+            <span class="mode-badge badge-ppk">Perlu Acc PPK</span>
+            <div class="mc-icon">🏛️</div>
+            <div class="mc-title">BAST SM → PPK</div>
+            <div class="mc-desc">Penyerahan hasil pekerjaan dari Supervisor Madya ke PPK. Per bulan, semua kegiatan dibundel.</div>
           </div>
         </div>
+      </div>
 
-        <!-- ══ SEKSI 2: DATA PETUGAS / PENERIMA ══ -->
-        <div class="form-card" id="card-petugas">
-          <div class="form-card-header">
-            <span>👤 2. Data Petugas / Penerima SPK</span>
-            <span class="step-badge">Langkah 2 / 5</span>
-          </div>
-          <div class="form-card-body">
-            <div class="form-group" style="margin-bottom:16px;">
-              <label class="form-label">Sumber Data Petugas</label>
-              <div style="display:flex; gap:20px; align-items:center;">
-                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.88rem; font-weight:600;">
-                  <input type="radio" name="sumber_petugas" value="mitra" checked> 👥 Mitra Lapangan
-                </label>
-                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.88rem; font-weight:600;">
-                  <input type="radio" name="sumber_petugas" value="pegawai"> 🏛️ Pegawai BPS
-                </label>
-              </div>
+      <!-- ═══════════════════════════════════════════════════════
+           FORM SPK
+           ═══════════════════════════════════════════════════════ -->
+      <div id="form-spk" class="form-body">
+        <form id="fspk" method="POST" action="javascript:void(0);" novalidate>
+
+          <!-- 1. Pilih Petugas -->
+          <div class="form-card">
+            <div class="form-card-header fc-blue">
+              <span>👤 1. Pilih Petugas</span>
+              <span class="step-badge">Langkah 1 / 3</span>
             </div>
-
-            <div class="mitra-search-wrap" id="wrap-search-mitra" style="margin-bottom:12px;">
-              <div class="search-input-wrap">
-                <span class="ico">🔍</span>
-                <input type="text" id="search-mitra" class="form-control"
-                       placeholder="Cari nama, NIK, NIP, atau Sobat ID..." autocomplete="off">
+            <div class="form-card-body">
+              <div class="form-group" style="margin-bottom:14px;">
+                <label class="form-label">Sumber Petugas</label>
+                <div style="display:flex; gap:20px; align-items:center;">
+                  <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.88rem; font-weight:600;">
+                    <input type="radio" name="spk-sumber" value="mitra" checked onchange="onSpkSumberChange()"> 👥 Mitra
+                  </label>
+                  <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.88rem; font-weight:600;">
+                    <input type="radio" name="spk-sumber" value="pegawai" onchange="onSpkSumberChange()"> 🏛️ Pegawai
+                  </label>
+                </div>
               </div>
-              <select id="filter-asal-mitra" class="form-control" style="width:180px;">
-                <option value="">Semua Kecamatan</option>
-              </select>
-            </div>
 
-            <div class="form-group" style="margin-top:14px;">
-              <label class="form-label" id="label-sel-mitra">Pilih Petugas <span class="required">*</span></label>
+              <div class="mitra-search-wrap" id="spk-search-wrap">
+                <div class="search-input-wrap">
+                  <span class="ico">🔍</span>
+                  <input type="text" id="spk-search-petugas" class="form-control"
+                         placeholder="Cari nama petugas..." autocomplete="off">
+                  <div id="spk-live-results" class="live-search-results"></div>
+                </div>
+              </div>
 
-              <!-- select disembunyikan dari tampilan, tetap digunakan untuk validasi & penyimpanan nilai -->
-              <select class="form-control" id="sel-mitra" name="id_mitra" required
-                      style="display:none; position:absolute; visibility:hidden;">
-                <option value="">-- Pilih Petugas --</option>
-              </select>
-
-              <!-- Selected Petugas Card -->
-              <div id="selected-petugas-card" class="selected-petugas-card" style="display:none; margin-bottom:12px;">
+              <div id="spk-selected-card" class="selected-petugas-card" style="display:none;">
                 <div class="selected-petugas-info">
                   <span style="font-size:1.2rem;">✅</span>
                   <div>
-                    <div class="name" id="selected-petugas-name">—</div>
-                    <div class="meta" id="selected-petugas-meta">—</div>
+                    <div class="name" id="spk-selected-nama">—</div>
+                    <div class="meta" id="spk-selected-meta">—</div>
                   </div>
                 </div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="clearSelectedPetugas()">
-                  🔄 Ganti Petugas
-                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="clearSpkPetugas()">🔄 Ganti</button>
               </div>
 
-              <!-- Tabel Daftar Petugas -->
-              <div class="petugas-table-wrapper" style="overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-md); background: #fff;">
-                <table class="detail-table" id="table-petugas-list" style="margin-bottom:0;">
-                  <thead>
-                    <tr>
-                      <th style="width: 50px; text-align: center;">No</th>
-                      <th style="text-align: left; padding-left: 12px;">Nama &amp; Informasi Petugas</th>
-                      <th style="width: 80px; text-align: center;">Pilih</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbody-petugas-list">
-                    <!-- Populated dynamically via JS -->
-                  </tbody>
-                </table>
-              </div>
+              <input type="hidden" id="spk-petugas-id">
+              <input type="hidden" id="spk-petugas-nama">
+              <input type="hidden" id="spk-petugas-tipe">
 
-              <!-- Pagination Controls -->
-              <div class="petugas-pagination" id="petugas-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.82rem; color: var(--gray-600);">
-                <div id="pagination-info">Menampilkan 0 - 0 dari 0 data</div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="btn btn-outline btn-sm" id="btn-prev-page" disabled>← Prev</button>
-                  <span id="pagination-page-num" style="font-weight: 600;">Halaman 1 / 1</span>
-                  <button type="button" class="btn btn-outline btn-sm" id="btn-next-page" disabled>Next →</button>
+              <!-- Kegiatan dari mapping KATIM -->
+              <div id="spk-mapping-section" style="display:none; margin-top:18px;">
+                <div class="sec-label">📋 Kegiatan dari Mapping KATIM (otomatis)</div>
+                <div id="spk-mapping-list" class="mapping-kegiatan-list"></div>
+
+                <div class="honor-box">
+                  <div>
+                    <div class="hb-label">Total Honor Pekerjaan</div>
+                    <div class="hb-amount" id="spk-honor-amount">Rp 0,-</div>
+                  </div>
+                  <div class="hb-terb" id="spk-honor-terbilang">Nol Rupiah</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- ══ SEKSI 3: TANGGAL SPK & PERIODE ══ -->
-        <div class="form-card">
-          <div class="form-card-header">
-            <span>📅 3. Tanggal SPK &amp; Periode Pelaksanaan</span>
-            <span class="step-badge">Langkah 3 / 5</span>
-          </div>
-          <div class="form-card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="input-tanggal-spk">Tanggal SPK (1 Hari) <span class="required">*</span></label>
-                <input type="date" class="form-control" id="input-tanggal-spk" name="tanggal_spk" required>
-                <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;">Pilih tanggal penetapan SPK. Bulan &amp; Tahun otomatis terisi.</div>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="input-no-spk">Nomor SPK <span class="required">*</span></label>
-                <input type="text" class="form-control" id="input-no-spk"
-                       name="no_spk" placeholder="Nomor 1 Tahun 2026" required>
-              </div>
+          <!-- 2. Nomor & Tanggal SPK -->
+          <div class="form-card">
+            <div class="form-card-header fc-blue">
+              <span>📅 2. Nomor & Tanggal SPK</span>
+              <span class="step-badge">Langkah 2 / 3</span>
             </div>
-
-            <div class="form-row" style="margin-top:12px;">
-              <div class="form-group">
-                <label class="form-label" for="input-bulan">Bulan Pelaksanaan <span class="required">*</span></label>
-                <select class="form-control" id="input-bulan" name="bulan" required>
-                  <option value="">-- Pilih Bulan --</option>
-                  <option>Januari</option><option>Februari</option><option>Maret</option>
-                  <option>April</option><option>Mei</option><option>Juni</option>
-                  <option>Juli</option><option>Agustus</option><option>September</option>
-                  <option>Oktober</option><option>November</option><option>Desember</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="input-tahun">Tahun <span class="required">*</span></label>
-                <input type="number" class="form-control" id="input-tahun"
-                       name="tahun" value="2026" min="2024" max="2030" required>
-              </div>
-            </div>
-
-            <div class="form-row" style="margin-top:12px;">
-              <div class="form-group">
-                <label class="form-label" for="input-tanggal-mulai">Tanggal Mulai Pekerjaan <span class="required">*</span></label>
-                <input type="date" class="form-control" id="input-tanggal-mulai" name="tanggal_mulai" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="input-tanggal-selesai">Tanggal Selesai Pekerjaan <span class="required">*</span></label>
-                <input type="date" class="form-control" id="input-tanggal-selesai" name="tanggal_selesai" required>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top:12px;">
-              <label class="form-label" for="input-batas-penyerahan-telat">Batas Penyerahan Hasil (Keterlambatan / Telat) <span class="required">*</span></label>
-              <input type="date" class="form-control" id="input-batas-penyerahan-telat" name="batas_penyerahan_telat" required>
-            </div>
-          </div>
-        </div>
-
-        <!-- ══ SEKSI 4: TIPE PERAN PETUGAS & ALUR BAST ══ -->
-        <div class="form-card" id="card-peran">
-          <div class="form-card-header">
-            <span>🔀 4. Tipe Peran Petugas &amp; Alur BAST</span>
-            <span class="step-badge">Langkah 4 / 5</span>
-          </div>
-          <div class="form-card-body">
-            <div class="form-group">
-              <label class="form-label" for="sel-peran-petugas">Peran Petugas dalam Kegiatan <span class="required">*</span></label>
-              <select class="form-control" id="sel-peran-petugas" name="jenis_petugas_peran" style="font-weight:600;">
-                <option value="ppl">Petugas Pendataan Lapangan (PPL) — Mengisi BAST PPL→PML &amp; BAST PPL→SM</option>
-                <option value="pml">Petugas Pemeriksa Lapangan (PML) — Mengisi BAST PML→SM</option>
-              </select>
-              <div style="font-size:.78rem; color:var(--gray-500); margin-top:4px;">
-                Tipe alur BAST yang akan diproduksi bergantung pada peran petugas yang dipilih.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ══ SEKSI 5: DETAIL PEKERJAAN & PEJABAT TERKAIT ══ -->
-        <div class="form-card">
-          <div class="form-card-header">
-            <span>📝 5. Detail Pekerjaan &amp; Pejabat Terkait</span>
-            <span class="step-badge">Langkah 5 / 5</span>
-          </div>
-          <div class="form-card-body">
-
-            <!-- Detail Pekerjaan -->
-            <div class="sec-label">📦 Detail Pekerjaan (Lampiran SPK)</div>
-            <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:14px;">
-              <div class="form-group" style="flex:1; margin-bottom:0;">
-                <label class="form-label" for="sel-kegiatan">Pilih Master Kegiatan <span class="required">*</span></label>
-                <select class="form-control" id="sel-kegiatan">
-                  <option value="">-- Pilih Kegiatan untuk Ditambahkan --</option>
-                </select>
-              </div>
-              <button type="button" id="btn-tambah-kegiatan"
-                      class="btn btn-primary"
-                      style="height:42px; padding:0 20px; white-space:nowrap;">
-                ➕ Tambah
-              </button>
-            </div>
-
-            <div class="table-wrapper" style="border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--gray-200);">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th style="width:36px;">No</th>
-                    <th>Uraian Tugas</th>
-                    <th style="width:125px;">Jangka Waktu</th>
-                    <th style="width:64px;">Vol</th>
-                    <th style="width:76px;">Satuan</th>
-                    <th style="width:105px;" class="tr">Harga Satuan</th>
-                    <th style="width:105px;" class="tr">Total</th>
-                    <th>Beban Anggaran</th>
-                    <th style="width:85px;" class="tc">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="detail-tbody">
-                  <tr id="empty-detail-row">
-                    <td colspan="9" class="text-center text-muted" style="padding:32px; font-size:.85rem;">
-                      Belum ada kegiatan. Pilih dari daftar di atas lalu klik "➕ Tambah".
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Honor Box -->
-            <div class="honor-box">
-              <div>
-                <div class="hb-label">Total Honor Pekerjaan</div>
-                <div class="hb-amount" id="honor-amount">Rp 0,-</div>
-              </div>
-              <div class="hb-terb" id="honor-terbilang">Nol Rupiah</div>
-            </div>
-
-            <!-- Warning SBM Honor -->
-            <div id="honor-sbm-warning" class="honor-sbm-warning" style="display:none;">
-              <span class="warn-icon">⚠️</span>
-              <div>
-                <strong>Peringatan Batas SBM!</strong> Total honor (<span id="warn-total-amount">Rp 0</span>) melebihi batas maksimum SBM sebesar <strong>Rp 3.500.000,-</strong> per bulan.
-              </div>
-            </div>
-
-            <!-- Judul Pekerjaan (Otomatis terisi dari Kegiatan) -->
-            <div class="form-group" style="margin-top:16px;">
-              <label class="form-label" for="input-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
-              <input type="text" class="form-control" id="input-judul" name="judul_pekerjaan" required
-                     placeholder="OTOMATIS DARI URAIAN KEGIATAN DI ATAS"
-                     style="text-transform:uppercase; font-weight:600;">
-              <div style="font-size:.78rem; color:var(--gray-500); margin-top:4px;">Akan otomatis terisi dari uraian tugas kegiatan yang dipilih, tetapi dapat Anda edit jika perlu.</div>
-            </div>
-
-            <!-- Buku Pedoman -->
-            <div class="form-group" style="margin-top:12px;">
-              <label class="form-label" for="input-buku-pedoman">Buku Pedoman <span class="required">*</span></label>
-              <input type="text" class="form-control" id="input-buku-pedoman"
-                     name="buku_pedoman" placeholder="Buku Pedoman Pewawancara REGSOSEK 2026" required>
-              <div style="font-size:.78rem; color:var(--gray-500); margin-top:4px;">Akan otomatis terisi dari uraian tugas kegiatan yang dipilih, tetapi dapat Anda edit jika perlu.</div>
-            </div>
-
-            <hr class="sec-divider">
-            <div class="sec-label">🏛️ Data Pejabat Terkait</div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
-                <select class="form-control" id="sel-ppk" name="ppk" required>
-                  <option value="">-- Pilih PPK --</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="sel-ketua-tim">Ketua Tim / Supervisor Madya (SM) <span class="required">*</span></label>
-                <select class="form-control" id="sel-ketua-tim" name="ketua_tim" required>
-                  <option value="">-- Pilih Ketua Tim/SM --</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group" id="grp-pml">
-              <label class="form-label" for="sel-pml">PML (Pengawas Lapangan) <span class="required">*</span></label>
-              <select class="form-control" id="sel-pml" name="pml">
-                <option value="">-- Pilih PML --</option>
-              </select>
-            </div>
-
-            <div class="form-row" style="margin-top:12px;">
-              <div class="form-group">
-                <label class="form-label" for="input-nomor-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
-                <input type="text" class="form-control" id="input-nomor-kepka"
-                       name="nomor_kepka" placeholder="001/BPS-1172/I/2026" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="input-tanggal-kepka">Tanggal SK Kepala <span class="required">*</span></label>
-                <input type="date" class="form-control" id="input-tanggal-kepka" name="tanggal_kepka" required>
-              </div>
-            </div>
-
-            <hr class="sec-divider">
-            <div class="sec-label">📋 Nomor &amp; Tanggal BAST</div>
-
-            <!-- Group BAST PPL (Opsional / Tidak Wajib Isi) -->
-            <div id="grp-bast-ppl">
+            <div class="form-card-body">
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-ppl-pml">No. BAST PPL → PML <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
-                  <input type="text" class="form-control" id="input-no-bast-ppl-pml"
-                         name="no_bast_ppl_pml" placeholder="Nomor 001 Tahun 2026">
+                  <label class="form-label" for="spk-no-spk">Nomor SPK <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="spk-no-spk"
+                         name="no_spk" placeholder="Nomor xx Tahun xxxx" required>
+                  <div class="format-hint">Contoh: Nomor 1 Tahun 2026</div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-ppl-pml">Tanggal BAST PPL-PML <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
-                  <input type="date" class="form-control" id="input-tgl-bast-ppl-pml" name="tanggal_bast_ppl_pml">
+                  <label class="form-label" for="spk-tgl-spk">Tanggal SPK <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="spk-tgl-spk"
+                         name="tanggal_spk" required>
+                  <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="spk-tgl-display">Pilih tanggal → terbilang otomatis</div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- 3. Data Pejabat -->
+          <div class="form-card">
+            <div class="form-card-header fc-blue">
+              <span>🏛️ 3. Data Pejabat Terkait</span>
+              <span class="step-badge">Langkah 3 / 3</span>
+            </div>
+            <div class="form-card-body">
+              <div class="info-box">
+                <span class="info-box-icon">💡</span>
+                <div>Nomor Kepka & Tanggal Kepka <strong>otomatis dari mapping KATIM</strong>. Kamu masih bisa mengubahnya jika perlu.</div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="spk-nomor-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="spk-nomor-kepka"
+                         name="nomor_kepka" placeholder="Nomor xx Tahun xxxx" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spk-tgl-kepka">Tanggal SK Kepala <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="spk-tgl-kepka"
+                         name="tanggal_kepka" required>
+                </div>
+              </div>
+
               <div class="form-row" style="margin-top:12px;">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-ppl-sm">No. BAST PPL → SM <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
-                  <input type="text" class="form-control" id="input-no-bast-ppl-sm"
-                         name="no_bast_ppl_sm" placeholder="Nomor 002 Tahun 2026">
+                  <label class="form-label" for="spk-sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
+                  <select class="form-control" id="spk-sel-ppk" name="ppk" required>
+                    <option value="">-- Pilih PPK --</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-ppl-sm">Tanggal BAST PPL-SM <span style="font-size:0.75rem; color:var(--gray-400); font-weight:normal;">(Opsional)</span></label>
-                  <input type="date" class="form-control" id="input-tgl-bast-ppl-sm" name="tanggal_bast_ppl_sm">
+                  <label class="form-label" for="spk-sel-ketua">Ketua Tim / Supervisor Madya (SM) <span class="required">*</span></label>
+                  <select class="form-control" id="spk-sel-ketua" name="ketua_tim" required>
+                    <option value="">-- Pilih Ketua Tim/SM --</option>
+                  </select>
                 </div>
               </div>
-            </div>
 
-            <!-- Group BAST PML -->
-            <div id="grp-bast-pml">
+              <div class="form-group" id="spk-grp-pml" style="margin-top:12px;">
+                <label class="form-label" for="spk-sel-pml">PML (Pengawas Lapangan)</label>
+                <select class="form-control" id="spk-sel-pml" name="pml">
+                  <option value="">-- Pilih PML (jika ada) --</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-top:12px;">
+                <label class="form-label" for="spk-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
+                <input type="text" class="form-control" id="spk-judul" name="judul_pekerjaan"
+                       placeholder="Otomatis dari kegiatan, bisa diedit"
+                       style="text-transform:uppercase; font-weight:600;" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="submit-bar">
+            <div>
+              <div style="font-weight:600; color:var(--gray-700); margin-bottom:3px;">Simpan SPK?</div>
+              <div class="note">Setelah disimpan, SPK akan menunggu verifikasi dari PPK sebelum BAST bisa dibuat.</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-xl" id="btn-simpan-spk">
+              💾 Simpan SPK →
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════
+           FORM BAST PETUGAS
+           ═══════════════════════════════════════════════════════ -->
+      <div id="form-bast" class="form-body">
+        <form id="fbast" method="POST" action="javascript:void(0);" novalidate>
+
+          <!-- 1. Pilih Petugas (hanya yang SPK-nya disetujui) -->
+          <div class="form-card">
+            <div class="form-card-header fc-green">
+              <span>👤 1. Pilih Petugas (SPK sudah disetujui PPK)</span>
+              <span class="step-badge">Langkah 1 / 3</span>
+            </div>
+            <div class="form-card-body">
+              <div class="info-box" style="background:#f0fdf4; border-color:#bbf7d0; color:#166534;">
+                <span class="info-box-icon">✅</span>
+                <div>Daftar petugas di bawah hanya menampilkan yang <strong>SPK-nya sudah disetujui PPK</strong>. Jika petugas yang dimaksud tidak muncul, pastikan SPK sudah disetujui terlebih dahulu.</div>
+              </div>
+
+              <div class="mitra-search-wrap" id="bast-search-wrap">
+                <div class="search-input-wrap">
+                  <span class="ico">🔍</span>
+                  <input type="text" id="bast-search-petugas" class="form-control"
+                         placeholder="Cari nama petugas yang sudah punya SPK disetujui..." autocomplete="off">
+                  <div id="bast-live-results" class="live-search-results"></div>
+                </div>
+              </div>
+
+              <div id="bast-selected-card" class="selected-petugas-card" style="display:none; border-color:#bbf7d0; background:#f0fdf4;">
+                <div class="selected-petugas-info">
+                  <span style="font-size:1.2rem;">✅</span>
+                  <div>
+                    <div class="name" id="bast-selected-nama" style="color:#166534;">—</div>
+                    <div class="meta" id="bast-selected-meta">—</div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="clearBastPetugas()">🔄 Ganti</button>
+              </div>
+
+              <input type="hidden" id="bast-petugas-id">
+              <input type="hidden" id="bast-petugas-nama">
+              <input type="hidden" id="bast-petugas-tipe">
+              <input type="hidden" id="bast-spk-id">
+            </div>
+          </div>
+
+          <!-- 2. Pilih Kegiatan yang Mau Dibuatkan BAST -->
+          <div class="form-card">
+            <div class="form-card-header fc-green">
+              <span>📋 2. Pilih Kegiatan & Peran</span>
+              <span class="step-badge">Langkah 2 / 3</span>
+            </div>
+            <div class="form-card-body">
+              <div class="info-box" style="background:#f0fdf4; border-color:#bbf7d0; color:#166534;">
+                <span class="info-box-icon">💡</span>
+                <div>Pilih <strong>satu kegiatan</strong> yang mau dibuatkan BAST-nya. Satu record BAST = satu petugas + satu kegiatan. Untuk kegiatan lain, buat BAST terpisah.</div>
+              </div>
+              <div id="bast-keg-selector" class="bast-keg-selector">
+                <div class="empty-mapping-notice">
+                  Pilih petugas terlebih dahulu untuk melihat daftar kegiatannya.
+                </div>
+              </div>
+
+              <input type="hidden" id="bast-selected-keg-id">
+              <input type="hidden" id="bast-selected-keg-nama">
+              <input type="hidden" id="bast-selected-peran">
+            </div>
+          </div>
+
+          <!-- 3. Nomor & Tanggal BAST -->
+          <div class="form-card">
+            <div class="form-card-header fc-green">
+              <span>📅 3. Nomor & Tanggal BAST</span>
+              <span class="step-badge">Langkah 3 / 3</span>
+            </div>
+            <div class="form-card-body">
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-pml-sm">No. BAST PML → SM <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="input-no-bast-pml-sm"
-                         name="no_bast_pml_sm" placeholder="Nomor 001 Tahun 2026">
+                  <label class="form-label" for="bast-no">Nomor BAST <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="bast-no"
+                         name="no_bast" placeholder="Nomor xx Tahun xxxx" required>
+                  <div class="format-hint">Contoh: Nomor 1 Tahun 2026</div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-pml-sm">Tanggal BAST PML-SM <span class="required">*</span></label>
-                  <input type="date" class="form-control" id="input-tgl-bast-pml-sm" name="tanggal_bast_pml_sm">
+                  <label class="form-label" for="bast-tgl">Tanggal BAST <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="bast-tgl"
+                         name="tanggal_bast" required>
+                  <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="bast-tgl-display">Pilih tanggal → terbilang otomatis</div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Group BAST SM-PPK -->
-            <div id="grp-bast-sm-ppk">
+          <div class="submit-bar" style="--brand-primary:#059669;">
+            <div>
+              <div style="font-weight:600; color:var(--gray-700); margin-bottom:3px;">Simpan BAST?</div>
+              <div class="note">BAST ini tidak perlu persetujuan PPK dan langsung bisa diekspor ke Word.</div>
+            </div>
+            <button type="submit" class="btn btn-success btn-xl" id="btn-simpan-bast"
+                    style="background:#059669; border-color:#059669;">
+              💾 Simpan BAST →
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════
+           FORM BAST SM→PPK
+           ═══════════════════════════════════════════════════════ -->
+      <div id="form-bast-sm" class="form-body">
+        <form id="fbastSm" method="POST" action="javascript:void(0);" novalidate>
+
+          <!-- 1. Pilih Bulan & Tahun -->
+          <div class="form-card">
+            <div class="form-card-header fc-purple">
+              <span>📅 1. Periode: Bulan & Tahun</span>
+              <span class="step-badge">Langkah 1 / 3</span>
+            </div>
+            <div class="form-card-body">
+              <div class="info-box" style="background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6;">
+                <span class="info-box-icon">🏛️</span>
+                <div>BAST SM→PPK dibuat <strong>per bulan</strong>. Semua kegiatan yang sudah selesai di bulan tersebut akan dibundel menjadi satu dokumen BAST SM→PPK.</div>
+              </div>
+
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="input-no-bast-sm-ppk">No. BAST SM → PPK <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="input-no-bast-sm-ppk"
-                         name="no_bast_sm_ppk" placeholder="Nomor 001 Tahun 2026">
+                  <label class="form-label" for="sm-sel-bulan">Bulan Pelaksanaan <span class="required">*</span></label>
+                  <select class="form-control" id="sm-sel-bulan" required onchange="loadSmKegiatanPerBulan()">
+                    <option value="">-- Pilih Bulan --</option>
+                    <option>Januari</option><option>Februari</option><option>Maret</option>
+                    <option>April</option><option>Mei</option><option>Juni</option>
+                    <option>Juli</option><option>Agustus</option><option>September</option>
+                    <option>Oktober</option><option>November</option><option>Desember</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="input-tgl-bast-sm-ppk">Tanggal BAST SM-PPK <span class="required">*</span></label>
-                  <input type="date" class="form-control" id="input-tgl-bast-sm-ppk" name="tanggal_bast_sm_ppk">
+                  <label class="form-label" for="sm-input-tahun">Tahun <span class="required">*</span></label>
+                  <input type="number" class="form-control" id="sm-input-tahun"
+                         value="2026" min="2024" max="2030" required onchange="loadSmKegiatanPerBulan()">
                 </div>
               </div>
             </div>
-
           </div>
-        </div>
 
-        <!-- ══ SUBMIT BAR ══ -->
-        <div class="submit-bar">
-          <div>
-            <div style="font-weight:600; color:var(--gray-700); margin-bottom:3px;">Siap menyimpan dokumen?</div>
-            <div class="note">Setelah disimpan, kamu bisa memilih ekspor per template dokumen resmi di preview.</div>
+          <!-- 2. Kegiatan yang Masuk Bulan Ini -->
+          <div class="form-card">
+            <div class="form-card-header fc-purple">
+              <span>📋 2. Daftar Kegiatan Bulan Ini</span>
+              <span class="step-badge">Langkah 2 / 3</span>
+            </div>
+            <div class="form-card-body">
+              <div id="sm-keg-list" class="mapping-kegiatan-list">
+                <div class="empty-mapping-notice">
+                  Pilih bulan dan tahun untuk melihat kegiatan yang tersedia.
+                </div>
+              </div>
+              <div id="sm-honor-box" class="honor-box" style="display:none;">
+                <div>
+                  <div class="hb-label">Total Honor BAST SM→PPK</div>
+                  <div class="hb-amount" id="sm-honor-amount">Rp 0,-</div>
+                </div>
+                <div class="hb-terb" id="sm-honor-terbilang">Nol Rupiah</div>
+              </div>
+            </div>
           </div>
-          <button type="submit" class="btn btn-primary btn-xl" id="btn-generate">
-            💾 Simpan &amp; Lanjut ke Preview →
-          </button>
-        </div>
 
-      </form>
+          <!-- 3. Nomor & Tanggal -->
+          <div class="form-card">
+            <div class="form-card-header fc-purple">
+              <span>📅 3. Nomor, Tanggal & Pejabat</span>
+              <span class="step-badge">Langkah 3 / 3</span>
+            </div>
+            <div class="form-card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="sm-no-bast">Nomor BAST SM→PPK <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="sm-no-bast"
+                         placeholder="Nomor xx Tahun xxxx" required>
+                  <div class="format-hint">Contoh: Nomor 1 Tahun 2026</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="sm-tgl-bast">Tanggal BAST <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="sm-tgl-bast" required>
+                  <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="sm-tgl-display">—</div>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-top:12px;">
+                <div class="form-group">
+                  <label class="form-label" for="sm-sel-ppk">PPK <span class="required">*</span></label>
+                  <select class="form-control" id="sm-sel-ppk" required>
+                    <option value="">-- Pilih PPK --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="sm-sel-ketua">Ketua Tim / SM <span class="required">*</span></label>
+                  <select class="form-control" id="sm-sel-ketua" required>
+                    <option value="">-- Pilih Ketua Tim/SM --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:12px;">
+                <label class="form-label" for="sm-judul">Judul Pekerjaan <span class="required">*</span></label>
+                <input type="text" class="form-control" id="sm-judul"
+                       placeholder="Otomatis dari kegiatan, bisa diedit"
+                       style="text-transform:uppercase; font-weight:600;" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="submit-bar">
+            <div>
+              <div style="font-weight:600; color:var(--gray-700); margin-bottom:3px;">Simpan BAST SM→PPK?</div>
+              <div class="note">Setelah disimpan, BAST SM→PPK akan menunggu verifikasi dari PPK.</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-xl" id="btn-simpan-bast-sm"
+                    style="background:#7c3aed; border-color:#7c3aed;">
+              💾 Simpan BAST SM→PPK →
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div><!-- /page-body -->
   </div><!-- /main-content -->
 </div>
 
 <div id="toast-container"></div>
-<div id="loading-overlay" class="loading-overlay">
-  <div class="spinner"></div>
-</div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.2"></script>
-<script src="js/data.js?v=4.2"></script>
-<script src="js/auth.js?v=4.2"></script>
-<script src="js/utils.js?v=4.2"></script>
-<script src="js/render.js?v=4.2"></script>
-<script src="js/sidebar.js?v=4.2"></script>
-<script src="js/app.js?v=4.2"></script>
+<script src="js/config.js?v=4.3"></script>
+<script src="js/data.js?v=4.3"></script>
+<script src="js/auth.js?v=4.3"></script>
+<script src="js/utils.js?v=4.3"></script>
+<script src="js/render.js?v=4.3"></script>
+<script src="js/sidebar.js?v=4.3"></script>
+<script src="js/app.js?v=4.3"></script>
+
+<script>
+  // ─── State ───────────────────────────────────────────────────
+  let _allMitra    = [];
+  let _allPegawai  = [];
+  let _allKegiatan = [];
+  let _allSpkBast  = [];
+  let _allMapping  = [];
+  let _currentMode = null;
+
+  // SPK state
+  let _spkMappingRows = []; // [{ID_Kegiatan, Uraian_Kegiatan, Peran, harga, ...}]
+
+  // BAST state
+  let _approvedSpkList = []; // SPK yang sudah disetujui PPK
+  let _bastMappingRows = [];
+
+  // ─── Init ────────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", async () => {
+    setLoading(true);
+    try {
+      const [mitra, pegawai, kegiatan, spkBast, mapping] = await Promise.all([
+        getMitra(),
+        getPegawai(),
+        getKegiatan(),
+        getSpkBast(),
+        getMappingPetugas().catch(() => []),
+      ]);
+      _allMitra    = mitra    || [];
+      _allPegawai  = pegawai  || [];
+      _allKegiatan = kegiatan || [];
+      _allSpkBast  = spkBast  || [];
+      _allMapping  = mapping  || [];
+
+      // Filter SPK yang sudah disetujui PPK
+      _approvedSpkList = _allSpkBast.filter(r =>
+        (r.Jenis_Dokumen === "SPK" || !r.Jenis_Dokumen) &&
+        String(r.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui"
+      );
+
+      populatePegawaiDropdowns();
+      setupSearchListeners();
+      setupDateListeners();
+      setupFormSubmit();
+    } catch (err) {
+      showToast("Gagal memuat data: " + err.message, "danger");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+
+    // Cek URL param ?mode=
+    const urlParams = new URLSearchParams(window.location.search);
+    const m = urlParams.get("mode");
+    if (m) selectMode(m);
+
+    // Edit mode
+    const editId = urlParams.get("id");
+    if (editId) loadEditMode(editId);
+  });
+
+  // ─── Mode selector ───────────────────────────────────────────
+  function selectMode(mode) {
+    _currentMode = mode;
+    ["spk", "bast", "bast_sm"].forEach(m => {
+      document.getElementById(`form-${m.replace("_","-")}`)?.classList.remove("visible");
+      document.getElementById(`mc-${m.replace("_","-")}`)?.classList.remove("selected", `selected-${m.replace("_","-")}`);
+    });
+    // Special handling for IDs
+    document.getElementById("form-spk")?.classList.toggle("visible", mode === "spk");
+    document.getElementById("form-bast")?.classList.toggle("visible", mode === "bast");
+    document.getElementById("form-bast-sm")?.classList.toggle("visible", mode === "bast_sm");
+    document.getElementById("mc-spk")?.classList.toggle("selected-spk", mode === "spk");
+    document.getElementById("mc-bast")?.classList.toggle("selected-bast", mode === "bast");
+    document.getElementById("mc-bast-sm")?.classList.toggle("selected-bast-sm", mode === "bast_sm");
+
+    const titles = {
+      spk:     ["Buat SPK",           "Surat Perjanjian Kerja — perlu persetujuan PPK"],
+      bast:    ["Buat BAST Petugas",  "Berita Acara Serah Terima untuk petugas ber-SPK disetujui"],
+      bast_sm: ["Buat BAST SM→PPK",   "Penyerahan hasil pekerjaan SM ke PPK — per bulan"],
+    };
+    const t = titles[mode] || ["Buat Dokumen", ""];
+    const bannerTitle = document.getElementById("banner-title");
+    const bannerDesc  = document.getElementById("banner-desc");
+    const pageTitle   = document.getElementById("page-title");
+    if (bannerTitle) bannerTitle.textContent = t[0];
+    if (bannerDesc)  bannerDesc.textContent  = t[1];
+  }
+
+  // ─── Populate pegawai dropdowns ──────────────────────────────
+  function populatePegawaiDropdowns() {
+    const buildOpts = (arr) => arr.map(p => {
+      const nip  = p.NIP || p.nip || "";
+      const nama = p.Nama_Pegawai || p.Nama || nip;
+      return `<option value="${escapeHtml(nip)}">${escapeHtml(nama)}</option>`;
+    }).join("");
+    const opts = buildOpts(_allPegawai);
+
+    ["spk-sel-ppk","spk-sel-ketua","spk-sel-pml","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = el.innerHTML.split('<option value="">')[0] +
+        `<option value="">-- Pilih --</option>` + opts;
+    });
+  }
+
+  // ─── Search listeners ────────────────────────────────────────
+  function setupSearchListeners() {
+    // SPK search
+    const spkEl = document.getElementById("spk-search-petugas");
+    if (spkEl) {
+      spkEl.addEventListener("input", () => onSearchPetugas("spk"));
+      spkEl.addEventListener("focus", () => onSearchPetugas("spk"));
+    }
+    // BAST search (hanya approved)
+    const bastEl = document.getElementById("bast-search-petugas");
+    if (bastEl) {
+      bastEl.addEventListener("input", () => onSearchPetugas("bast"));
+      bastEl.addEventListener("focus", () => onSearchPetugas("bast"));
+    }
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".mitra-search-wrap")) {
+        document.getElementById("spk-live-results")?.classList.remove("visible");
+        document.getElementById("bast-live-results")?.classList.remove("visible");
+      }
+    });
+  }
+
+  function onSearchPetugas(formPrefix) {
+    const q = (document.getElementById(`${formPrefix}-search-petugas`)?.value || "").toLowerCase().trim();
+    const sumber = formPrefix === "spk"
+      ? (document.querySelector('input[name="spk-sumber"]:checked')?.value || "mitra")
+      : "mitra"; // BAST: semua sumber, kita cari dari approved list
+
+    let results = [];
+    if (formPrefix === "bast") {
+      // Hanya tampilkan yang ada di approved SPK
+      const approvedIds = _approvedSpkList.map(r => r.ID_Mitra);
+      const mitraApproved = _allMitra.filter(m => approvedIds.includes(getMitraId(m)));
+      results = mitraApproved.filter(m => {
+        const nama = getMitraName(m);
+        return !q || nama.toLowerCase().includes(q);
+      }).slice(0, 15);
+    } else {
+      const source = sumber === "mitra" ? _allMitra : _allPegawai;
+      results = source.filter(item => {
+        const nama = sumber === "mitra" ? getMitraName(item) : getPegawaiName(item);
+        const id   = sumber === "mitra" ? getMitraId(item) : getPegawaiNip(item);
+        return !q || nama.toLowerCase().includes(q) || String(id).toLowerCase().includes(q);
+      }).slice(0, 15);
+    }
+
+    const resEl = document.getElementById(`${formPrefix}-live-results`);
+    if (!resEl) return;
+
+    const tipe = formPrefix === "bast" ? "mitra" : sumber;
+    resEl.innerHTML = results.length === 0
+      ? `<div class="live-search-item" style="color:var(--gray-400);">Tidak ada hasil.</div>`
+      : results.map(item => {
+          const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
+          const id   = tipe === "mitra" ? getMitraId(item)   : getPegawaiNip(item);
+          const meta = tipe === "mitra" ? `Mitra · ${item.Asal || "—"}` : `NIP: ${id}`;
+          return `<div class="live-search-item" onclick="selectPetugas('${formPrefix}','${escapeHtml(id)}','${escapeHtml(nama)}','${tipe}')">
+            <div class="item-avatar">${(nama||"?")[0].toUpperCase()}</div>
+            <div>
+              <div class="item-name">${escapeHtml(nama)}</div>
+              <div class="item-meta">${escapeHtml(meta)}</div>
+            </div>
+          </div>`;
+        }).join("");
+
+    resEl.classList.add("visible");
+  }
+
+  function selectPetugas(formPrefix, id, nama, tipe) {
+    document.getElementById(`${formPrefix}-petugas-id`).value   = id;
+    document.getElementById(`${formPrefix}-petugas-nama`).value = nama;
+    if (document.getElementById(`${formPrefix}-petugas-tipe`)) {
+      document.getElementById(`${formPrefix}-petugas-tipe`).value = tipe;
+    }
+    document.getElementById(`${formPrefix}-search-petugas`).value = nama;
+    document.getElementById(`${formPrefix}-live-results`)?.classList.remove("visible");
+
+    const card = document.getElementById(`${formPrefix}-selected-card`);
+    if (card) card.style.display = "flex";
+    const nm = document.getElementById(`${formPrefix}-selected-nama`);
+    const mt = document.getElementById(`${formPrefix}-selected-meta`);
+    if (nm) nm.textContent = nama;
+    if (mt) mt.textContent = tipe === "mitra" ? "Mitra Lapangan" : "Pegawai BPS";
+
+    if (formPrefix === "spk") loadSpkMappingKegiatan(id, tipe);
+    if (formPrefix === "bast") loadBastKegiatanFromMapping(id);
+  }
+
+  function clearSpkPetugas() {
+    ["spk-petugas-id","spk-petugas-nama","spk-petugas-tipe"].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = "";
+    });
+    document.getElementById("spk-search-petugas").value = "";
+    document.getElementById("spk-selected-card").style.display = "none";
+    document.getElementById("spk-mapping-section").style.display = "none";
+    _spkMappingRows = [];
+  }
+
+  function clearBastPetugas() {
+    ["bast-petugas-id","bast-petugas-nama","bast-petugas-tipe","bast-spk-id"].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = "";
+    });
+    document.getElementById("bast-search-petugas").value = "";
+    document.getElementById("bast-selected-card").style.display = "none";
+    document.getElementById("bast-keg-selector").innerHTML = `<div class="empty-mapping-notice">Pilih petugas terlebih dahulu.</div>`;
+    _bastMappingRows = [];
+  }
+
+  function onSpkSumberChange() {
+    clearSpkPetugas();
+  }
+
+  // ─── Load kegiatan dari mapping KATIM (SPK) ──────────────────
+  function loadSpkMappingKegiatan(petugasId, tipe) {
+    const mappingItems = _allMapping.filter(m =>
+      String(m.ID_Mitra_atau_NIP) === String(petugasId)
+    );
+
+    const section = document.getElementById("spk-mapping-section");
+    const listEl  = document.getElementById("spk-mapping-list");
+
+    if (mappingItems.length === 0) {
+      section.style.display = "block";
+      listEl.innerHTML = `<div class="empty-mapping-notice">
+        ⚠️ Petugas ini belum punya mapping dari KATIM. Hubungi Ketua Tim untuk menambahkan penugasan terlebih dahulu.
+      </div>`;
+      return;
+    }
+
+    _spkMappingRows = mappingItems;
+    section.style.display = "block";
+
+    const formatTgl = str => {
+      if (!str) return "—";
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
+    };
+
+    let totalHonor = 0;
+    listEl.innerHTML = mappingItems.map(m => {
+      const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+      const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
+      totalHonor += harga;
+      return `<div class="mapping-keg-item">
+        <span class="mki-badge mki-${m.Peran || 'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
+        <span class="mki-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</span>
+        <span class="mki-meta">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+      </div>`;
+    }).join("");
+
+    document.getElementById("spk-honor-amount").textContent = `Rp ${formatRupiah(totalHonor)},-`;
+    document.getElementById("spk-honor-terbilang").textContent = terbilang(totalHonor) + " Rupiah";
+
+    // Auto-fill Kepka & Judul
+    const firstMapping = mappingItems[0];
+    if (firstMapping) {
+      const kepkaEl = document.getElementById("spk-nomor-kepka");
+      const tglKepEl = document.getElementById("spk-tgl-kepka");
+      const judulEl = document.getElementById("spk-judul");
+      if (kepkaEl && !kepkaEl.value) kepkaEl.value = firstMapping.Nomor_Kepka || "";
+      if (tglKepEl && !tglKepEl.value && firstMapping.Tanggal_Kepka) {
+        tglKepEl.value = firstMapping.Tanggal_Kepka.includes("T")
+          ? firstMapping.Tanggal_Kepka.split("T")[0]
+          : firstMapping.Tanggal_Kepka;
+      }
+      if (judulEl && !judulEl.value) {
+        const uraianList = mappingItems.map(m => m.Uraian_Kegiatan || "").filter(Boolean);
+        judulEl.value = uraianList.join(", ").toUpperCase().substring(0, 200);
+      }
+    }
+  }
+
+  // ─── Load kegiatan BAST (hanya yang SPK sudah disetujui) ──────
+  function loadBastKegiatanFromMapping(petugasId) {
+    // Cari SPK yang sudah disetujui untuk petugas ini
+    const approvedSpk = _approvedSpkList.find(r => String(r.ID_Mitra) === String(petugasId));
+    if (approvedSpk) {
+      document.getElementById("bast-spk-id").value = approvedSpk.ID_Dokumen || "";
+    }
+
+    const mappingItems = _allMapping.filter(m =>
+      String(m.ID_Mitra_atau_NIP) === String(petugasId)
+    );
+
+    _bastMappingRows = mappingItems;
+    const container = document.getElementById("bast-keg-selector");
+
+    if (mappingItems.length === 0) {
+      container.innerHTML = `<div class="empty-mapping-notice">
+        Tidak ada kegiatan yang ter-mapping untuk petugas ini. Hubungi KATIM.
+      </div>`;
+      return;
+    }
+
+    const formatTgl = str => {
+      if (!str) return "—";
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
+    };
+
+    container.innerHTML = mappingItems.map((m, i) => `
+      <div class="bast-keg-option" id="bko-${i}" onclick="selectBastKegiatan(${i})">
+        <div class="bko-check" id="bkc-${i}">✓</div>
+        <div class="bko-info">
+          <div class="bko-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</div>
+          <div class="bko-meta">
+            <span class="mki-badge mki-${m.Peran||'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
+            📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function selectBastKegiatan(idx) {
+    // Deselect all
+    document.querySelectorAll(".bast-keg-option").forEach(el => el.classList.remove("selected"));
+    document.getElementById(`bko-${idx}`)?.classList.add("selected");
+
+    const m = _bastMappingRows[idx];
+    if (!m) return;
+    document.getElementById("bast-selected-keg-id").value   = m.ID_Kegiatan || "";
+    document.getElementById("bast-selected-keg-nama").value = m.Uraian_Kegiatan || "";
+    document.getElementById("bast-selected-peran").value    = m.Peran || "ppl";
+  }
+
+  // ─── Date listeners ──────────────────────────────────────────
+  function setupDateListeners() {
+    // SPK Tanggal
+    document.getElementById("spk-tgl-spk")?.addEventListener("change", function() {
+      const el = document.getElementById("spk-tgl-display");
+      if (el && this.value) {
+        const t = tanggalTerbilang(this.value);
+        el.textContent = `${t.hari}, ${t.tanggalFormat}`;
+      }
+    });
+    // BAST Tanggal
+    document.getElementById("bast-tgl")?.addEventListener("change", function() {
+      const el = document.getElementById("bast-tgl-display");
+      if (el && this.value) {
+        const t = tanggalTerbilang(this.value);
+        el.textContent = `${t.hari}, ${t.tanggalFormat}`;
+      }
+    });
+    // SM→PPK Tanggal
+    document.getElementById("sm-tgl-bast")?.addEventListener("change", function() {
+      const el = document.getElementById("sm-tgl-display");
+      if (el && this.value) {
+        const t = tanggalTerbilang(this.value);
+        el.textContent = `${t.hari}, ${t.tanggalFormat}`;
+      }
+    });
+  }
+
+  // ─── Load kegiatan SM per bulan ──────────────────────────────
+  function loadSmKegiatanPerBulan() {
+    const bulan = document.getElementById("sm-sel-bulan")?.value;
+    const tahun = document.getElementById("sm-input-tahun")?.value;
+    if (!bulan || !tahun) return;
+
+    const listEl    = document.getElementById("sm-keg-list");
+    const honorBox  = document.getElementById("sm-honor-box");
+    const honorEl   = document.getElementById("sm-honor-amount");
+    const terbilEl  = document.getElementById("sm-honor-terbilang");
+    const judulEl   = document.getElementById("sm-judul");
+
+    // Filter mapping yang periode-nya masuk bulan ini
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const bulanIdx = months.indexOf(bulan);
+
+    const relevantMappings = _allMapping.filter(m => {
+      if (!m.Tanggal_Mulai) return false;
+      const d = new Date(m.Tanggal_Mulai);
+      return !isNaN(d) && d.getMonth() === bulanIdx && d.getFullYear() === parseInt(tahun);
+    });
+
+    if (relevantMappings.length === 0) {
+      listEl.innerHTML = `<div class="empty-mapping-notice">
+        Tidak ada kegiatan yang ter-mapping pada bulan ${bulan} ${tahun}.
+      </div>`;
+      if (honorBox) honorBox.style.display = "none";
+      return;
+    }
+
+    const formatTgl = str => {
+      if (!str) return "—";
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
+    };
+
+    let totalHonor = 0;
+    listEl.innerHTML = relevantMappings.map(m => {
+      const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+      const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
+      totalHonor += harga;
+      return `<div class="mapping-keg-item">
+        <span class="mki-badge mki-${m.Peran||'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
+        <span class="mki-name">${escapeHtml(m.Nama_Petugas||"—")} — ${escapeHtml(m.Uraian_Kegiatan||"—")}</span>
+        <span class="mki-meta">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+      </div>`;
+    }).join("");
+
+    if (honorBox) honorBox.style.display = "flex";
+    if (honorEl)  honorEl.textContent  = `Rp ${formatRupiah(totalHonor)},-`;
+    if (terbilEl) terbilEl.textContent = terbilang(totalHonor) + " Rupiah";
+
+    // Auto-fill judul
+    const uraianList = [...new Set(relevantMappings.map(m => m.Uraian_Kegiatan||"").filter(Boolean))];
+    if (judulEl && !judulEl.value) {
+      judulEl.value = uraianList.slice(0,3).join(", ").toUpperCase();
+    }
+  }
+
+  // ─── Form submit handlers ────────────────────────────────────
+  function setupFormSubmit() {
+    document.getElementById("fspk")?.addEventListener("submit", handleSpkSubmit);
+    document.getElementById("fbast")?.addEventListener("submit", handleBastSubmit);
+    document.getElementById("fbastSm")?.addEventListener("submit", handleBastSmSubmit);
+  }
+
+  async function handleSpkSubmit(e) {
+    e.preventDefault();
+    const petugasId   = document.getElementById("spk-petugas-id")?.value;
+    const petugasNama = document.getElementById("spk-petugas-nama")?.value;
+    const petugasTipe = document.getElementById("spk-petugas-tipe")?.value;
+    const noSpk       = document.getElementById("spk-no-spk")?.value.trim();
+    const tglSpk      = document.getElementById("spk-tgl-spk")?.value;
+    const noKepka     = document.getElementById("spk-nomor-kepka")?.value.trim();
+    const tglKepka    = document.getElementById("spk-tgl-kepka")?.value;
+    const ppk         = document.getElementById("spk-sel-ppk")?.value;
+    const ketua       = document.getElementById("spk-sel-ketua")?.value;
+    const pml         = document.getElementById("spk-sel-pml")?.value;
+    const judul       = document.getElementById("spk-judul")?.value.trim();
+
+    if (!petugasId)  { showToast("Pilih petugas terlebih dahulu!", "warning"); return; }
+    if (_spkMappingRows.length === 0) { showToast("Petugas belum punya mapping dari KATIM!", "warning"); return; }
+    if (!noSpk)   { showToast("Isi Nomor SPK!", "warning"); return; }
+    if (!tglSpk)  { showToast("Isi Tanggal SPK!", "warning"); return; }
+    if (!noKepka) { showToast("Isi Nomor Kepka!", "warning"); return; }
+    if (!tglKepka){ showToast("Isi Tanggal Kepka!", "warning"); return; }
+    if (!ppk)     { showToast("Pilih PPK!", "warning"); return; }
+    if (!ketua)   { showToast("Pilih Ketua Tim/SM!", "warning"); return; }
+    if (!judul)   { showToast("Isi Judul Pekerjaan!", "warning"); return; }
+
+    // Compute dates from mapping
+    const tglList   = _spkMappingRows.filter(m => m.Tanggal_Mulai).map(m => new Date(m.Tanggal_Mulai));
+    const tglSList  = _spkMappingRows.filter(m => m.Tanggal_Selesai).map(m => new Date(m.Tanggal_Selesai));
+    const batasList = _spkMappingRows.filter(m => m.Batas_Terlambat).map(m => new Date(m.Batas_Terlambat));
+    const tglMulai   = tglList.length  ? new Date(Math.min(...tglList)).toISOString().split("T")[0]  : "";
+    const tglSelesai = tglSList.length ? new Date(Math.max(...tglSList)).toISOString().split("T")[0] : "";
+    const batasTerlambat = batasList.length ? new Date(Math.max(...batasList)).toISOString().split("T")[0] : "";
+
+    // Ambil info tgl SPK
+    const tglObj = tanggalTerbilang(tglSpk);
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const bulan  = months[new Date(tglSpk).getMonth()] || "";
+    const tahun  = new Date(tglSpk).getFullYear();
+
+    // Hitung total honor
+    let totalHonor = 0;
+    _spkMappingRows.forEach(m => {
+      const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+      if (keg) totalHonor += Number(keg.Harga_Satuan || 0);
+    });
+
+    const docId = generateId("SPK");
+    const record = {
+      ID_Dokumen:              docId,
+      Jenis_Dokumen:           "SPK",
+      Tahun:                   tahun,
+      Bulan:                   bulan,
+      Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
+      ID_Mitra:                petugasId,
+      PML:                     pml || "",
+      PPK:                     ppk,
+      Ketua_Tim:               ketua,
+      "Kepala/PLH":            "",
+      Nomor_Kepka:             noKepka,
+      Tanggal_Kepka:           tglKepka,
+      No_SPK:                  noSpk,
+      Nomor_SPK:               noSpk,
+      "Tanggal SPK":           tglSpk,
+      Tanggal_SPK:             tglSpk,
+      Judul_Pekerjaan_Dokumen: judul,
+      Tanggal_Mulai:           tglMulai,
+      Tanggal_Selesai:         tglSelesai,
+      Batas_Penyerahan:        batasTerlambat,
+      Batas_Penyerahan_Telat:  batasTerlambat,
+      Total_Honor:             totalHonor,
+      Terbilang:               terbilang(totalHonor) + " Rupiah",
+      Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
+      Status_Generate_SPK:     "Belum",
+      Tanggal_Verifikasi_PPK:  "",
+      Catatan_Verifikasi_PPK:  "",
+      PPK_Verifikator:         "",
+    };
+
+    setLoading(true);
+    try {
+      await appendToSheet("spkBast", record);
+
+      // Simpan detail kegiatan
+      for (let i = 0; i < _spkMappingRows.length; i++) {
+        const m   = _spkMappingRows[i];
+        const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+        const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
+        const detail = {
+          ID_Detail:      generateId("DET"),
+          ID_Dokumen:     docId,
+          No_Urut:        i + 1,
+          ID_Kegiatan:    m.ID_Kegiatan,
+          Uraian_Tugas:   m.Uraian_Kegiatan || "",
+          Buku_Pedoman:   keg?.Buku_Pedoman || "",
+          Jangka_Waktu:   `${m.Tanggal_Mulai || ""} s/d ${m.Tanggal_Selesai || ""}`,
+          Volume:         1,
+          Satuan:         keg?.Satuan || "Dokumen",
+          Harga_Satuan:   harga,
+          Nilai_Perjanjian: harga,
+          Beban_Anggaran: keg?.Beban_Anggaran || "",
+        };
+        await appendToSheet("detailPekerjaan", detail);
+      }
+
+      clearCache("spkBast");
+      clearCache("detailPekerjaan");
+      showToast(`✅ SPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
+      setTimeout(() => window.location.href = "dokumen.html", 1800);
+    } catch (err) {
+      showToast("Gagal simpan SPK: " + err.message, "danger");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleBastSubmit(e) {
+    e.preventDefault();
+    const petugasId   = document.getElementById("bast-petugas-id")?.value;
+    const petugasNama = document.getElementById("bast-petugas-nama")?.value;
+    const petugasTipe = document.getElementById("bast-petugas-tipe")?.value || "mitra";
+    const spkId       = document.getElementById("bast-spk-id")?.value;
+    const kegId       = document.getElementById("bast-selected-keg-id")?.value;
+    const kegNama     = document.getElementById("bast-selected-keg-nama")?.value;
+    const peran       = document.getElementById("bast-selected-peran")?.value || "ppl";
+    const noBast      = document.getElementById("bast-no")?.value.trim();
+    const tglBast     = document.getElementById("bast-tgl")?.value;
+
+    if (!petugasId) { showToast("Pilih petugas!", "warning"); return; }
+    if (!kegId)     { showToast("Pilih kegiatan yang mau dibuatkan BAST!", "warning"); return; }
+    if (!noBast)    { showToast("Isi Nomor BAST!", "warning"); return; }
+    if (!tglBast)   { showToast("Isi Tanggal BAST!", "warning"); return; }
+
+    // Cari mapping untuk kegiatan ini
+    const mappingItem = _bastMappingRows.find(m => m.ID_Kegiatan === kegId && m.Peran === peran);
+
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const bulan  = months[new Date(tglBast).getMonth()] || "";
+    const tahun  = new Date(tglBast).getFullYear();
+
+    const keg = _allKegiatan.find(k => getKegiatanId(k) === kegId);
+    const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
+
+    // Tentukan kolom No/Tanggal BAST berdasarkan peran
+    let noBastPplPml = "", tglBastPplPml = "";
+    let noBastPplSm  = "", tglBastPplSm  = "";
+    let noBastPmlSm  = "", tglBastPmlSm  = "";
+    if (peran === "ppl") {
+      noBastPplPml = noBast; tglBastPplPml = tglBast;
+      noBastPplSm  = noBast; tglBastPplSm  = tglBast;
+    } else {
+      noBastPmlSm  = noBast; tglBastPmlSm  = tglBast;
+    }
+
+    // Cari Kepka dari SPK induk
+    const spkRecord = _allSpkBast.find(r => r.ID_Dokumen === spkId) || {};
+
+    const docId = generateId("BAST");
+    const record = {
+      ID_Dokumen:              docId,
+      Jenis_Dokumen:           "BAST",
+      ID_SPK_Induk:            spkId || "",
+      Tahun:                   tahun,
+      Bulan:                   bulan,
+      Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
+      ID_Mitra:                petugasId,
+      PML:                     spkRecord.PML || "",
+      PPK:                     spkRecord.PPK || "",
+      Ketua_Tim:               spkRecord.Ketua_Tim || "",
+      "Kepala/PLH":            spkRecord["Kepala/PLH"] || "",
+      Nomor_Kepka:             spkRecord.Nomor_Kepka || "",
+      Tanggal_Kepka:           spkRecord.Tanggal_Kepka || "",
+      No_BAST_PPL_PML:         noBastPplPml,
+      Tanggal_BAST_PPL_PML:    tglBastPplPml,
+      No_BAST_PPL_SM:          noBastPplSm,
+      Tanggal_BAST_PPL_SM:     tglBastPplSm,
+      No_BAST_PML_SM:          noBastPmlSm,
+      Tanggal_BAST_PML_SM:     tglBastPmlSm,
+      Judul_Pekerjaan_Dokumen: kegNama || "",
+      Tanggal_Mulai:           mappingItem?.Tanggal_Mulai || "",
+      Tanggal_Selesai:         mappingItem?.Tanggal_Selesai || "",
+      Batas_Penyerahan:        mappingItem?.Batas_Terlambat || "",
+      Total_Honor:             harga,
+      Terbilang:               terbilang(harga) + " Rupiah",
+      Status_Generate_SPK:     "Belum",
+      Status_Verifikasi_PPK:   "Tidak_Perlu",
+    };
+
+    setLoading(true);
+    try {
+      await appendToSheet("spkBast", record);
+      clearCache("spkBast");
+      showToast(`✅ BAST berhasil disimpan!`, "success", 4000);
+      setTimeout(() => window.location.href = "dokumen.html", 1500);
+    } catch (err) {
+      showToast("Gagal simpan BAST: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleBastSmSubmit(e) {
+    e.preventDefault();
+    const bulan  = document.getElementById("sm-sel-bulan")?.value;
+    const tahun  = document.getElementById("sm-input-tahun")?.value;
+    const noBast = document.getElementById("sm-no-bast")?.value.trim();
+    const tglBast = document.getElementById("sm-tgl-bast")?.value;
+    const ppk    = document.getElementById("sm-sel-ppk")?.value;
+    const ketua  = document.getElementById("sm-sel-ketua")?.value;
+    const judul  = document.getElementById("sm-judul")?.value.trim();
+
+    if (!bulan)   { showToast("Pilih Bulan!", "warning"); return; }
+    if (!tahun)   { showToast("Isi Tahun!", "warning"); return; }
+    if (!noBast)  { showToast("Isi Nomor BAST SM→PPK!", "warning"); return; }
+    if (!tglBast) { showToast("Isi Tanggal BAST!", "warning"); return; }
+    if (!ppk)     { showToast("Pilih PPK!", "warning"); return; }
+    if (!ketua)   { showToast("Pilih Ketua Tim/SM!", "warning"); return; }
+
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const bulanIdx = months.indexOf(bulan);
+    const relevantMappings = _allMapping.filter(m => {
+      if (!m.Tanggal_Mulai) return false;
+      const d = new Date(m.Tanggal_Mulai);
+      return !isNaN(d) && d.getMonth() === bulanIdx && d.getFullYear() === parseInt(tahun);
+    });
+
+    let totalHonor = 0;
+    relevantMappings.forEach(m => {
+      const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+      if (keg) totalHonor += Number(keg.Harga_Satuan || 0);
+    });
+
+    const docId = generateId("BSM");
+    const record = {
+      ID_BAST_SM_PPK:          docId,
+      Tahun:                   parseInt(tahun),
+      Bulan:                   bulan,
+      Uraian_Tugas:            judul,
+      PPK:                     ppk,
+      Ketua_Tim:               ketua,
+      "Kepala/Plh":            "",
+      No_BAST_SM_PPK:          noBast,
+      Judul_Pekerjaan_Dokumen: judul,
+      Total_Honor:             totalHonor,
+      Terbilang:               terbilang(totalHonor) + " Rupiah",
+      Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
+      Status_Generate_BAST_SM_PPK: "Belum",
+      Tanggal_Verifikasi_PPK:  "",
+      Catatan_Verifikasi_PPK:  "",
+      PPK_Verifikator:         "",
+    };
+
+    setLoading(true);
+    try {
+      await appendToSheet("bastSmPpk", record);
+      clearCache("bastSmPpk");
+      showToast(`✅ BAST SM→PPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
+      setTimeout(() => window.location.href = "dokumen.html", 1800);
+    } catch (err) {
+      showToast("Gagal simpan BAST SM→PPK: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function generateId(prefix) {
+    return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2,4).toUpperCase()}`;
+  }
+
+  // ─── Edit mode (dari dokumen.html) ───────────────────────────
+  async function loadEditMode(docId) {
+    // Cari di spkBast
+    const allDocs = await getSpkBast().catch(() => []);
+    const rec = allDocs.find(r => String(r.ID_Dokumen) === String(docId));
+    if (!rec) return;
+
+    const jenis = String(rec.Jenis_Dokumen || "SPK");
+    selectMode(jenis === "BAST" ? "bast" : jenis === "BAST_SM" ? "bast_sm" : "spk");
+    // TODO: populate fields from rec — keep for minimal initial version
+  }
+</script>
 </body>
 </html>
-

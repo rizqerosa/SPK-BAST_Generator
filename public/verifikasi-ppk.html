@@ -155,10 +155,22 @@
         </div>
       </div>
 
+      <!-- Tab Switcher -->
+      <div style="display:flex; gap:0; background:var(--gray-100); border-radius:var(--radius-md); padding:4px; margin-bottom:20px; width:fit-content;">
+        <button class="btn" id="tab-spk" onclick="switchVerifTab('spk')"
+                style="border-radius:calc(var(--radius-md) - 2px); padding:9px 20px; font-size:.85rem; font-weight:700; background:#fff; color:#1d4ed8; box-shadow:0 1px 4px rgba(0,0,0,.12); border:none;">
+          📜 Verifikasi SPK
+        </button>
+        <button class="btn" id="tab-bast-sm" onclick="switchVerifTab('bast_sm')"
+                style="border-radius:calc(var(--radius-md) - 2px); padding:9px 20px; font-size:.85rem; font-weight:700; background:transparent; color:var(--gray-500); border:none;">
+          🏛️ Verifikasi BAST SM→PPK
+        </button>
+      </div>
+
       <!-- Table Card -->
-      <div class="card">
+      <div class="card" id="verif-card-spk">
         <div class="card-header">
-          <h2>📋 Daftar Pengajuan Dokumen</h2>
+          <h2>📋 Daftar Pengajuan SPK</h2>
           <div class="list-controls">
             <!-- Filter status -->
             <div class="filter-bar">
@@ -192,7 +204,49 @@
               <tr>
                 <td colspan="7" class="text-center text-muted" style="padding:48px;">
                   <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
-                  Memuat data dokumen untuk verifikasi...
+                  Memuat data SPK untuk verifikasi...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table Card BAST SM→PPK -->
+      <div class="card" id="verif-card-bast-sm" style="display:none;">
+        <div class="card-header">
+          <h2>🏛️ Daftar Pengajuan BAST SM→PPK</h2>
+          <div class="list-controls">
+            <div class="filter-bar">
+              <button class="btn btn-outline btn-sm active" data-filter-sm="Menunggu_Verifikasi">⏳ Menunggu Verifikasi</button>
+              <button class="btn btn-outline btn-sm" data-filter-sm="Disetujui">🟢 Disetujui</button>
+              <button class="btn btn-outline btn-sm" data-filter-sm="Ditolak">🔴 Ditolak</button>
+              <button class="btn btn-outline btn-sm" data-filter-sm="all">Semua</button>
+            </div>
+            <div class="search-box" style="max-width:220px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-sm-input" class="form-control" placeholder="Cari judul / bulan...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">No</th>
+                <th>Judul Pekerjaan / Bulan</th>
+                <th style="width:110px;">Bulan / Tahun</th>
+                <th style="width:115px;" class="tr">Total Honor</th>
+                <th style="width:150px;">Status Verifikasi</th>
+                <th style="width:160px;" class="tc">Aksi PPK</th>
+              </tr>
+            </thead>
+            <tbody id="verif-sm-tbody">
+              <tr>
+                <td colspan="6" class="text-center text-muted" style="padding:48px;">
+                  <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+                  Memuat data BAST SM→PPK...
                 </td>
               </tr>
             </tbody>
@@ -278,20 +332,45 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.2"></script>
-<script src="js/data.js?v=4.2"></script>
-<script src="js/auth.js?v=4.2"></script>
-<script src="js/utils.js?v=4.2"></script>
-<script src="js/render.js?v=4.2"></script>
-<script src="js/sidebar.js?v=4.2"></script>
-<script src="js/app.js?v=4.2"></script>
+<script src="js/config.js?v=4.3"></script>
+<script src="js/data.js?v=4.3"></script>
+<script src="js/auth.js?v=4.3"></script>
+<script src="js/utils.js?v=4.3"></script>
+<script src="js/render.js?v=4.3"></script>
+<script src="js/sidebar.js?v=4.3"></script>
+<script src="js/app.js?v=4.3"></script>
 <script>
   let _allDocs = [];
+  let _allSmDocs = [];
   let _allMitra = [];
   let _allPegawai = [];
   let _allDetails = [];
   let _activeFilter = "Menunggu_Verifikasi";
+  let _activeSmFilter = "Menunggu_Verifikasi";
   let _selectedDoc = null;
+  let _selectedSmDoc = null;
+  let _currentVerifTab = "spk";
+
+  // ─── Tab switching ─────────────────────────────────────────
+  function switchVerifTab(tab) {
+    _currentVerifTab = tab;
+    const isSpk = tab === "spk";
+    document.getElementById("verif-card-spk").style.display = isSpk ? "" : "none";
+    document.getElementById("verif-card-bast-sm").style.display = isSpk ? "none" : "";
+
+    const tabSpkEl  = document.getElementById("tab-spk");
+    const tabSmEl   = document.getElementById("tab-bast-sm");
+    if (tabSpkEl) {
+      tabSpkEl.style.background = isSpk ? "#fff" : "transparent";
+      tabSpkEl.style.color      = isSpk ? "#1d4ed8" : "var(--gray-500)";
+      tabSpkEl.style.boxShadow  = isSpk ? "0 1px 4px rgba(0,0,0,.12)" : "none";
+    }
+    if (tabSmEl) {
+      tabSmEl.style.background  = isSpk ? "transparent" : "#fff";
+      tabSmEl.style.color       = isSpk ? "var(--gray-500)" : "#7c3aed";
+      tabSmEl.style.boxShadow   = isSpk ? "none" : "0 1px 4px rgba(0,0,0,.12)";
+    }
+  }
 
   function renderVerifBadge(status) {
     const s = String(status || "Menunggu_Verifikasi").toLowerCase();
@@ -339,6 +418,66 @@
           </td>
         </tr>`;
     }).join("");
+  }
+
+  // ─── BAST SM→PPK Table ─────────────────────────────────────
+  function renderSmTable(data) {
+    const tbody = document.getElementById("verif-sm-tbody");
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:48px;">Tidak ada BAST SM→PPK dalam kategori ini</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map((doc, i) => `
+      <tr>
+        <td class="tc text-muted">${i + 1}</td>
+        <td><div style="font-weight:600; font-size:.88rem;">${doc.Judul_Pekerjaan_Dokumen || doc.Uraian_Tugas || "—"}</div></td>
+        <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
+        <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
+        <td>${renderVerifBadge(doc.Status_Verifikasi_PPK)}</td>
+        <td>
+          <div class="action-btns">
+            <button type="button" class="btn btn-primary btn-sm" onclick="openSmVerifModal('${doc.ID_BAST_SM_PPK}')">
+              🔍 Verifikasi
+            </button>
+          </div>
+        </td>
+      </tr>`
+    ).join("");
+  }
+
+  function applySmFilters() {
+    const q = (document.getElementById("search-sm-input")?.value || "").toLowerCase().trim();
+    const data = _allSmDocs.filter(d => {
+      const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      let matchStatus = true;
+      if (_activeSmFilter === "Disetujui")          matchStatus = (vStatus === "disetujui");
+      else if (_activeSmFilter === "Ditolak")        matchStatus = (vStatus === "ditolak");
+      else if (_activeSmFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "menunggu_verifikasi" || vStatus === "" || !d.Status_Verifikasi_PPK);
+      if (!matchStatus) return false;
+      if (!q) return true;
+      const judul = String(d.Judul_Pekerjaan_Dokumen || d.Uraian_Tugas || "").toLowerCase();
+      return judul.includes(q) || String(d.Bulan||"" ).toLowerCase().includes(q);
+    });
+    renderSmTable(data);
+  }
+
+  function openSmVerifModal(smDocId) {
+    _selectedSmDoc = _allSmDocs.find(d => String(d.ID_BAST_SM_PPK) === String(smDocId));
+    if (!_selectedSmDoc) return;
+    // Reuse the same modal but adapt content
+    document.getElementById("vm-title").textContent  = "🏛️ Verifikasi BAST SM→PPK";
+    document.getElementById("vm-desc").textContent   = "Periksa kelengkapan BAST SM→PPK sebelum disetujui.";
+    document.getElementById("vm-id").textContent     = _selectedSmDoc.ID_BAST_SM_PPK || "—";
+    document.getElementById("vm-petugas").textContent = "Supervisor Madya";
+    document.getElementById("vm-no-spk").textContent  = _selectedSmDoc.No_BAST_SM_PPK || "—";
+    document.getElementById("vm-tgl-spk").textContent = _selectedSmDoc.Tanggal_BAST_SM_PPK || "—";
+    document.getElementById("vm-periode").textContent = `${_selectedSmDoc.Bulan || "—"} ${_selectedSmDoc.Tahun || ""}`;
+    document.getElementById("vm-honor").textContent   = `Rp ${formatRupiah(_selectedSmDoc.Total_Honor || 0)},-`;
+    document.getElementById("vm-catatan").value = _selectedSmDoc.Catatan_Verifikasi_PPK || "";
+    document.getElementById("vm-detail-tbody").innerHTML = `<tr><td colspan="5" style="padding:16px; font-size:.84rem; color:var(--gray-500);">${_selectedSmDoc.Judul_Pekerjaan_Dokumen || _selectedSmDoc.Uraian_Tugas || "—"}</td></tr>`;
+    // Override prosesVerifikasi to handle SM
+    window._verifyingSmMode = true;
+    document.getElementById("verif-modal").classList.add("visible");
   }
 
   function applyFilters() {
@@ -406,6 +545,36 @@
   }
 
   async function prosesVerifikasi(statusBaru) {
+    if (window._verifyingSmMode && _selectedSmDoc) {
+      // Verifikasi BAST SM→PPK
+      const catatan = document.getElementById("vm-catatan").value.trim();
+      if (statusBaru === "Ditolak" && !catatan) {
+        showToast("Harap isi alasan penolakan!", "danger"); return;
+      }
+      const currUser = Auth.getUser() || {};
+      const verifikatorInfo = `${currUser.nama || 'PPK'} (NIP. ${currUser.nip || '-'})`;
+      setLoading(true);
+      try {
+        await updateInSheet("bastSmPpk", "ID_BAST_SM_PPK", _selectedSmDoc.ID_BAST_SM_PPK, {
+          Status_Verifikasi_PPK: statusBaru,
+          Catatan_Verifikasi_PPK: catatan,
+          Tanggal_Verifikasi_PPK: new Date().toISOString(),
+          PPK_Verifikator: verifikatorInfo
+        });
+        _selectedSmDoc.Status_Verifikasi_PPK = statusBaru;
+        clearCache("bastSmPpk");
+        showToast(`BAST SM→PPK berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning");
+        closeVerifModal();
+        updateStats();
+        applySmFilters();
+      } catch (err) {
+        showToast("Gagal memperbarui: " + err.message, "danger");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!_selectedDoc) return;
 
     const catatan = document.getElementById("vm-catatan").value.trim();
@@ -448,16 +617,18 @@
   }
 
   function updateStats() {
-    const total = _allDocs.length;
-    const pending = _allDocs.filter(d => {
+    // Count from both SPK and SM→PPK docs
+    const spkOnly = _allDocs.filter(d => d.Jenis_Dokumen === "SPK" || !d.Jenis_Dokumen);
+    const total   = spkOnly.length + _allSmDocs.length;
+    const pending = [...spkOnly, ..._allSmDocs].filter(d => {
       const s = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
       return s === "menunggu_verifikasi" || s === "pending" || s === "" || !d.Status_Verifikasi_PPK;
     }).length;
-    const approved = _allDocs.filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui").length;
-    const rejected = _allDocs.filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "ditolak").length;
+    const approved = [...spkOnly, ..._allSmDocs].filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui").length;
+    const rejected = [...spkOnly, ..._allSmDocs].filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "ditolak").length;
 
-    document.getElementById("stat-total").textContent = total;
-    document.getElementById("stat-pending").textContent = pending;
+    document.getElementById("stat-total").textContent    = total;
+    document.getElementById("stat-pending").textContent  = pending;
     document.getElementById("stat-approved").textContent = approved;
     document.getElementById("stat-rejected").textContent = rejected;
   }
@@ -465,22 +636,28 @@
   document.addEventListener("DOMContentLoaded", async () => {
     setLoading(true);
     try {
-      const [spkBastData, mitraData, pegawaiData, detailData] = await Promise.all([
+      const [spkBastData, mitraData, pegawaiData, detailData, smData] = await Promise.all([
         getSpkBast(),
         getMitra(),
         getPegawai(),
-        getDetailPekerjaan()
+        getDetailPekerjaan(),
+        getBastSmPpk().catch(() => []),
       ]);
 
-      _allDocs    = spkBastData || [];
+      // Filter hanya SPK (bukan BAST petugas) untuk tab verifikasi SPK
+      const allSpkBast = spkBastData || [];
+      _allDocs    = allSpkBast.filter(r => r.Jenis_Dokumen === "SPK" || !r.Jenis_Dokumen);
+      _allSmDocs  = smData     || [];
       _allMitra   = mitraData   || [];
       _allPegawai = pegawaiData || [];
       _allDetails = detailData  || [];
 
       updateStats();
       applyFilters();
+      applySmFilters();
 
       document.getElementById("search-input")?.addEventListener("input", applyFilters);
+      document.getElementById("search-sm-input")?.addEventListener("input", applySmFilters);
 
       document.querySelectorAll("[data-filter]").forEach(btn => {
         btn.addEventListener("click", function() {
@@ -488,6 +665,15 @@
           this.classList.add("active");
           _activeFilter = this.dataset.filter;
           applyFilters();
+        });
+      });
+
+      document.querySelectorAll("[data-filter-sm]").forEach(btn => {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll("[data-filter-sm]").forEach(b => b.classList.remove("active"));
+          this.classList.add("active");
+          _activeSmFilter = this.dataset.filterSm;
+          applySmFilters();
         });
       });
 
