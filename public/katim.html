@@ -780,6 +780,24 @@
   // KATIM.JS — Logika Penugasan Petugas per Kegiatan
   // ============================================================
 
+  // ─── UI Helpers: Loading & Toast ─────────────────────────────
+  function setLoading(visible, text = "Memuat data...") {
+    const overlay = document.getElementById("loading-overlay");
+    const textEl  = document.getElementById("loading-text");
+    if (overlay) overlay.classList.toggle("active", Boolean(visible));
+    if (textEl && text) textEl.textContent = text;
+  }
+
+  function showToast(msg, type = "default", duration = 3500) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), duration);
+  }
+
   // ─── State ───────────────────────────────────────────────────
   let _allMitra    = [];
   let _allPegawai  = [];
@@ -794,11 +812,12 @@
 
   // ─── Init ────────────────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    setLoading(true);
+    setLoading(true, "Memuat data penugasan...");
     try {
       await loadAll();
     } catch (err) {
-      showToast("Gagal memuat data: " + err.message, "danger");
+      console.error("[katim.html] Init loadAll error:", err);
+      showToast("Sebagian data gagal dimuat: " + err.message, "danger");
     } finally {
       setLoading(false);
     }
@@ -846,15 +865,15 @@
 
   async function loadAll() {
     const [mitra, pegawai, kegiatan, mapping] = await Promise.all([
-      getMitra(),
-      getPegawai(),
-      getKegiatan(),
-      getMappingPetugas().catch(() => []),
+      getMitra().catch(err => { console.warn("Gagal getMitra:", err); return []; }),
+      getPegawai().catch(err => { console.warn("Gagal getPegawai:", err); return []; }),
+      getKegiatan().catch(err => { console.warn("Gagal getKegiatan:", err); return []; }),
+      getMappingPetugas().catch(err => { console.warn("Gagal getMappingPetugas:", err); return []; }),
     ]);
-    _allMitra    = mitra    || [];
-    _allPegawai  = pegawai  || [];
-    _allKegiatan = kegiatan || [];
-    _allMapping  = mapping  || [];
+    _allMitra    = Array.isArray(mitra) ? mitra : [];
+    _allPegawai  = Array.isArray(pegawai) ? pegawai : [];
+    _allKegiatan = Array.isArray(kegiatan) ? kegiatan : [];
+    _allMapping  = Array.isArray(mapping) ? mapping : [];
 
     populateKegiatanDropdown();
     renderMappingList();
