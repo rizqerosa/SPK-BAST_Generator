@@ -396,9 +396,15 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="spk-no-spk">Nomor SPK <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="spk-no-spk"
-                         name="no_spk" placeholder="Nomor xx Tahun xxxx" required>
-                  <div class="format-hint">Contoh: Nomor 1 Tahun 2026</div>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" class="form-control" id="spk-no-spk"
+                           name="no_spk" placeholder="Nomor xx Tahun xxxx" required>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('spk', true)"
+                            style="white-space:nowrap; padding:0 14px; font-weight:600;" title="Generate nomor urut berikutnya dari database">
+                      ⚡ Auto
+                    </button>
+                  </div>
+                  <div id="spk-no-status" class="format-hint">Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="spk-tgl-spk">Tanggal SPK <span class="required">*</span></label>
@@ -451,10 +457,13 @@
               </div>
 
               <div class="form-group" id="spk-grp-pml" style="margin-top:12px;">
-                <label class="form-label" for="spk-sel-pml">PML (Pengawas Lapangan)</label>
+                <label class="form-label" for="spk-sel-pml">PML (Pengawas Lapangan — Pegawai / Mitra)</label>
                 <select class="form-control" id="spk-sel-pml" name="pml">
-                  <option value="">-- Pilih PML (jika ada) --</option>
+                  <option value="">-- Pilih PML (Pegawai / Mitra) --</option>
                 </select>
+                <div style="font-size:.74rem; color:var(--gray-500); margin-top:4px;">
+                  💡 PML bisa dari Pegawai BPS atau Mitra Lapangan. Otomatis terisi jika ada mapping PML dari KATIM.
+                </div>
               </div>
 
               <div class="form-group" style="margin-top:12px;">
@@ -556,9 +565,15 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="bast-no">Nomor BAST <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="bast-no"
-                         name="no_bast" placeholder="Nomor xx Tahun xxxx" required>
-                  <div class="format-hint">Contoh: Nomor 1 Tahun 2026</div>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" class="form-control" id="bast-no"
+                           name="no_bast" placeholder="Nomor xxx Tahun xxxx" required>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('bast', true)"
+                            style="white-space:nowrap; padding:0 14px; font-weight:600; color:#059669; border-color:#a7f3d0;" title="Generate nomor urut berikutnya dari database">
+                      ⚡ Auto
+                    </button>
+                  </div>
+                  <div id="bast-no-status" class="format-hint">Format: Nomor xxx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="bast-tgl">Tanggal BAST <span class="required">*</span></label>
@@ -653,9 +668,15 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="sm-no-bast">Nomor BAST SM→PPK <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="sm-no-bast"
-                         placeholder="Nomor xx Tahun xxxx" required>
-                  <div class="format-hint">Contoh: Nomor 1 Tahun 2026</div>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" class="form-control" id="sm-no-bast"
+                           placeholder="Nomor xx Tahun xxxx" required>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('bast_sm', true)"
+                            style="white-space:nowrap; padding:0 14px; font-weight:600; color:#7c3aed; border-color:#ddd6fe;" title="Generate nomor urut berikutnya dari database">
+                      ⚡ Auto
+                    </button>
+                  </div>
+                  <div id="sm-no-status" class="format-hint">Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="sm-tgl-bast">Tanggal BAST <span class="required">*</span></label>
@@ -723,7 +744,10 @@
   let _allKegiatan = [];
   let _allSpkBast  = [];
   let _allMapping  = [];
-  let _currentMode = null;
+  let _allBastSmPpk = [];
+  let _currentMode = "spk";
+  let _editDocId   = null;
+  let _isEditMode  = false;
 
   // SPK state
   let _spkMappingRows = []; // [{ID_Kegiatan, Uraian_Kegiatan, Peran, harga, ...}]
@@ -736,18 +760,20 @@
   document.addEventListener("DOMContentLoaded", async () => {
     setLoading(true);
     try {
-      const [mitra, pegawai, kegiatan, spkBast, mapping] = await Promise.all([
+      const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
         getMitra(),
         getPegawai(),
         getKegiatan(),
         getSpkBast(),
+        getBastSmPpk().catch(() => []),
         getMappingPetugas().catch(() => []),
       ]);
-      _allMitra    = mitra    || [];
-      _allPegawai  = pegawai  || [];
-      _allKegiatan = kegiatan || [];
-      _allSpkBast  = spkBast  || [];
-      _allMapping  = mapping  || [];
+      _allMitra     = mitra     || [];
+      _allPegawai   = pegawai   || [];
+      _allKegiatan  = kegiatan  || [];
+      _allSpkBast   = spkBast   || [];
+      _allBastSmPpk = smPpk     || [];
+      _allMapping   = mapping   || [];
 
       // Filter SPK yang sudah disetujui PPK
       _approvedSpkList = _allSpkBast.filter(r =>
@@ -758,7 +784,11 @@
       populatePegawaiDropdowns();
       setupSearchListeners();
       setupDateListeners();
+      setupDocNumberListeners();
       setupFormSubmit();
+
+      // Initial auto-fill nomor SPK if empty
+      applyAutoDocNumber("spk", false);
     } catch (err) {
       showToast("Gagal memuat data: " + err.message, "danger");
       console.error(err);
@@ -769,11 +799,18 @@
     // Cek URL param ?mode=
     const urlParams = new URLSearchParams(window.location.search);
     const m = urlParams.get("mode");
-    if (m) selectMode(m);
+    if (m) {
+      selectMode(m);
+    } else {
+      selectMode("spk");
+    }
 
     // Edit mode
     const editId = urlParams.get("id");
-    if (editId) loadEditMode(editId);
+    if (editId) {
+      _editDocId = editId;
+      _isEditMode = true;
+    }
   });
 
   // ─── Mode selector ───────────────────────────────────────────
@@ -799,12 +836,16 @@
     const t = titles[mode] || ["Buat Dokumen", ""];
     const bannerTitle = document.getElementById("banner-title");
     const bannerDesc  = document.getElementById("banner-desc");
-    const pageTitle   = document.getElementById("page-title");
     if (bannerTitle) bannerTitle.textContent = t[0];
     if (bannerDesc)  bannerDesc.textContent  = t[1];
+
+    // Auto-fill suggested number if currently empty
+    if (!_isEditMode) {
+      applyAutoDocNumber(mode, false);
+    }
   }
 
-  // ─── Populate pegawai dropdowns ──────────────────────────────
+  // ─── Populate pegawai & PML dropdowns ────────────────────────
   function populatePegawaiDropdowns() {
     const buildOpts = (arr) => arr.map(p => {
       const nip  = p.NIP || p.nip || "";
@@ -813,11 +854,29 @@
     }).join("");
     const opts = buildOpts(_allPegawai);
 
-    ["spk-sel-ppk","spk-sel-ketua","spk-sel-pml","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
+    ["spk-sel-ppk","spk-sel-ketua","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = el.innerHTML.split('<option value="">')[0] +
-        `<option value="">-- Pilih --</option>` + opts;
+      if (el) el.innerHTML = `<option value="">-- Pilih --</option>` + opts;
     });
+
+    // PML Dropdown: Bisa dari Pegawai BPS maupun Mitra Lapangan
+    const pmlEl = document.getElementById("spk-sel-pml");
+    if (pmlEl) {
+      const pegPmlOpts = _allPegawai.map(p => {
+        const nip  = p.NIP || p.nip || "";
+        const nama = p.Nama_Pegawai || p.Nama || nip;
+        return `<option value="${escapeHtml(nip)}">${escapeHtml(nama)} (🏛️ Pegawai BPS)</option>`;
+      }).join("");
+      const mitraPmlOpts = _allMitra.map(m => {
+        const id   = getMitraId(m);
+        const nama = getMitraName(m);
+        return `<option value="${escapeHtml(id)}">${escapeHtml(nama)} (👥 Mitra Lapangan)</option>`;
+      }).join("");
+
+      pmlEl.innerHTML = `<option value="">-- Pilih PML (Pegawai / Mitra) --</option>` +
+        `<optgroup label="🏛️ Pegawai BPS">${pegPmlOpts}</optgroup>` +
+        `<optgroup label="👥 Mitra Lapangan">${mitraPmlOpts}</optgroup>`;
+    }
   }
 
   // ─── Search listeners ────────────────────────────────────────
@@ -993,6 +1052,20 @@
         judulEl.value = uraianList.join(", ").toUpperCase().substring(0, 200);
       }
     }
+
+    // Auto-suggest PML from mapping if available
+    const kegIds = mappingItems.map(m => m.ID_Kegiatan);
+    const pmlMapping = _allMapping.find(m =>
+      kegIds.includes(m.ID_Kegiatan) &&
+      String(m.Peran || "").toLowerCase() === "pml" &&
+      String(m.ID_Mitra_atau_NIP) !== String(petugasId)
+    );
+    if (pmlMapping) {
+      const pmlEl = document.getElementById("spk-sel-pml");
+      if (pmlEl && !pmlEl.value) {
+        pmlEl.value = pmlMapping.ID_Mitra_atau_NIP;
+      }
+    }
   }
 
   // ─── Load kegiatan BAST (hanya yang SPK sudah disetujui) ──────
@@ -1049,6 +1122,207 @@
     document.getElementById("bast-selected-peran").value    = m.Peran || "ppl";
   }
 
+  // ─── Number Generator & Database Duplicate Validator ─────────
+  function getDocYear(docType) {
+    if (docType === "spk") {
+      const val = document.getElementById("spk-tgl-spk")?.value;
+      if (val) {
+        const d = new Date(val);
+        if (!isNaN(d)) return d.getFullYear();
+      }
+    } else if (docType === "bast") {
+      const val = document.getElementById("bast-tgl")?.value;
+      if (val) {
+        const d = new Date(val);
+        if (!isNaN(d)) return d.getFullYear();
+      }
+    } else if (docType === "bast_sm") {
+      const y = parseInt(document.getElementById("sm-input-tahun")?.value, 10);
+      if (y) return y;
+      const val = document.getElementById("sm-tgl-bast")?.value;
+      if (val) {
+        const d = new Date(val);
+        if (!isNaN(d)) return d.getFullYear();
+      }
+    }
+    return new Date().getFullYear();
+  }
+
+  function extractDocSeq(str, yr) {
+    if (!str) return null;
+    const s = String(str).trim();
+    if (!s) return null;
+    const matches = s.match(/\d+/g);
+    if (!matches) return null;
+    for (const m of matches) {
+      const n = parseInt(m, 10);
+      if (n !== yr && n > 0 && n < 2000) return n;
+    }
+    return null;
+  }
+
+  function getMaxDocSeq(docType, targetYear) {
+    const yr = parseInt(targetYear, 10) || new Date().getFullYear();
+    let maxSeq = 0;
+
+    if (docType === "spk") {
+      (_allSpkBast || []).forEach(r => {
+        if (_editDocId && String(r.ID_Dokumen) === String(_editDocId)) return;
+        let rYear = parseInt(r.Tahun || 0, 10);
+        if (!rYear && r.Tanggal_SPK) {
+          const d = new Date(r.Tanggal_SPK);
+          if (!isNaN(d)) rYear = d.getFullYear();
+        }
+        if (!rYear) rYear = yr;
+        if (rYear === yr) {
+          const vals = [r.Nomor_SPK, r.No_SPK, r["Nomor SPK"], r["No SPK"]];
+          vals.forEach(v => {
+            const seq = extractDocSeq(v, yr);
+            if (seq && seq > maxSeq) maxSeq = seq;
+          });
+        }
+      });
+    } else if (docType === "bast") {
+      const allDocs = [...(_allSpkBast || []), ...(_allBastSmPpk || [])];
+      allDocs.forEach(r => {
+        if (_editDocId && String(r.ID_Dokumen) === String(_editDocId)) return;
+        let rYear = parseInt(r.Tahun || 0, 10);
+        if (!rYear && r.Tanggal_BAST) {
+          const d = new Date(r.Tanggal_BAST);
+          if (!isNaN(d)) rYear = d.getFullYear();
+        }
+        if (!rYear) rYear = yr;
+        if (rYear === yr) {
+          const vals = [
+            r.Nomor_BAST_PPL_PML, r.No_BAST_PPL_PML,
+            r.Nomor_BAST_PPL_SM,  r.No_BAST_PPL_SM,
+            r.Nomor_BAST_PML_SM,  r.No_BAST_PML_SM,
+            r.Nomor_BAST,         r.No_BAST,
+            r.No_BAST_SM_PPK,     r.Nomor_BAST_SM_PPK
+          ];
+          vals.forEach(v => {
+            const seq = extractDocSeq(v, yr);
+            if (seq && seq > maxSeq) maxSeq = seq;
+          });
+        }
+      });
+    } else if (docType === "bast_sm") {
+      const allDocs = [...(_allBastSmPpk || []), ...(_allSpkBast || [])];
+      allDocs.forEach(r => {
+        if (_editDocId && String(r.ID_Dokumen || r.ID_BAST_SM_PPK) === String(_editDocId)) return;
+        let rYear = parseInt(r.Tahun || 0, 10);
+        if (!rYear) rYear = yr;
+        if (rYear === yr) {
+          const vals = [r.No_BAST_SM_PPK, r.Nomor_BAST_SM_PPK, r["No_BAST_SM_PPK"]];
+          vals.forEach(v => {
+            const seq = extractDocSeq(v, yr);
+            if (seq && seq > maxSeq) maxSeq = seq;
+          });
+        }
+      });
+    }
+
+    return maxSeq;
+  }
+
+  function generateSuggestedDocNumber(docType, targetYear) {
+    const yr = targetYear || getDocYear(docType);
+    const nextSeq = getMaxDocSeq(docType, yr) + 1;
+    if (docType === "bast") {
+      return `Nomor ${String(nextSeq).padStart(3, "0")} Tahun ${yr}`;
+    }
+    return `Nomor ${nextSeq} Tahun ${yr}`;
+  }
+
+  function checkDocNumberDuplicate(docType, val) {
+    if (!val || !val.trim()) return null;
+    const target = val.trim().toLowerCase();
+
+    if (docType === "spk") {
+      for (const r of _allSpkBast) {
+        if (_editDocId && String(r.ID_Dokumen) === String(_editDocId)) continue;
+        const vals = [r.Nomor_SPK, r.No_SPK, r["Nomor SPK"], r["No SPK"]];
+        for (const v of vals) {
+          if (v && String(v).trim().toLowerCase() === target) {
+            return { isDuplicate: true, label: r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "SPK di Database" };
+          }
+        }
+      }
+    } else if (docType === "bast") {
+      const allDocs = [..._allSpkBast, ..._allBastSmPpk];
+      for (const r of allDocs) {
+        if (_editDocId && String(r.ID_Dokumen || r.ID_BAST_SM_PPK) === String(_editDocId)) continue;
+        const vals = [
+          r.Nomor_BAST_PPL_PML, r.No_BAST_PPL_PML,
+          r.Nomor_BAST_PPL_SM,  r.No_BAST_PPL_SM,
+          r.Nomor_BAST_PML_SM,  r.No_BAST_PML_SM,
+          r.Nomor_BAST,         r.No_BAST
+        ];
+        for (const v of vals) {
+          if (v && String(v).trim().toLowerCase() === target) {
+            return { isDuplicate: true, label: r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "BAST di Database" };
+          }
+        }
+      }
+    } else if (docType === "bast_sm") {
+      const allDocs = [..._allBastSmPpk, ..._allSpkBast];
+      for (const r of allDocs) {
+        if (_editDocId && String(r.ID_Dokumen || r.ID_BAST_SM_PPK) === String(_editDocId)) continue;
+        const vals = [r.No_BAST_SM_PPK, r.Nomor_BAST_SM_PPK, r["No_BAST_SM_PPK"]];
+        for (const v of vals) {
+          if (v && String(v).trim().toLowerCase() === target) {
+            return { isDuplicate: true, label: r.Uraian_Tugas || r.ID_BAST_SM_PPK || "BAST SM di Database" };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function validateDocNumberInput(docType) {
+    const inputId = docType === "spk" ? "spk-no-spk" : docType === "bast" ? "bast-no" : "sm-no-bast";
+    const statusId = docType === "spk" ? "spk-no-status" : docType === "bast" ? "bast-no-status" : "sm-no-status";
+    const inputEl = document.getElementById(inputId);
+    const statusEl = document.getElementById(statusId);
+    if (!inputEl || !statusEl) return;
+
+    const val = inputEl.value.trim();
+    if (!val) {
+      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)`;
+      return;
+    }
+
+    const dup = checkDocNumberDuplicate(docType, val);
+    if (dup) {
+      statusEl.innerHTML = `<span style="color:#dc2626; font-weight:600;">⚠️ Nomor sudah digunakan (${escapeHtml(dup.label)})</span>`;
+    } else {
+      statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor tersedia</span>`;
+    }
+  }
+
+  function applyAutoDocNumber(docType, force = false) {
+    const inputId = docType === "spk" ? "spk-no-spk" : docType === "bast" ? "bast-no" : "sm-no-bast";
+    const inputEl = document.getElementById(inputId);
+    if (!inputEl) return;
+
+    if (force || !inputEl.value.trim()) {
+      const yr = getDocYear(docType);
+      inputEl.value = generateSuggestedDocNumber(docType, yr);
+      validateDocNumberInput(docType);
+    }
+  }
+
+  function setupDocNumberListeners() {
+    ["spk", "bast", "bast_sm"].forEach(type => {
+      const inputId = type === "spk" ? "spk-no-spk" : type === "bast" ? "bast-no" : "sm-no-bast";
+      const inputEl = document.getElementById(inputId);
+      if (inputEl) {
+        inputEl.addEventListener("input", () => validateDocNumberInput(type));
+        inputEl.addEventListener("blur", () => validateDocNumberInput(type));
+      }
+    });
+  }
+
   // ─── Date listeners ──────────────────────────────────────────
   function setupDateListeners() {
     // SPK Tanggal
@@ -1058,6 +1332,7 @@
         const t = tanggalTerbilang(this.value);
         el.textContent = `${t.hari}, ${t.tanggalFormat}`;
       }
+      applyAutoDocNumber("spk", false);
     });
     // BAST Tanggal
     document.getElementById("bast-tgl")?.addEventListener("change", function() {
@@ -1066,6 +1341,7 @@
         const t = tanggalTerbilang(this.value);
         el.textContent = `${t.hari}, ${t.tanggalFormat}`;
       }
+      applyAutoDocNumber("bast", false);
     });
     // SM→PPK Tanggal
     document.getElementById("sm-tgl-bast")?.addEventListener("change", function() {
@@ -1074,6 +1350,7 @@
         const t = tanggalTerbilang(this.value);
         el.textContent = `${t.hari}, ${t.tanggalFormat}`;
       }
+      applyAutoDocNumber("bast_sm", false);
     });
   }
 
