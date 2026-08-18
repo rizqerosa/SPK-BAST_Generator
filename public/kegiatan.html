@@ -205,7 +205,7 @@
     const satuan  = (document.getElementById("filter-satuan")?.value || "").toLowerCase();
     const data = _allKegiatan.filter(k => {
       const matchSatuan = !satuan || (k.Satuan || "").toLowerCase() === satuan;
-      const matchQ      = !q || [k.ID_Kegiatan, k.Uraian_Tugas, k.Nama_Tim_Teknis, k.Beban_Anggaran]
+      const matchQ      = !q || [k.ID_Kegiatan, k.ID, k.Uraian_Tugas, k.Nama_Kegiatan, k.Judul_Kegiatan, k.Nama_Tim_Teknis, k.Beban_Anggaran, k.Mata_Anggaran, k.MAK]
         .some(v => String(v || "").toLowerCase().includes(q));
       return matchSatuan && matchQ;
     });
