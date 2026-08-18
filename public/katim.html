@@ -901,9 +901,7 @@
     // Tanggal Kepka format display
     document.getElementById("wiz-tgl-kepka")?.addEventListener("change", function() {
       updateTglKepkaDisplay();
-      if (!document.getElementById("wiz-no-kepka")?.value.trim()) {
-        applyAutoKepkaNumber(false);
-      }
+      validateKepkaInput();
     });
   });
 
@@ -1049,42 +1047,34 @@
 
     const val = inputEl.value.trim();
     if (!val) {
-      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)`;
+      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Isi manual sesuai SK BPS)`;
       return;
     }
 
     const dup = checkKepkaDuplicate(val);
     if (dup) {
       statusEl.innerHTML = `<span style="color:#d97706; font-size:.74rem; font-weight:600;">ℹ️ Nomor Kepka ini sudah dipakai untuk kegiatan "${escapeHtml(dup.label)}"</span>`;
-    } else {
-      statusEl.innerHTML = `<span style="color:#16a34a; font-size:.74rem; font-weight:600;">✅ Nomor Kepka baru (tersedia)</span>`;
+      return;
     }
+
+    const yr = getKepkaYear();
+    const maxSeq = getMaxKepkaSeq(yr);
+    const inputSeq = extractKepkaSeq(val, yr);
+    if (inputSeq !== null && maxSeq > 0 && inputSeq > maxSeq + 1) {
+      statusEl.innerHTML = `<span style="color:#d97706; font-size:.74rem; font-weight:600;">⚠️ Perhatian: Nomor Kepka melompati urutan! Urutan terakhir di database adalah ${maxSeq} (seharusnya Nomor ${maxSeq + 1}).</span>`;
+      return;
+    }
+
+    statusEl.innerHTML = `<span style="color:#16a34a; font-size:.74rem; font-weight:600;">✅ Nomor Kepka baru (tersedia)</span>`;
   }
 
   function applyAutoKepkaNumber(force = false) {
     const inputEl = document.getElementById("wiz-no-kepka");
     if (!inputEl) return;
 
-    if (force || !inputEl.value.trim()) {
+    // Hanya isi jika tombol Auto ditekan secara sengaja oleh pengguna
+    if (force) {
       const yr = getKepkaYear();
-      // Cek apakah kegiatan yang dipilih saat ini sudah pernah punya Kepka di database
-      if (_wizSelectedKegiatan && _wizSelectedKegiatan.id) {
-        const existingMapping = _allMapping.find(m =>
-          String(m.ID_Kegiatan) === String(_wizSelectedKegiatan.id) && m.Nomor_Kepka
-        );
-        if (existingMapping && existingMapping.Nomor_Kepka) {
-          inputEl.value = existingMapping.Nomor_Kepka;
-          if (existingMapping.Tanggal_Kepka && !document.getElementById("wiz-tgl-kepka").value) {
-            document.getElementById("wiz-tgl-kepka").value = existingMapping.Tanggal_Kepka.includes("T")
-              ? existingMapping.Tanggal_Kepka.split("T")[0]
-              : existingMapping.Tanggal_Kepka;
-            updateTglKepkaDisplay();
-          }
-          validateKepkaInput();
-          return;
-        }
-      }
-
       inputEl.value = generateSuggestedKepkaNumber(yr);
       validateKepkaInput();
     }
@@ -1104,14 +1094,29 @@
   }
 
   // ─── Kegiatan Dropdown Populator ─────────────────────────────
+  function _getKatimKegiatanList() {
+    const user = (typeof Auth !== "undefined") ? Auth.getUser() : null;
+    const subRole = (user?.sub_role || "").toLowerCase().trim();
+    if (user && user.role === "KATIM" && subRole && subRole !== "-") {
+      const filtered = _allKegiatan.filter(k => {
+        const tim = String(k.Nama_Tim_Teknis || "").toLowerCase();
+        return tim.includes(subRole) || subRole.includes(tim);
+      });
+      if (filtered.length > 0) return filtered;
+    }
+    return _allKegiatan;
+  }
+
   function populateKegiatanDropdown() {
     const sel = document.getElementById("wiz-kegiatan-select");
     if (!sel) return;
+    const list = _getKatimKegiatanList();
     sel.innerHTML = `<option value="">-- Pilih Kegiatan dari Master --</option>` +
-      _allKegiatan.map(k => {
+      list.map(k => {
         const id   = (typeof getKegiatanId === "function") ? getKegiatanId(k) : (k.ID_Kegiatan || k.ID || "");
         const nama = k.Uraian_Tugas || k.Nama_Kegiatan || id;
-        return `<option value="${escapeHtml(id)}">${escapeHtml(nama)}</option>`;
+        const tim  = k.Nama_Tim_Teknis ? ` [${k.Nama_Tim_Teknis}]` : "";
+        return `<option value="${escapeHtml(id)}">${escapeHtml(nama)}${escapeHtml(tim)}</option>`;
       }).join("");
   }
 
@@ -1121,7 +1126,8 @@
     const resultsEl = document.getElementById("wiz-keg-live-results");
     if (!resultsEl) return;
 
-    const filtered = _allKegiatan.filter(k => {
+    const baseList = _getKatimKegiatanList();
+    const filtered = baseList.filter(k => {
       const id   = ((typeof getKegiatanId === "function" ? getKegiatanId(k) : k.ID_Kegiatan) || "").toLowerCase();
       const nama = String(k.Uraian_Tugas || k.Nama_Kegiatan || "").toLowerCase();
       const mak  = String(k.Mata_Anggaran || k.MAK || "").toLowerCase();
@@ -1136,6 +1142,7 @@
         const id   = (typeof getKegiatanId === "function") ? getKegiatanId(k) : (k.ID_Kegiatan || k.ID || "");
         const nama = k.Uraian_Tugas || k.Nama_Kegiatan || id;
         const mak  = k.Mata_Anggaran || k.MAK || "";
+        const tim  = k.Nama_Tim_Teknis || "";
         const harga = Number(k.Harga_Satuan || 0);
         const hargaText = harga > 0 ? (typeof formatRupiah === "function" ? `Rp ${formatRupiah(harga)}` : `Rp ${harga}`) : "—";
         return `
@@ -1145,6 +1152,7 @@
               <div class="lri-name" style="font-size:.86rem;">${escapeHtml(nama)}</div>
               <div class="lri-meta" style="display:flex; gap:8px; flex-wrap:wrap; font-size:.72rem; margin-top:2px;">
                 <span>ID: <code style="font-weight:700;">${escapeHtml(id)}</code></span>
+                ${tim ? `<span style="color:var(--brand-primary); font-weight:600;">Tim: ${escapeHtml(tim)}</span>` : ''}
                 ${mak ? `<span>MAK: ${escapeHtml(mak)}</span>` : ''}
                 <span style="color:#15803d; font-weight:600;">Honor: ${hargaText}</span>
               </div>
@@ -1218,9 +1226,6 @@
     document.getElementById("wiz-keg-satuan-display").textContent = satuan;
     document.getElementById("wiz-keg-honor-display").textContent  = (typeof formatRupiah === "function") ? `Rp ${formatRupiah(honor)}` : `Rp ${honor}`;
     document.getElementById("wiz-keg-detail-card").style.display  = "block";
-
-    // Auto-fill Kepka dari mapping sebelumnya atau buat nomor baru
-    applyAutoKepkaNumber(false);
   }
 
   function calculateBatasTerlambat(tglSelesaiStr) {
@@ -1252,10 +1257,6 @@
     if (val && !tglKepkaEl.value) {
       tglKepkaEl.value = val;
       updateTglKepkaDisplay();
-    }
-    // Update suggested Kepka number if empty
-    if (!document.getElementById("wiz-no-kepka").value.trim()) {
-      applyAutoKepkaNumber(false);
     }
   }
 

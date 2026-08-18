@@ -11,22 +11,22 @@ const AUTH_SESSION_KEY = "spkbast_user_session";
 // ─── Default Fallback Users ───────────────────────────────────
 const DEFAULT_USERS = [
   // ── 11 Akun Pengguna dari Database Sheet User ──
-  { id: "1",  username: "srideza",       password: "123456", nama: "Sri Deza",            role: "ADMIN",    sub_role: "",           jabatan: "Administrator Sistem" },
-  { id: "2",  username: "rizqerosalia",  password: "123456", nama: "Rizqe Rosalia",       role: "ADMIN",    sub_role: "",           jabatan: "Administrator Sistem" },
-  { id: "3",  username: "armajuwita",    password: "123456", nama: "Armajuwita",          role: "PPK",      sub_role: "",           jabatan: "Pejabat Pembuat Komitmen (PPK)" },
-  { id: "4",  username: "triwahyudi",    password: "123456", nama: "Tri Wahyudi",         role: "KATIM",    sub_role: "distribusi", jabatan: "Ketua Tim Distribusi" },
-  { id: "5",  username: "radendaffa",    password: "123456", nama: "Raden Daffa",         role: "KATIM",    sub_role: "neraca",     jabatan: "Ketua Tim Neraca" },
-  { id: "6",  username: "thariqalfatih", password: "123456", nama: "Thariq Alfatih",      role: "KATIM",    sub_role: "produksi",   jabatan: "Ketua Tim Produksi" },
-  { id: "7",  username: "mutiasoraya",   password: "123456", nama: "Mutia Soraya",        role: "KATIM",    sub_role: "pengolahan", jabatan: "Ketua Tim Pengolahan" },
-  { id: "8",  username: "putrinurhilwa", password: "123456", nama: "Putri Nurhilwa",      role: "KATIM",    sub_role: "sosial",     jabatan: "Ketua Tim Sosial" },
-  { id: "9",  username: "suciarti",      password: "123456", nama: "Suciarti",           role: "KATIM",    sub_role: "diseminasi", jabatan: "Ketua Tim Diseminasi" },
-  { id: "10", username: "adiputra",      password: "123456", nama: "Adi Putra",           role: "PENGGUNA", sub_role: "",           jabatan: "Pengguna / Staf BPS" },
-  { id: "11", username: "ernilusiani",   password: "123456", nama: "Erni Lusiani",        role: "PENGGUNA", sub_role: "",           jabatan: "Pengguna / Staf BPS" },
+  { id: "1",  username: "srideza",       id_pegawai: "199412042025212046", password: "123456", nama: "Sri Deza",            role: "ADMIN",    sub_role: "",           jabatan: "Administrator Sistem" },
+  { id: "2",  username: "rizqerosalia",  id_pegawai: "200309292026032001", password: "123456", nama: "Rizqe Rosalia",       role: "ADMIN",    sub_role: "",           jabatan: "Administrator Sistem" },
+  { id: "3",  username: "armajuwita",    id_pegawai: "198801012010012001", password: "123456", nama: "Armajuwita",          role: "PPK",      sub_role: "",           jabatan: "Pejabat Pembuat Komitmen (PPK)" },
+  { id: "4",  username: "triwahyudi",    id_pegawai: "199001012014011001", password: "123456", nama: "Tri Wahyudi",         role: "KATIM",    sub_role: "distribusi", jabatan: "Ketua Tim Distribusi" },
+  { id: "5",  username: "radendaffa",    id_pegawai: "199501012018011001", password: "123456", nama: "Raden Daffa",         role: "KATIM",    sub_role: "neraca",     jabatan: "Ketua Tim Neraca" },
+  { id: "6",  username: "thariqalfatih", id_pegawai: "199601012019011001", password: "123456", nama: "Thariq Alfatih",      role: "KATIM",    sub_role: "produksi",   jabatan: "Ketua Tim Produksi" },
+  { id: "7",  username: "mutiasoraya",   id_pegawai: "199701012020012001", password: "123456", nama: "Mutia Soraya",        role: "KATIM",    sub_role: "pengolahan", jabatan: "Ketua Tim Pengolahan" },
+  { id: "8",  username: "putrinurhilwa", id_pegawai: "199801012021012001", password: "123456", nama: "Putri Nurhilwa",      role: "KATIM",    sub_role: "sosial",     jabatan: "Ketua Tim Sosial" },
+  { id: "9",  username: "suciarti",      id_pegawai: "199901012022012001", password: "123456", nama: "Suciarti",           role: "KATIM",    sub_role: "diseminasi", jabatan: "Ketua Tim Diseminasi" },
+  { id: "10", username: "adiputra",      id_pegawai: "197208131993011001", password: "123456", nama: "Adi Putra",           role: "PENGGUNA", sub_role: "",           jabatan: "Pengguna / Staf BPS" },
+  { id: "11", username: "ernilusiani",   id_pegawai: "199604202019032003", password: "123456", nama: "Erni Lusiani",        role: "PENGGUNA", sub_role: "",           jabatan: "Pengguna / Staf BPS" },
 
   // ── Akun Default / Fallback Tambahan ──
-  { id: "99", username: "admin",         password: "admin",  nama: "Administrator Sistem",role: "ADMIN",    sub_role: "",           jabatan: "Admin Sistem SPK/BAST" },
-  { id: "98", username: "ppk",           password: "ppk",    nama: "Pejabat Pembuat Komitmen", role: "PPK",  sub_role: "",           jabatan: "Pejabat Pembuat Komitmen" },
-  { id: "97", username: "katim",         password: "katim",  nama: "Ketua Tim",           role: "KATIM",    sub_role: "",           jabatan: "Ketua Tim BPS" },
+  { id: "99", username: "admin",         id_pegawai: "", password: "admin",  nama: "Administrator Sistem",role: "ADMIN",    sub_role: "",           jabatan: "Admin Sistem SPK/BAST" },
+  { id: "98", username: "ppk",           id_pegawai: "198801012010012001", password: "ppk",    nama: "Pejabat Pembuat Komitmen", role: "PPK",  sub_role: "",           jabatan: "Pejabat Pembuat Komitmen" },
+  { id: "97", username: "katim",         id_pegawai: "", password: "katim",  nama: "Ketua Tim",           role: "KATIM",    sub_role: "",           jabatan: "Ketua Tim BPS" },
 ];
 
 // ─── Helper: deteksi nama halaman saat ini ───────────────────
@@ -131,13 +131,14 @@ const Auth = {
             const subRole = (match.sub_role && String(match.sub_role).trim() !== "-") ? String(match.sub_role).trim() : "";
 
             userFound = {
-              id:       match.id || match.ID || "",
-              username: (match.username || match.Username || u).toLowerCase(),
-              nama:     match.nama || match.Nama || match.Nama_Lengkap || u,
-              nip:      match.nip || match.NIP || "",
-              role:     roleStr,
-              sub_role: subRole,
-              jabatan:  match.jabatan || match.Jabatan || (roleStr === "KATIM" && subRole ? `Ketua Tim ${subRole}` : "")
+              id:         match.id || match.ID || "",
+              username:   (match.username || match.Username || u).toLowerCase(),
+              id_pegawai: match.id_pegawai || match.ID_Pegawai || match.nip || match.NIP || "",
+              nama:       match.nama || match.Nama || match.Nama_Lengkap || u,
+              nip:        match.id_pegawai || match.ID_Pegawai || match.nip || match.NIP || "",
+              role:       roleStr,
+              sub_role:   subRole,
+              jabatan:    match.jabatan || match.Jabatan || (roleStr === "KATIM" && subRole ? `Ketua Tim ${subRole}` : "")
             };
           }
         }

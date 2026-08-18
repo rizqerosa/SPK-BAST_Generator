@@ -1288,16 +1288,30 @@
 
     const val = inputEl.value.trim();
     if (!val) {
-      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)`;
+      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Bisa diedit)`;
       return;
     }
 
     const dup = checkDocNumberDuplicate(docType, val);
     if (dup) {
       statusEl.innerHTML = `<span style="color:#dc2626; font-weight:600;">⚠️ Nomor sudah digunakan (${escapeHtml(dup.label)})</span>`;
-    } else {
-      statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor tersedia</span>`;
+      return;
     }
+
+    // Peringatan jika nomor melompati urutan (gap)
+    const yr = getDocYear(docType);
+    const maxSeq = getMaxDocSeq(docType, yr);
+    const inputSeq = extractDocSeq(val, yr);
+
+    if (inputSeq !== null && maxSeq > 0 && inputSeq > maxSeq + 1) {
+      statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Perhatian: Nomor melompati urutan! Urutan terakhir di database adalah ${maxSeq} (seharusnya Nomor ${maxSeq + 1}).</span>`;
+      return;
+    } else if (inputSeq !== null && maxSeq === 0 && inputSeq > 1) {
+      statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Perhatian: Belum ada nomor di database tahun ${yr}. Disarankan mulai dari Nomor 1 (atau 001).</span>`;
+      return;
+    }
+
+    statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor tersedia</span>`;
   }
 
   function applyAutoDocNumber(docType, force = false) {
