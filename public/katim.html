@@ -518,12 +518,18 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="wiz-no-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="wiz-no-kepka" placeholder="Nomor xx Tahun xxxx">
-                  <div style="font-size:.73rem; color:var(--gray-400); margin-top:4px;">Contoh: Nomor 12 Tahun 2026</div>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" class="form-control" id="wiz-no-kepka" placeholder="Nomor xx Tahun xxxx">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoKepkaNumber(true)"
+                            style="white-space:nowrap; padding:0 14px; font-weight:600;" title="Generate nomor Kepka urut berikutnya dari database">
+                      ⚡ Auto
+                    </button>
+                  </div>
+                  <div id="wiz-kepka-status" class="format-hint">Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="wiz-tgl-kepka">Tanggal SK Kepala <span class="required">*</span></label>
-                  <input type="date" class="form-control" id="wiz-tgl-kepka">
+                  <input type="date" class="form-control" id="wiz-tgl-kepka" onchange="updateTglKepkaDisplay()">
                   <div style="font-size:.73rem; color:var(--gray-400); margin-top:4px;" id="tgl-kepka-display">—</div>
                 </div>
               </div>
@@ -838,6 +844,7 @@
   let _allPegawai  = [];
   let _allKegiatan = [];
   let _allMapping  = [];
+  let _allSpkBast  = [];
 
   // State wizard
   let _currentStep = 1;
@@ -884,31 +891,35 @@
       }
     });
 
+    // Nomor Kepka live duplicate listener
+    const noKepkaEl = document.getElementById("wiz-no-kepka");
+    if (noKepkaEl) {
+      noKepkaEl.addEventListener("input", validateKepkaInput);
+      noKepkaEl.addEventListener("blur", validateKepkaInput);
+    }
+
     // Tanggal Kepka format display
     document.getElementById("wiz-tgl-kepka")?.addEventListener("change", function() {
-      const el = document.getElementById("tgl-kepka-display");
-      if (el && this.value) {
-        const tgl = (typeof tanggalTerbilang === "function")
-          ? tanggalTerbilang(this.value)
-          : { hari: "", tanggalFormat: this.value };
-        el.textContent = tgl.hari ? `${tgl.hari}, ${tgl.tanggalFormat}` : tgl.tanggalFormat;
-      } else if (el) {
-        el.textContent = "—";
+      updateTglKepkaDisplay();
+      if (!document.getElementById("wiz-no-kepka")?.value.trim()) {
+        applyAutoKepkaNumber(false);
       }
     });
   });
 
   async function loadAll() {
-    const [mitra, pegawai, kegiatan, mapping] = await Promise.all([
+    const [mitra, pegawai, kegiatan, mapping, spkBast] = await Promise.all([
       getMitra().catch(err => { console.warn("Gagal getMitra:", err); return []; }),
       getPegawai().catch(err => { console.warn("Gagal getPegawai:", err); return []; }),
       getKegiatan().catch(err => { console.warn("Gagal getKegiatan:", err); return []; }),
       getMappingPetugas().catch(err => { console.warn("Gagal getMappingPetugas:", err); return []; }),
+      getSpkBast().catch(err => { console.warn("Gagal getSpkBast:", err); return []; }),
     ]);
     _allMitra    = Array.isArray(mitra) ? mitra : [];
     _allPegawai  = Array.isArray(pegawai) ? pegawai : [];
     _allKegiatan = Array.isArray(kegiatan) ? kegiatan : [];
     _allMapping  = Array.isArray(mapping) ? mapping : [];
+    _allSpkBast  = Array.isArray(spkBast) ? spkBast : [];
 
     populateKegiatanDropdown();
     renderMappingList();
@@ -920,6 +931,7 @@
     clearCache("pegawai");
     clearCache("kegiatan");
     clearCache("mappingPetugas");
+    clearCache("spkBast");
     setLoading(true);
     try {
       await loadAll();
@@ -929,11 +941,173 @@
     }
   }
 
+  // ─── Auto-generate & Validate Nomor SK Kepala (Kepka) ────────
+  function getKepkaYear() {
+    const tglKepka = document.getElementById("wiz-tgl-kepka")?.value;
+    if (tglKepka) {
+      const d = new Date(tglKepka);
+      if (!isNaN(d)) return d.getFullYear();
+    }
+    const tglMulai = document.getElementById("wiz-tgl-mulai")?.value;
+    if (tglMulai) {
+      const d = new Date(tglMulai);
+      if (!isNaN(d)) return d.getFullYear();
+    }
+    return new Date().getFullYear();
+  }
+
+  function extractKepkaSeq(str, yr) {
+    if (!str) return null;
+    const s = String(str).trim();
+    if (!s) return null;
+    const matches = s.match(/\d+/g);
+    if (!matches) return null;
+    for (const m of matches) {
+      const n = parseInt(m, 10);
+      if (n !== yr && n > 0 && n < 2000) return n;
+    }
+    return null;
+  }
+
+  function getMaxKepkaSeq(targetYear) {
+    const yr = parseInt(targetYear, 10) || getKepkaYear();
+    let maxSeq = 0;
+
+    // 1. Cek di _allMapping
+    (_allMapping || []).forEach(m => {
+      let rYear = 0;
+      if (m.Tanggal_Kepka) {
+        const d = new Date(m.Tanggal_Kepka);
+        if (!isNaN(d)) rYear = d.getFullYear();
+      } else if (m.Tanggal_Mulai) {
+        const d = new Date(m.Tanggal_Mulai);
+        if (!isNaN(d)) rYear = d.getFullYear();
+      }
+      if (!rYear) rYear = yr;
+      if (rYear === yr && m.Nomor_Kepka) {
+        const seq = extractKepkaSeq(m.Nomor_Kepka, yr);
+        if (seq && seq > maxSeq) maxSeq = seq;
+      }
+    });
+
+    // 2. Cek di _allKegiatan
+    (_allKegiatan || []).forEach(k => {
+      const kepka = k.Nomor_Kepka || k.No_Kepka || k.Kepka;
+      if (kepka) {
+        const seq = extractKepkaSeq(kepka, yr);
+        if (seq && seq > maxSeq) maxSeq = seq;
+      }
+    });
+
+    // 3. Cek di _allSpkBast
+    (_allSpkBast || []).forEach(r => {
+      let rYear = parseInt(r.Tahun || 0, 10);
+      if (!rYear && r.Tanggal_Kepka) {
+        const d = new Date(r.Tanggal_Kepka);
+        if (!isNaN(d)) rYear = d.getFullYear();
+      }
+      if (!rYear) rYear = yr;
+      if (rYear === yr && r.Nomor_Kepka) {
+        const seq = extractKepkaSeq(r.Nomor_Kepka, yr);
+        if (seq && seq > maxSeq) maxSeq = seq;
+      }
+    });
+
+    return maxSeq;
+  }
+
+  function generateSuggestedKepkaNumber(targetYear) {
+    const yr = targetYear || getKepkaYear();
+    const maxSeq = getMaxKepkaSeq(yr);
+    const nextSeq = maxSeq + 1; // Mulai dari 1 jika belum ada
+    return `Nomor ${nextSeq} Tahun ${yr}`;
+  }
+
+  function checkKepkaDuplicate(val) {
+    if (!val || !val.trim()) return null;
+    const target = val.trim().toLowerCase();
+    
+    // Cek di _allMapping
+    for (const m of _allMapping) {
+      if (m.Nomor_Kepka && String(m.Nomor_Kepka).trim().toLowerCase() === target) {
+        return { isDuplicate: true, label: m.Uraian_Kegiatan || "Mapping Petugas" };
+      }
+    }
+    // Cek di _allSpkBast
+    for (const r of _allSpkBast) {
+      if (r.Nomor_Kepka && String(r.Nomor_Kepka).trim().toLowerCase() === target) {
+        return { isDuplicate: true, label: r.Judul_Pekerjaan_Dokumen || "SPK/BAST" };
+      }
+    }
+    return null;
+  }
+
+  function validateKepkaInput() {
+    const inputEl = document.getElementById("wiz-no-kepka");
+    const statusEl = document.getElementById("wiz-kepka-status");
+    if (!inputEl || !statusEl) return;
+
+    const val = inputEl.value.trim();
+    if (!val) {
+      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)`;
+      return;
+    }
+
+    const dup = checkKepkaDuplicate(val);
+    if (dup) {
+      statusEl.innerHTML = `<span style="color:#d97706; font-size:.74rem; font-weight:600;">ℹ️ Nomor Kepka ini sudah dipakai untuk kegiatan "${escapeHtml(dup.label)}"</span>`;
+    } else {
+      statusEl.innerHTML = `<span style="color:#16a34a; font-size:.74rem; font-weight:600;">✅ Nomor Kepka baru (tersedia)</span>`;
+    }
+  }
+
+  function applyAutoKepkaNumber(force = false) {
+    const inputEl = document.getElementById("wiz-no-kepka");
+    if (!inputEl) return;
+
+    if (force || !inputEl.value.trim()) {
+      const yr = getKepkaYear();
+      // Cek apakah kegiatan yang dipilih saat ini sudah pernah punya Kepka di database
+      if (_wizSelectedKegiatan && _wizSelectedKegiatan.id) {
+        const existingMapping = _allMapping.find(m =>
+          String(m.ID_Kegiatan) === String(_wizSelectedKegiatan.id) && m.Nomor_Kepka
+        );
+        if (existingMapping && existingMapping.Nomor_Kepka) {
+          inputEl.value = existingMapping.Nomor_Kepka;
+          if (existingMapping.Tanggal_Kepka && !document.getElementById("wiz-tgl-kepka").value) {
+            document.getElementById("wiz-tgl-kepka").value = existingMapping.Tanggal_Kepka.includes("T")
+              ? existingMapping.Tanggal_Kepka.split("T")[0]
+              : existingMapping.Tanggal_Kepka;
+            updateTglKepkaDisplay();
+          }
+          validateKepkaInput();
+          return;
+        }
+      }
+
+      inputEl.value = generateSuggestedKepkaNumber(yr);
+      validateKepkaInput();
+    }
+  }
+
+  function updateTglKepkaDisplay() {
+    const el = document.getElementById("tgl-kepka-display");
+    const val = document.getElementById("wiz-tgl-kepka")?.value;
+    if (el && val) {
+      const tgl = (typeof tanggalTerbilang === "function")
+        ? tanggalTerbilang(val)
+        : { hari: "", tanggalFormat: val };
+      el.textContent = tgl.hari ? `${tgl.hari}, ${tgl.tanggalFormat}` : tgl.tanggalFormat;
+    } else if (el) {
+      el.textContent = "—";
+    }
+  }
+
   // ─── Kegiatan Dropdown Populator ─────────────────────────────
   function populateKegiatanDropdown() {
     const sel = document.getElementById("wiz-kegiatan-select");
     if (!sel) return;
-    sel.innerHTML = '<option value="">-- Pilih Langsung dari Dropdown Master Data --</option>' +
+    sel.innerHTML = `<option value="">-- Pilih Kegiatan dari Master --</option>` +
       _allKegiatan.map(k => {
         const id   = (typeof getKegiatanId === "function") ? getKegiatanId(k) : (k.ID_Kegiatan || k.ID || "");
         const nama = k.Uraian_Tugas || k.Nama_Kegiatan || id;
@@ -1002,17 +1176,36 @@
     const satuan = keg.Satuan || "Dokumen / OB";
     const honor  = Number(keg.Harga_Satuan || 0);
 
+    // Default tanggal jika kosong
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = String(now.getMonth() + 1).padStart(2, "0");
+    const lastDay = new Date(curYear, now.getMonth() + 1, 0).getDate();
+
+    const tglMulaiEl = document.getElementById("wiz-tgl-mulai");
+    const tglSlsEl   = document.getElementById("wiz-tgl-selesai");
+    const batasEl    = document.getElementById("wiz-batas-terlambat");
+    const tglKepkaEl = document.getElementById("wiz-tgl-kepka");
+
+    if (!tglMulaiEl.value) tglMulaiEl.value = `${curYear}-${curMonth}-01`;
+    if (!tglSlsEl.value)   tglSlsEl.value   = `${curYear}-${curMonth}-${String(lastDay).padStart(2, "0")}`;
+    if (!batasEl.value)    batasEl.value    = `${curYear}-${curMonth}-25`;
+    if (!tglKepkaEl.value) {
+      tglKepkaEl.value = tglMulaiEl.value || `${curYear}-${curMonth}-01`;
+      updateTglKepkaDisplay();
+    }
+
     _wizSelectedKegiatan = {
       id: id,
       nama: nama,
       mak: mak,
       satuan: satuan,
       honor: honor,
-      tglMulai: document.getElementById("wiz-tgl-mulai").value,
-      tglSelesai: document.getElementById("wiz-tgl-selesai").value,
-      batasTerlambat: document.getElementById("wiz-batas-terlambat").value,
+      tglMulai: tglMulaiEl.value,
+      tglSelesai: tglSlsEl.value,
+      batasTerlambat: batasEl.value,
       noKepka: document.getElementById("wiz-no-kepka").value.trim(),
-      tglKepka: document.getElementById("wiz-tgl-kepka").value,
+      tglKepka: tglKepkaEl.value,
     };
 
     document.getElementById("wiz-search-kegiatan").value          = nama;
@@ -1025,6 +1218,9 @@
     document.getElementById("wiz-keg-satuan-display").textContent = satuan;
     document.getElementById("wiz-keg-honor-display").textContent  = (typeof formatRupiah === "function") ? `Rp ${formatRupiah(honor)}` : `Rp ${honor}`;
     document.getElementById("wiz-keg-detail-card").style.display  = "block";
+
+    // Auto-fill Kepka dari mapping sebelumnya atau buat nomor baru
+    applyAutoKepkaNumber(false);
   }
 
   function clearSelectedKegiatan() {
@@ -1037,6 +1233,17 @@
   function onTglMulaiChange() {
     const val = document.getElementById("wiz-tgl-mulai").value;
     if (_wizSelectedKegiatan) _wizSelectedKegiatan.tglMulai = val;
+
+    // Auto-set tanggal Kepka jika kosong
+    const tglKepkaEl = document.getElementById("wiz-tgl-kepka");
+    if (val && !tglKepkaEl.value) {
+      tglKepkaEl.value = val;
+      updateTglKepkaDisplay();
+    }
+    // Update suggested Kepka number if empty
+    if (!document.getElementById("wiz-no-kepka").value.trim()) {
+      applyAutoKepkaNumber(false);
+    }
   }
 
   function onTglSelesaiChange() {
