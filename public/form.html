@@ -460,8 +460,8 @@
               <div class="form-group" style="margin-top:12px;">
                 <label class="form-label" for="spk-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
                 <input type="text" class="form-control" id="spk-judul" name="judul_pekerjaan"
-                       placeholder="Otomatis dari kegiatan, bisa diedit"
-                       style="text-transform:uppercase; font-weight:600;" required>
+                       placeholder="Tergenerate Otomatis"
+                       style="font-weight:600;" required>
               </div>
             </div>
           </div>
@@ -682,8 +682,8 @@
               <div class="form-group" style="margin-top:12px;">
                 <label class="form-label" for="sm-judul">Judul Pekerjaan <span class="required">*</span></label>
                 <input type="text" class="form-control" id="sm-judul"
-                       placeholder="Otomatis dari kegiatan, bisa diedit"
-                       style="text-transform:uppercase; font-weight:600;" required>
+                       placeholder="Tergenerate Otomatis"
+                       style="font-weight:600;" required>
               </div>
             </div>
           </div>
@@ -961,12 +961,15 @@
     let totalHonor = 0;
     listEl.innerHTML = mappingItems.map(m => {
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-      const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
-      totalHonor += harga;
+      const vol = Number(m.Volume) || 1;
+      const sat = m.Satuan || keg?.Satuan || "Dokumen";
+      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
+      const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+      totalHonor += subtotal;
       return `<div class="mapping-keg-item">
         <span class="mki-badge mki-${m.Peran || 'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
         <span class="mki-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</span>
-        <span class="mki-meta">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+        <span class="mki-meta">📦 ${vol} ${escapeHtml(sat)} &nbsp;·&nbsp; 💰 Rp ${formatRupiah(subtotal)} &nbsp;·&nbsp; 📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
       </div>`;
     }).join("");
 
@@ -1182,7 +1185,10 @@
     let totalHonor = 0;
     _spkMappingRows.forEach(m => {
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-      if (keg) totalHonor += Number(keg.Harga_Satuan || 0);
+      const vol = Number(m.Volume) || 1;
+      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
+      const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+      totalHonor += subtotal;
     });
 
     const docId = generateId("SPK");
@@ -1225,7 +1231,11 @@
       for (let i = 0; i < _spkMappingRows.length; i++) {
         const m   = _spkMappingRows[i];
         const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-        const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
+        const vol = Number(m.Volume) || 1;
+        const sat = m.Satuan || keg?.Satuan || "Dokumen";
+        const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
+        const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+
         const detail = {
           ID_Detail:      generateId("DET"),
           ID_Dokumen:     docId,
@@ -1234,10 +1244,10 @@
           Uraian_Tugas:   m.Uraian_Kegiatan || "",
           Buku_Pedoman:   keg?.Buku_Pedoman || "",
           Jangka_Waktu:   `${m.Tanggal_Mulai || ""} s/d ${m.Tanggal_Selesai || ""}`,
-          Volume:         1,
-          Satuan:         keg?.Satuan || "Dokumen",
-          Harga_Satuan:   harga,
-          Nilai_Perjanjian: harga,
+          Volume:         vol,
+          Satuan:         sat,
+          Harga_Satuan:   hrg,
+          Nilai_Perjanjian: subtotal,
           Beban_Anggaran: keg?.Beban_Anggaran || "",
         };
         await appendToSheet("detailPekerjaan", detail);
@@ -1368,7 +1378,10 @@
     let totalHonor = 0;
     relevantMappings.forEach(m => {
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-      if (keg) totalHonor += Number(keg.Harga_Satuan || 0);
+      const vol = Number(m.Volume) || 1;
+      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
+      const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+      totalHonor += subtotal;
     });
 
     const docId = generateId("BSM");

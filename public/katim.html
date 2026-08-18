@@ -582,9 +582,9 @@
                   </div>
                 </div>
 
-                <!-- Input Pencarian & Peran -->
+                <!-- Input Pencarian, Peran, Volume & Tombol -->
                 <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
-                  <div class="petugas-search-wrap" style="flex:1; min-width:240px;">
+                  <div class="petugas-search-wrap" style="flex:2; min-width:220px;">
                     <label class="form-label" for="wiz-search-petugas">Cari Nama Petugas</label>
                     <div style="position:relative;">
                       <span class="s-ico">🔍</span>
@@ -594,18 +594,53 @@
                     </div>
                   </div>
 
-                  <div style="width:170px;">
+                  <div style="flex:1; min-width:140px;">
                     <label class="form-label" for="wiz-peran-input">Peran Petugas</label>
-                    <select class="form-control" id="wiz-peran-input">
+                    <select class="form-control" id="wiz-peran-input" onchange="updatePetugasPreview()">
                       <option value="ppl">PPL (Pendataan)</option>
                       <option value="pml">PML (Pemeriksaan)</option>
                     </select>
+                  </div>
+
+                  <div style="width:110px;">
+                    <label class="form-label" for="wiz-volume-input">Volume <span class="required">*</span></label>
+                    <input type="number" class="form-control" id="wiz-volume-input" value="1" min="1" step="1"
+                           oninput="updatePetugasPreview()" onchange="updatePetugasPreview()">
                   </div>
 
                   <button type="button" class="btn btn-primary" id="btn-tambah-petugas"
                           style="height:42px; padding:0 22px; white-space:nowrap;" onclick="tambahPetugasRow()">
                     ➕ Tambahkan
                   </button>
+                </div>
+
+                <!-- Preview Honor Real-time (Muncul saat petugas terpilih / diketik) -->
+                <div id="wiz-petugas-preview-card" style="display:none; margin-top:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:12px 16px;">
+                  <div style="font-weight:700; color:#166534; font-size:.82rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                    <span>💡 Rincian Honor Penugasan</span>
+                  </div>
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; font-size:.82rem;">
+                    <div>
+                      <span style="color:var(--gray-500); font-size:.73rem;">Petugas:</span><br>
+                      <strong id="prev-petugas-nama" style="color:var(--gray-900);">-</strong>
+                    </div>
+                    <div>
+                      <span style="color:var(--gray-500); font-size:.73rem;">Kegiatan:</span><br>
+                      <strong id="prev-keg-nama" style="color:var(--gray-900);">-</strong>
+                    </div>
+                    <div>
+                      <span style="color:var(--gray-500); font-size:.73rem;">Volume:</span><br>
+                      <strong id="prev-volume-satuan" style="color:var(--gray-900);">-</strong>
+                    </div>
+                    <div>
+                      <span style="color:var(--gray-500); font-size:.73rem;">Harga Satuan:</span><br>
+                      <strong id="prev-harga-satuan" style="color:var(--gray-900);">-</strong>
+                    </div>
+                    <div>
+                      <span style="color:var(--gray-500); font-size:.73rem;">Total Honor:</span><br>
+                      <strong id="prev-total-honor" style="color:#15803d; font-size:.95rem;">-</strong>
+                    </div>
+                  </div>
                 </div>
 
                 <input type="hidden" id="wiz-petugas-temp-id">
@@ -1128,7 +1163,41 @@
     document.getElementById("wiz-petugas-temp-id").value = "";
     document.getElementById("wiz-petugas-temp-nama").value = "";
     document.getElementById("wiz-petugas-temp-tipe").value = "";
-    document.getElementById("wiz-live-results").classList.remove("visible");
+    const volInput = document.getElementById("wiz-volume-input");
+    if (volInput) volInput.value = "1";
+    document.getElementById("wiz-live-results")?.classList.remove("visible");
+    const previewCard = document.getElementById("wiz-petugas-preview-card");
+    if (previewCard) previewCard.style.display = "none";
+  }
+
+  function updatePetugasPreview() {
+    let id   = document.getElementById("wiz-petugas-temp-id")?.value;
+    let nama = document.getElementById("wiz-petugas-temp-nama")?.value;
+    let tipe = document.getElementById("wiz-petugas-temp-tipe")?.value;
+    const card = document.getElementById("wiz-petugas-preview-card");
+    if (!card) return;
+
+    if (!nama && document.getElementById("wiz-search-petugas")?.value.trim()) {
+      nama = document.getElementById("wiz-search-petugas").value.trim();
+      tipe = document.querySelector('input[name="wiz-sumber"]:checked')?.value || "mitra";
+    }
+
+    if (!_wizSelectedKegiatan || !nama) {
+      card.style.display = "none";
+      return;
+    }
+
+    const vol = Math.max(1, parseInt(document.getElementById("wiz-volume-input")?.value) || 1);
+    const satuan = _wizSelectedKegiatan.satuan || "Dokumen";
+    const harga = Number(_wizSelectedKegiatan.honor || 0);
+    const total = vol * harga;
+
+    document.getElementById("prev-petugas-nama").textContent = `${nama} (${tipe === 'mitra' ? 'Mitra' : 'Pegawai'})`;
+    document.getElementById("prev-keg-nama").textContent = _wizSelectedKegiatan.nama;
+    document.getElementById("prev-volume-satuan").textContent = `${vol} ${satuan}`;
+    document.getElementById("prev-harga-satuan").textContent = `Rp ${formatRupiah(harga)}`;
+    document.getElementById("prev-total-honor").textContent = `Rp ${formatRupiah(total)}`;
+    card.style.display = "block";
   }
 
   function onSearchPetugas() {
@@ -1137,6 +1206,8 @@
     const source = sumber === "mitra" ? _allMitra : _allPegawai;
     const resultsEl = document.getElementById("wiz-live-results");
     if (!resultsEl) return;
+
+    updatePetugasPreview();
 
     const filtered = source.filter(item => {
       const nama = (sumber === "mitra" ? ((typeof getMitraName === "function") ? getMitraName(item) : (item.Nama_Mitra || item.Nama || "")) : ((typeof getPegawaiName === "function") ? getPegawaiName(item) : (item.Nama_Pegawai || item.Nama || "")));
@@ -1172,7 +1243,8 @@
     document.getElementById("wiz-petugas-temp-nama").value = nama;
     document.getElementById("wiz-petugas-temp-tipe").value = tipe;
     document.getElementById("wiz-search-petugas").value    = nama;
-    document.getElementById("wiz-live-results").classList.remove("visible");
+    document.getElementById("wiz-live-results")?.classList.remove("visible");
+    updatePetugasPreview();
   }
 
   function tambahPetugasRow() {
@@ -1180,6 +1252,7 @@
     let nama = document.getElementById("wiz-petugas-temp-nama").value;
     let tipe = document.getElementById("wiz-petugas-temp-tipe").value;
     const peran = document.getElementById("wiz-peran-input").value || "ppl";
+    const volume = Math.max(1, parseInt(document.getElementById("wiz-volume-input")?.value) || 1);
 
     // Fallback jika belum klik autocomplete tapi ketik nama
     if (!id && document.getElementById("wiz-search-petugas").value.trim()) {
@@ -1208,12 +1281,20 @@
       return;
     }
 
+    const satuan = _wizSelectedKegiatan?.satuan || "Dokumen";
+    const hargaSatuan = Number(_wizSelectedKegiatan?.honor || 0);
+    const totalHonor = volume * hargaSatuan;
+
     // Tambahkan ke array
     _wizAssignedOfficers.push({
       id: id,
       nama: nama,
       tipe: tipe || "mitra",
       peran: peran,
+      volume: volume,
+      satuan: satuan,
+      hargaSatuan: hargaSatuan,
+      totalHonor: totalHonor,
       tglMulai: _wizSelectedKegiatan?.tglMulai || "",
       tglSelesai: _wizSelectedKegiatan?.tglSelesai || "",
       batasTerlambat: _wizSelectedKegiatan?.batasTerlambat || "",
@@ -1221,7 +1302,7 @@
 
     renderAssignedOfficers();
     clearPetugasSearchInput();
-    showToast(`✅ ${nama} (${peran.toUpperCase()}) ditambahkan.`, "success", 2500);
+    showToast(`✅ ${nama} (${peran.toUpperCase()}, ${volume} ${satuan}) ditambahkan.`, "success", 2500);
   }
 
   function hapusPetugasRow(idx) {
@@ -1239,6 +1320,15 @@
     }
   }
 
+  function updateOfficerVolume(idx, newVol) {
+    if (_wizAssignedOfficers[idx]) {
+      const vol = Math.max(1, parseInt(newVol) || 1);
+      _wizAssignedOfficers[idx].volume = vol;
+      _wizAssignedOfficers[idx].totalHonor = vol * (_wizAssignedOfficers[idx].hargaSatuan || 0);
+      renderAssignedOfficers();
+    }
+  }
+
   function renderAssignedOfficers() {
     const container = document.getElementById("assigned-officers-container");
     const countBadge = document.getElementById("assigned-count-badge");
@@ -1247,16 +1337,18 @@
     const total = _wizAssignedOfficers.length;
     const pplCount = _wizAssignedOfficers.filter(p => p.peran === "ppl").length;
     const pmlCount = _wizAssignedOfficers.filter(p => p.peran === "pml").length;
+    const totalVol = _wizAssignedOfficers.reduce((s, p) => s + (p.volume || 1), 0);
+    const totalAnggaran = _wizAssignedOfficers.reduce((s, p) => s + (p.totalHonor || 0), 0);
 
     if (countBadge) {
-      countBadge.textContent = `${total} Petugas (${pplCount} PPL, ${pmlCount} PML)`;
+      countBadge.textContent = `${total} Petugas (${pplCount} PPL, ${pmlCount} PML) · Total Rp ${formatRupiah(totalAnggaran)}`;
     }
 
     if (total === 0) {
       container.innerHTML = `
         <div class="empty-officers" id="empty-officers-msg">
           Belum ada petugas yang ditambahkan ke kegiatan ini.<br>
-          Cari nama petugas di atas lalu klik <strong>"➕ Tambahkan"</strong>.
+          Cari nama petugas di atas, tentukan volume lalu klik <strong>"➕ Tambahkan"</strong>.
         </div>`;
       return;
     }
@@ -1272,12 +1364,16 @@
         <table class="assigned-table">
           <thead>
             <tr>
-              <th style="width:40px; text-align:center;">#</th>
+              <th style="width:36px; text-align:center;">#</th>
               <th>Nama Petugas</th>
               <th>Tipe</th>
-              <th style="width:130px;">Peran</th>
-              <th>Periode Pelaksanaan</th>
-              <th style="width:50px; text-align:center;">Aksi</th>
+              <th style="width:120px;">Peran</th>
+              <th style="width:85px; text-align:center;">Volume</th>
+              <th>Satuan</th>
+              <th>Harga Satuan</th>
+              <th>Total Honor</th>
+              <th>Periode</th>
+              <th style="width:40px; text-align:center;">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -1301,14 +1397,21 @@
                     </span>
                   </td>
                   <td>
-                    <select class="form-control" style="padding:4px 8px; font-size:.8rem; font-weight:700;"
+                    <select class="form-control" style="padding:4px 6px; font-size:.78rem; font-weight:600;"
                             onchange="updateOfficerPeran(${idx}, this.value)">
                       <option value="ppl" ${p.peran === 'ppl' ? 'selected' : ''}>PPL (Pendataan)</option>
                       <option value="pml" ${p.peran === 'pml' ? 'selected' : ''}>PML (Pemeriksaan)</option>
                     </select>
                   </td>
+                  <td style="text-align:center;">
+                    <input type="number" min="1" class="form-control" style="width:70px; text-align:center; padding:3px 4px; font-weight:700;"
+                           value="${p.volume || 1}" onchange="updateOfficerVolume(${idx}, this.value)">
+                  </td>
+                  <td style="font-size:.8rem; color:var(--gray-600);">${escapeHtml(p.satuan || 'Dokumen')}</td>
+                  <td style="font-size:.8rem; color:var(--gray-600); white-space:nowrap;">Rp ${formatRupiah(p.hargaSatuan || 0)}</td>
+                  <td style="font-size:.85rem; font-weight:700; color:#15803d; white-space:nowrap;">Rp ${formatRupiah(p.totalHonor || 0)}</td>
                   <td>
-                    <span style="font-size:.78rem; color:var(--gray-600);">
+                    <span style="font-size:.76rem; color:var(--gray-500); white-space:nowrap;">
                       📅 ${formatTgl(p.tglMulai)} – ${formatTgl(p.tglSelesai)}
                     </span>
                   </td>
@@ -1318,6 +1421,15 @@
                 </tr>`;
             }).join("")}
           </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc; font-weight:700; border-top:2px solid var(--gray-300);">
+              <td colspan="4" style="text-align:right; padding:10px 14px; font-size:.84rem; color:var(--gray-700);">Total Keseluruhan:</td>
+              <td style="text-align:center; padding:10px 4px; font-size:.88rem; color:#1e40af;">${totalVol}</td>
+              <td colspan="2"></td>
+              <td style="padding:10px 14px; font-size:.92rem; color:#15803d; white-space:nowrap;">Rp ${formatRupiah(totalAnggaran)}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>`;
   }
@@ -1339,7 +1451,8 @@
     document.getElementById("sum-batas-terlambat").textContent  = _wizSelectedKegiatan.batasTerlambat ? formatTglLong(_wizSelectedKegiatan.batasTerlambat) : "—";
 
     const total = _wizAssignedOfficers.length;
-    document.getElementById("sum-petugas-title").textContent = `👥 Petugas yang Ditugaskan (${total} orang):`;
+    const totalAnggaran = _wizAssignedOfficers.reduce((s, p) => s + (p.totalHonor || 0), 0);
+    document.getElementById("sum-petugas-title").textContent = `👥 Petugas yang Ditugaskan (${total} orang — Total Honor: Rp ${formatRupiah(totalAnggaran)}):`;
 
     const listEl = document.getElementById("sum-officers-list");
     if (!listEl) return;
@@ -1356,17 +1469,24 @@
           <div>
             <strong style="color:var(--gray-900);">${escapeHtml(p.nama)}</strong>
             <span style="font-size:.74rem; color:var(--gray-500); margin-left:6px;">(${p.tipe === 'mitra' ? 'Mitra' : 'Pegawai'})</span>
+            <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
+              📦 Volume: <strong>${p.volume || 1} ${escapeHtml(p.satuan || 'Dokumen')}</strong> &nbsp;|&nbsp;
+              💵 Harga Satuan: Rp ${formatRupiah(p.hargaSatuan || 0)}
+            </div>
           </div>
         </div>
-        <div>
+        <div style="text-align:right;">
           <span class="peran-badge peran-${p.peran}">${p.peran.toUpperCase()}</span>
+          <div style="font-weight:700; color:#15803d; font-size:.88rem; margin-top:4px;">
+            Rp ${formatRupiah(p.totalHonor || 0)}
+          </div>
         </div>
       </div>
     `).join("");
 
     const btnSimpan = document.getElementById("btn-simpan-penugasan");
     if (btnSimpan) {
-      btnSimpan.textContent = `💾 Simpan Penugasan (${total} Petugas)`;
+      btnSimpan.textContent = `💾 Simpan Penugasan (${total} Petugas — Rp ${formatRupiah(totalAnggaran)})`;
     }
   }
 
@@ -1385,6 +1505,11 @@
     setLoading(true);
     try {
       for (const p of _wizAssignedOfficers) {
+        const vol = Number(p.volume) || 1;
+        const sat = p.satuan || keg.satuan || "Dokumen";
+        const hrg = Number(p.hargaSatuan !== undefined ? p.hargaSatuan : keg.honor) || 0;
+        const tot = Number(p.totalHonor !== undefined ? p.totalHonor : (vol * hrg));
+
         const record = {
           ID_Mapping:          generateId(),
           ID_Mitra_atau_NIP:   p.id,
@@ -1393,6 +1518,10 @@
           ID_Kegiatan:         keg.id,
           Uraian_Kegiatan:     keg.nama,
           Peran:               p.peran,
+          Volume:              vol,
+          Satuan:              sat,
+          Harga_Satuan:        hrg,
+          Total_Honor:         tot,
           Tanggal_Mulai:       p.tglMulai || keg.tglMulai,
           Tanggal_Selesai:     p.tglSelesai || keg.tglSelesai,
           Batas_Terlambat:     p.batasTerlambat || keg.batasTerlambat || "",
@@ -1507,16 +1636,25 @@
         const pmlCount = items.filter(m => (m.Peran || "").toLowerCase() === "pml").length;
         const cardId = `kegcard-${idx}`;
 
-        const rowsHTML = items.map(m => `
+        const rowsHTML = items.map(m => {
+          const vol = m.Volume || 1;
+          const sat = m.Satuan || "Dokumen";
+          const hrg = Number(m.Harga_Satuan || 0);
+          const tot = Number(m.Total_Honor || (vol * hrg));
+          return `
           <div class="mapping-sub-row">
             <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
               ${(m.Peran||'ppl').toUpperCase()}
             </span>
-            <div class="msr-title">
+            <div class="msr-title" style="flex:1;">
               <strong style="color:var(--gray-900);">${escapeHtml(m.Nama_Petugas || '—')}</strong>
               <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">
                 (${m.Tipe_Petugas === 'mitra' ? '👥 Mitra' : '🏛️ Pegawai'})
               </span>
+              <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
+                📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
+                ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
+              </div>
             </div>
             <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
             ${m.Batas_Terlambat ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(m.Batas_Terlambat)}</span>` : ""}
@@ -1525,8 +1663,8 @@
                     onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(m.Nama_Petugas || '')}', '${escapeHtml(kegNama)}')">
               🗑️
             </button>
-          </div>
-        `).join("");
+          </div>`;
+        }).join("");
 
         return `
           <div class="mapping-card ${idx === 0 ? 'open' : ''}" id="${cardId}">
@@ -1563,14 +1701,23 @@
         const initial = (nama || "?")[0].toUpperCase();
         const cardId  = `petcard-${idx}`;
 
-        const rowsHTML = items.map(m => `
+        const rowsHTML = items.map(m => {
+          const vol = m.Volume || 1;
+          const sat = m.Satuan || "Dokumen";
+          const hrg = Number(m.Harga_Satuan || 0);
+          const tot = Number(m.Total_Honor || (vol * hrg));
+          return `
           <div class="mapping-sub-row">
             <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
               ${(m.Peran||'ppl').toUpperCase()}
             </span>
-            <div class="msr-title">
+            <div class="msr-title" style="flex:1;">
               <strong style="color:var(--gray-900);">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || '—')}</strong>
               <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">(Kepka: ${escapeHtml(m.Nomor_Kepka || '—')})</span>
+              <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
+                📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
+                ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
+              </div>
             </div>
             <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
             ${m.Batas_Terlambat ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(m.Batas_Terlambat)}</span>` : ""}
@@ -1579,8 +1726,8 @@
                     onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(nama)}', '${escapeHtml(m.Uraian_Kegiatan || '')}')">
               🗑️
             </button>
-          </div>
-        `).join("");
+          </div>`;
+        }).join("");
 
         return `
           <div class="mapping-card ${idx === 0 ? 'open' : ''}" id="${cardId}">

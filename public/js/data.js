@@ -118,6 +118,8 @@ function normalizeRow(row, sheetKey) {
     detailPekerjaan:  ["No_Urut", "Volume", "Harga_Satuan", "Nilai_Perjanjian"],
     detail_pekerjaan: ["No_Urut", "Volume", "Harga_Satuan", "Nilai_Perjanjian"],
     kegiatan:         ["Harga_Satuan"],
+    mappingPetugas:   ["Volume", "Harga_Satuan", "Total_Honor"],
+    mapping_petugas:  ["Volume", "Harga_Satuan", "Total_Honor"],
     bastSmPpk:        ["Tahun", "Total_Honor"],
     bast_sm_ppk:      ["Tahun", "Total_Honor"],
     parameter:        ["TAHUN_AKTIF", "BATAS_HONOR_MAKSIMUM"],
