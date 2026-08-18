@@ -10,9 +10,23 @@ const AUTH_SESSION_KEY = "spkbast_user_session";
 
 // ─── Default Fallback Users ───────────────────────────────────
 const DEFAULT_USERS = [
-  { username: "ppk",   password: "ppk",   nama: "Pejabat Pembuat Komitmen", nip: "198501012010011001", role: "PPK",   jabatan: "Pejabat Pembuat Komitmen BPS Subulussalam" },
-  { username: "admin", password: "admin", nama: "Administrator Sistem",     nip: "198001012005011001", role: "ADMIN", jabatan: "Admin Sistem SPK/BAST" },
-  { username: "katim", password: "katim", nama: "Ketua Tim",                nip: "197501012000011001", role: "KATIM", jabatan: "Ketua Tim BPS Kota Subulussalam" },
+  // ── 11 Akun Pengguna dari Database Sheet User ──
+  { id: "1",  username: "srideza",       password: "123456", nama: "Sri Deza",            role: "ADMIN",    sub_role: "",           jabatan: "Administrator Sistem" },
+  { id: "2",  username: "rizqerosalia",  password: "123456", nama: "Rizqe Rosalia",       role: "ADMIN",    sub_role: "",           jabatan: "Administrator Sistem" },
+  { id: "3",  username: "armajuwita",    password: "123456", nama: "Armajuwita",          role: "PPK",      sub_role: "",           jabatan: "Pejabat Pembuat Komitmen (PPK)" },
+  { id: "4",  username: "triwahyudi",    password: "123456", nama: "Tri Wahyudi",         role: "KATIM",    sub_role: "distribusi", jabatan: "Ketua Tim Distribusi" },
+  { id: "5",  username: "radendaffa",    password: "123456", nama: "Raden Daffa",         role: "KATIM",    sub_role: "neraca",     jabatan: "Ketua Tim Neraca" },
+  { id: "6",  username: "thariqalfatih", password: "123456", nama: "Thariq Alfatih",      role: "KATIM",    sub_role: "produksi",   jabatan: "Ketua Tim Produksi" },
+  { id: "7",  username: "mutiasoraya",   password: "123456", nama: "Mutia Soraya",        role: "KATIM",    sub_role: "pengolahan", jabatan: "Ketua Tim Pengolahan" },
+  { id: "8",  username: "putrinurhilwa", password: "123456", nama: "Putri Nurhilwa",      role: "KATIM",    sub_role: "sosial",     jabatan: "Ketua Tim Sosial" },
+  { id: "9",  username: "suciarti",      password: "123456", nama: "Suciarti",           role: "KATIM",    sub_role: "diseminasi", jabatan: "Ketua Tim Diseminasi" },
+  { id: "10", username: "adiputra",      password: "123456", nama: "Adi Putra",           role: "PENGGUNA", sub_role: "",           jabatan: "Pengguna / Staf BPS" },
+  { id: "11", username: "ernilusiani",   password: "123456", nama: "Erni Lusiani",        role: "PENGGUNA", sub_role: "",           jabatan: "Pengguna / Staf BPS" },
+
+  // ── Akun Default / Fallback Tambahan ──
+  { id: "99", username: "admin",         password: "admin",  nama: "Administrator Sistem",role: "ADMIN",    sub_role: "",           jabatan: "Admin Sistem SPK/BAST" },
+  { id: "98", username: "ppk",           password: "ppk",    nama: "Pejabat Pembuat Komitmen", role: "PPK",  sub_role: "",           jabatan: "Pejabat Pembuat Komitmen" },
+  { id: "97", username: "katim",         password: "katim",  nama: "Ketua Tim",           role: "KATIM",    sub_role: "",           jabatan: "Ketua Tim BPS" },
 ];
 
 // ─── Helper: deteksi nama halaman saat ini ───────────────────
@@ -72,6 +86,11 @@ const Auth = {
     return user ? (user.role || "PENGGUNA").toUpperCase() : "GUEST";
   },
 
+  getSubRole() {
+    const user = this.getUser();
+    return user ? (user.sub_role || "") : "";
+  },
+
   isPPK()      { return this.getRole() === "PPK";      },
   isPengguna() { return this.getRole() === "PENGGUNA"; },
   isAdmin()    { return this.getRole() === "ADMIN";    },
@@ -86,41 +105,44 @@ const Auth = {
     let userFound = null;
 
     // ── LANGKAH 1: Cek DEFAULT_USERS dulu (SINKRON, instan) ──
-    // Ini yang buat login admin/ppk/katim jadi cepat
-    const matchDefault = DEFAULT_USERS.find(d => d.username === u);
+    const matchDefault = DEFAULT_USERS.find(d => d.username.toLowerCase() === u);
     if (matchDefault) {
       const customPwd = _getCustomPwd(u);
       const validPwd  = customPwd !== null ? customPwd : matchDefault.password;
       if (validPwd === p) {
         userFound = { ...matchDefault };
-      } else {
-        // Username ada di DEFAULT_USERS tapi password salah → langsung error
-        throw new Error("Username atau Password salah!");
       }
     }
 
-    // ── LANGKAH 2: Sheet "pengguna" (hanya jika bukan DEFAULT_USER) ──
+    // ── LANGKAH 2: Sheet "user" / "pengguna" ──
     if (!userFound && typeof getPengguna === "function") {
       try {
         const usersFromSheet = await getPengguna();
         if (Array.isArray(usersFromSheet) && usersFromSheet.length > 0) {
           const match = usersFromSheet.find(row => {
-            const rUser = String(row.Username || row.username || "").trim().toLowerCase();
-            const rPass = String(row.Password || row.Password_Hash || row.password || "").trim();
-            return rUser === u && rPass === p;
+            const rUser = String(row.username || row.Username || "").trim().toLowerCase();
+            const rPass = String(row.password || row.Password || row.Password_Hash || "").trim();
+            const isDeleted = row.deleted_at && String(row.deleted_at).trim() !== "" && String(row.deleted_at).trim() !== "-";
+            return rUser === u && rPass === p && !isDeleted;
           });
           if (match) {
+            let roleStr = String(match.role || match.Role || "PENGGUNA").trim().toUpperCase();
+            if (roleStr === "USER" || roleStr === "OPERATOR") roleStr = "PENGGUNA";
+            const subRole = (match.sub_role && String(match.sub_role).trim() !== "-") ? String(match.sub_role).trim() : "";
+
             userFound = {
-              username: (match.Username || match.username || u).toLowerCase(),
-              nama:     match.Nama_Lengkap || match.Nama || match.nama || u,
-              nip:      match.NIP || match.nip || "",
-              role:     String(match.Role || match.role || "PENGGUNA").toUpperCase(),
-              jabatan:  match.Jabatan || match.jabatan || ""
+              id:       match.id || match.ID || "",
+              username: (match.username || match.Username || u).toLowerCase(),
+              nama:     match.nama || match.Nama || match.Nama_Lengkap || u,
+              nip:      match.nip || match.NIP || "",
+              role:     roleStr,
+              sub_role: subRole,
+              jabatan:  match.jabatan || match.Jabatan || (roleStr === "KATIM" && subRole ? `Ketua Tim ${subRole}` : "")
             };
           }
         }
       } catch (err) {
-        console.warn("[auth.js] Gagal fetch sheet pengguna:", err.message);
+        console.warn("[auth.js] Gagal fetch sheet user/pengguna:", err.message);
       }
     }
 
@@ -137,13 +159,13 @@ const Auth = {
             const customPwd  = _getCustomPwd(namaBersih);
             const validPwd   = customPwd !== null ? customPwd : "password";
             if (validPwd === p) {
-              // Cek role yang di-assign Admin, fallback ke PENGGUNA
               const assignedRole = _getAssignedRole(namaBersih) || "PENGGUNA";
               userFound = {
                 username: namaBersih,
                 nama:     match.Nama_Pegawai || match.Nama || u,
                 nip:      match.NIP || match.nip || "",
                 role:     assignedRole,
+                sub_role: "",
                 jabatan:  match.Jabatan || match.jabatan || ""
               };
             }
@@ -155,6 +177,23 @@ const Auth = {
     }
 
     if (!userFound) throw new Error("Username atau Password salah!");
+
+    // Lengkapi NIP atau Nama dari data pegawai jika ada
+    if (typeof getPegawai === "function" && (!userFound.nip || !userFound.nama || userFound.nama === userFound.username)) {
+      try {
+        const pList = await getPegawai();
+        if (Array.isArray(pList)) {
+          const matchedPeg = pList.find(pg => {
+            const clean = _stripGelardanPangkat(pg.Nama_Pegawai || pg.Nama || "").replace(/\s+/g, "");
+            return clean.includes(u) || u.includes(clean);
+          });
+          if (matchedPeg) {
+            if (!userFound.nip) userFound.nip = matchedPeg.NIP || matchedPeg.nip || "";
+            if (!userFound.nama || userFound.nama === userFound.username) userFound.nama = matchedPeg.Nama_Pegawai || matchedPeg.Nama || userFound.nama;
+          }
+        }
+      } catch {}
+    }
 
     const sessionData = JSON.stringify({ ...userFound, loginAt: new Date().toISOString() });
     if (rememberMe) {

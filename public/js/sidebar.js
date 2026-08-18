@@ -110,18 +110,16 @@
       PENGGUNA: "#1d4ed8"
     };
     const roleColor = roleColors[role] || "#1d4ed8";
-    const roleBadge = {
-      PPK:      "PPK",
-      ADMIN:    "ADMIN",
-      KATIM:    "Ketua Tim",
-      PENGGUNA: "Pengguna"
-    };
+    let badgeText = role === "PPK" ? "PPK" : role === "ADMIN" ? "ADMIN" : role === "KATIM" ? "Ketua Tim" : "Pengguna";
+    if (role === "KATIM" && user.sub_role && user.sub_role !== "-") {
+      badgeText = `Katim · ${user.sub_role.charAt(0).toUpperCase() + user.sub_role.slice(1)}`;
+    }
 
     return `
       <div style="padding: 12px; margin: 10px; background: #f8fafc; border: 1px solid var(--gray-200); border-radius: var(--radius-md);">
         <div style="font-weight: 700; font-size: 0.82rem; color: var(--gray-800); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${user.nama || user.username}</div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-          <span style="font-size: 0.68rem; font-weight: 800; color: ${roleColor}; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${roleBadge[role] || role}</span>
+          <span style="font-size: 0.68rem; font-weight: 800; color: ${roleColor}; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${badgeText}</span>
           <button type="button" onclick="Auth.logout()" style="background: none; border: none; color: #dc2626; font-weight: 700; font-size: 0.75rem; cursor: pointer; padding: 0;">🚪 Keluar</button>
         </div>
       </div>`;

@@ -191,5 +191,11 @@ async function getSpkBast()          { return fetchSheet("spkBast"); }
 async function getDetailPekerjaan()  { return fetchSheet("detailPekerjaan"); }
 async function getBastSmPpk()        { return fetchSheet("bastSmPpk"); }
 async function getParameter()        { return fetchSheet("parameter"); }
-async function getPengguna()         { return fetchSheet("pengguna"); }
+async function getPengguna()         {
+  const res = await fetchSheet("pengguna");
+  if (Array.isArray(res) && res.length > 0) return res;
+  return fetchSheet("user");
+}
+async function getUser()             { return getPengguna(); }
+async function getUsers()            { return getPengguna(); }
 async function getMappingPetugas()   { return fetchSheet("mappingPetugas"); }

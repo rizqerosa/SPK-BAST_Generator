@@ -352,7 +352,11 @@
     const pillEl = document.getElementById("role-pill-el");
     if (pillEl) {
       const roleLabels = { PENGGUNA: "Pengguna", PPK: "PPK", KATIM: "Ketua Tim", ADMIN: "Admin" };
-      pillEl.textContent = roleLabels[role] || role;
+      let pillText = roleLabels[role] || role;
+      if (role === "KATIM" && user.sub_role && user.sub_role !== "-") {
+        pillText = `Katim · ${user.sub_role.charAt(0).toUpperCase() + user.sub_role.slice(1)}`;
+      }
+      pillEl.textContent = pillText;
       pillEl.className = `role-pill pill-${role}`;
     }
 
@@ -364,7 +368,11 @@
     set("info-jabatan",  user.jabatan);
 
     const roleLabels2 = { PENGGUNA: "Pengguna", PPK: "PPK — Pejabat Pembuat Komitmen", KATIM: "Ketua Tim", ADMIN: "Administrator" };
-    set("info-role", roleLabels2[role] || role);
+    let roleFullText = roleLabels2[role] || role;
+    if (role === "KATIM" && user.sub_role && user.sub_role !== "-") {
+      roleFullText = `Ketua Tim (${user.sub_role.charAt(0).toUpperCase() + user.sub_role.slice(1)})`;
+    }
+    set("info-role", roleFullText);
 
     // Login time
     if (user.loginAt) {
@@ -388,7 +396,8 @@
   function _getDefaultPwd(username, role) {
     // Tampilkan password default sesuai username
     const defaults = { ppk: "ppk", admin: "admin", katim: "katim" };
-    return defaults[username] || "password";
+    if (defaults[username]) return defaults[username];
+    return "123456";
   }
 </script>
 </body>
