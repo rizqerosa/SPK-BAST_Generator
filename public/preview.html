@@ -89,10 +89,10 @@
             </div>
           </div>
           <div class="export-section">
-            <h3>&#128229; Export PDF</h3>
-            <button class="btn btn-success w-full mb-8" onclick="exportCurrentPdf()">&#11015; Download PDF Dokumen Ini</button>
+            <h3>&#128229; Export Word</h3>
+            <button class="btn btn-primary w-full mb-8" onclick="exportCurrentWord()">&#11015; Download Word (.docx)</button>
             <button class="btn btn-outline w-full btn-sm" onclick="window.print()">&#128424;&#65039; Print</button>
-            <p class="text-xs text-muted mt-8">Export menggunakan html2pdf.js.</p>
+            <p class="text-xs text-muted mt-8">Format Microsoft Word (.docx).</p>
           </div>
         </div>
         <div>
@@ -109,14 +109,15 @@
 </div>
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="js/config.js?v=4.2"></script>
-<script src="js/data.js?v=4.2"></script>
-<script src="js/auth.js?v=4.2"></script>
-<script src="js/utils.js?v=4.2"></script>
-<script src="js/render.js?v=4.2"></script>
-<script src="js/sidebar.js?v=4.2"></script>
-<script src="js/app.js?v=4.2"></script>
+<script src="https://unpkg.com/docx@8/build/index.min.js"></script>
+<script src="js/config.js?v=4.3"></script>
+<script src="js/data.js?v=4.3"></script>
+<script src="js/auth.js?v=4.3"></script>
+<script src="js/utils.js?v=4.3"></script>
+<script src="js/render.js?v=4.3"></script>
+<script src="js/word-export.js?v=4.3"></script>
+<script src="js/sidebar.js?v=4.3"></script>
+<script src="js/app.js?v=4.3"></script>
 <script>
   let _previewRecord  = null;
   let _previewDetails = [];
@@ -345,23 +346,34 @@
     setLoading(false);
   }
 
-  function exportCurrentPdf() {
-    if (!window.html2pdf) { showToast("html2pdf belum dimuat", "danger"); return; }
-    const tabLabels = { spk:"SPK", "ppl-pml":"BAST-PPL-PML", "ppl-sm":"BAST-PPL-SM", "pml-sm":"BAST-PML-SM", "sm-ppk":"BAST-SM-PPK" };
-    const docId    = _previewRecord?.ID_Dokumen || "DOK";
-    const filename = docId + "_" + (tabLabels[_currentTab] || _currentTab) + ".pdf";
-    const content  = document.getElementById("preview-doc-content");
-    const opt = {
-      margin:[0,0,0,0], filename,
-      image:{ type:"jpeg", quality:0.98 },
-      html2canvas:{ scale:2, useCORS:true, logging:false, scrollY:0 },
-      jsPDF:{ unit:"mm", format:"a4", orientation:"portrait" },
-      pagebreak:{ mode:["css","avoid-all"], before:".doc-page" },
-    };
+  async function exportCurrentWord() {
+    if (typeof docx === "undefined" || typeof generateAndDownloadWord === "undefined") {
+      showToast("Library Word belum termuat. Pastikan koneksi internet aktif.", "danger");
+      return;
+    }
+    if (!_previewRecord) {
+      showToast("Data dokumen belum siap", "warning");
+      return;
+    }
     setLoading(true);
-    html2pdf().set(opt).from(content).save()
-      .then(() => { setLoading(false); showToast('PDF "' + filename + '" berhasil diunduh', "success"); })
-      .catch(err => { setLoading(false); showToast("Gagal export PDF: " + err.message, "danger"); });
+    try {
+      const filename = await generateAndDownloadWord(
+        _currentTab,
+        _previewCtx || {},
+        _previewRecord,
+        {
+          details: _previewDetails,
+          pegawaiArr: AppState.pegawai,
+          isPmlMitra: _isPmlMitra
+        }
+      );
+      showToast('File Word "' + filename + '" berhasil diunduh', "success");
+    } catch (err) {
+      showToast("Gagal export Word: " + err.message, "danger");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function changeZoom(delta) {

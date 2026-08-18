@@ -1976,40 +1976,7 @@ async function renderTab(tabKey, ctx, containerId, record, details) {
   content.innerHTML = renderTemplate(tpl, dataCtx);
 }
 
-// ─── PDF Export ───────────────────────────────────────────────
-function exportPdf(filename) {
-  const content = document.getElementById("preview-doc-content");
-  if (!content || !window.html2pdf) {
-    showToast("html2pdf belum dimuat", "danger");
-    return;
-  }
-  const opt = {
-    margin:      [10, 10, 10, 10],
-    filename:    filename || "dokumen-spk-bast.pdf",
-    image:       { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF:       { unit: "mm", format: "a4", orientation: "portrait" },
-    pagebreak:   { mode: ["avoid-all", "css"], before: ".doc-page" },
-  };
-  setLoading(true);
-  html2pdf().set(opt).from(content).save()
-    .then(() => {
-      setLoading(false);
-      showToast("PDF berhasil diunduh", "success");
-      // Update status Generate ke Sheets
-      const urlParams = new URLSearchParams(window.location.search);
-      const docId = urlParams.get("id");
-      if (docId) {
-        updateInSheet("spkBast", "ID_Dokumen", docId, { Status_Generate_SPK: "Sudah" })
-          .then(() => clearCache("spkBast"))
-          .catch(err => console.warn("Gagal update status:", err));
-      }
-    })
-    .catch(err => {
-      setLoading(false);
-      showToast("Gagal export PDF: " + err.message, "danger");
-    });
-}
+// ─── Export Dokumen (Word generator ditangani oleh word-export.js) ─────────
 
 // ============================================================
 // DASHBOARD LOGIC — dipakai dokumen.html (tabel histori)
