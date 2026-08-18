@@ -507,7 +507,7 @@
                 <div class="form-group">
                   <label class="form-label" for="wiz-batas-terlambat">Batas Terlambat</label>
                   <input type="date" class="form-control" id="wiz-batas-terlambat">
-                  <div style="font-size:.73rem; color:var(--gray-400); margin-top:4px;">Default tgl 25 di bulan yang sama (bisa diubah)</div>
+                  <div style="font-size:.73rem; color:var(--gray-400); margin-top:4px;">Default +5 hari dari tanggal selesai (bisa diubah)</div>
                 </div>
               </div>
 
@@ -1189,7 +1189,7 @@
 
     if (!tglMulaiEl.value) tglMulaiEl.value = `${curYear}-${curMonth}-01`;
     if (!tglSlsEl.value)   tglSlsEl.value   = `${curYear}-${curMonth}-${String(lastDay).padStart(2, "0")}`;
-    if (!batasEl.value)    batasEl.value    = `${curYear}-${curMonth}-25`;
+    if (!batasEl.value)    batasEl.value    = calculateBatasTerlambat(tglSlsEl.value);
     if (!tglKepkaEl.value) {
       tglKepkaEl.value = tglMulaiEl.value || `${curYear}-${curMonth}-01`;
       updateTglKepkaDisplay();
@@ -1223,6 +1223,19 @@
     applyAutoKepkaNumber(false);
   }
 
+  function calculateBatasTerlambat(tglSelesaiStr) {
+    if (!tglSelesaiStr) return "";
+    const parts = tglSelesaiStr.split("-");
+    if (parts.length !== 3) return "";
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    if (isNaN(d.getTime())) return "";
+    d.setDate(d.getDate() + 5); // + 5 hari dari tanggal selesai
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
   function clearSelectedKegiatan() {
     _wizSelectedKegiatan = null;
     document.getElementById("wiz-search-kegiatan").value = "";
@@ -1250,16 +1263,11 @@
     const val = document.getElementById("wiz-tgl-selesai").value;
     if (_wizSelectedKegiatan) _wizSelectedKegiatan.tglSelesai = val;
 
-    // Auto set batas terlambat ke tgl 25 di bulan yang sama jika belum diisi
+    // Auto set batas terlambat ke +5 hari dari tanggal selesai
     const batasEl = document.getElementById("wiz-batas-terlambat");
-    if (val && !batasEl.value) {
-      const d = new Date(val);
-      if (!isNaN(d)) {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        batasEl.value = `${y}-${m}-25`;
-        if (_wizSelectedKegiatan) _wizSelectedKegiatan.batasTerlambat = batasEl.value;
-      }
+    if (val) {
+      batasEl.value = calculateBatasTerlambat(val);
+      if (_wizSelectedKegiatan) _wizSelectedKegiatan.batasTerlambat = batasEl.value;
     }
   }
 
