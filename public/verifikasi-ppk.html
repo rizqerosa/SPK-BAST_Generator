@@ -636,6 +636,9 @@
   document.addEventListener("DOMContentLoaded", async () => {
     setLoading(true);
     try {
+      // Bersihkan cache agar data verifikasi selalu fresh
+      clearCache("spkBast");
+      clearCache("bastSmPpk");
       const [spkBastData, mitraData, pegawaiData, detailData, smData] = await Promise.all([
         getSpkBast(),
         getMitra(),
