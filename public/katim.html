@@ -637,12 +637,18 @@
                     </select>
                   </div>
 
-                  <!-- Dropdown PML Pengawas untuk Petugas PPL -->
-                  <div id="wiz-pml-wrap" style="flex:2; min-width:200px;">
-                    <label class="form-label" for="wiz-pml-select">PML Pengawas (untuk PPL) <span class="required">*</span></label>
-                    <select class="form-control" id="wiz-pml-select">
-                      <option value="">-- Pilih PML Pengawas --</option>
-                    </select>
+                  <!-- Input Pencarian & Dropdown PML Pengawas untuk Petugas PPL -->
+                  <div id="wiz-pml-wrap" class="petugas-search-wrap" style="flex:2; min-width:220px;">
+                    <label class="form-label" for="wiz-search-pml">PML Pengawas (untuk PPL) <span class="required">*</span></label>
+                    <div style="position:relative;">
+                      <span class="s-ico">👤</span>
+                      <input type="text" id="wiz-search-pml" class="form-control"
+                             placeholder="Ketik / cari nama PML..." autocomplete="off">
+                      <div id="wiz-pml-live-results" class="live-results"></div>
+                    </div>
+                    <input type="hidden" id="wiz-pml-temp-id">
+                    <input type="hidden" id="wiz-pml-temp-nama">
+                    <input type="hidden" id="wiz-pml-temp-tipe">
                   </div>
 
                   <div style="width:100px;">
@@ -958,6 +964,13 @@
       searchPetugasEl.addEventListener("focus", onSearchPetugas);
     }
 
+    // PML Pengawas autocomplete live search listener (Langkah 2)
+    const searchPmlEl = document.getElementById("wiz-search-pml");
+    if (searchPmlEl) {
+      searchPmlEl.addEventListener("input", onSearchPml);
+      searchPmlEl.addEventListener("focus", onSearchPml);
+    }
+
     // Close live results when clicking outside
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".kegiatan-search-wrap")) {
@@ -965,6 +978,9 @@
       }
       if (!e.target.closest(".petugas-search-wrap")) {
         document.getElementById("wiz-live-results")?.classList.remove("visible");
+      }
+      if (!e.target.closest("#wiz-pml-wrap")) {
+        document.getElementById("wiz-pml-live-results")?.classList.remove("visible");
       }
     });
 
@@ -1498,57 +1514,69 @@
     if (pmlWrap) {
       pmlWrap.style.display = (peran === "ppl") ? "block" : "none";
     }
-    if (peran === "ppl") {
-      populatePmlDropdown();
-    }
     updatePetugasPreview();
   }
 
-  function populatePmlDropdown(selectedPmlId = "") {
-    const selectEl = document.getElementById("wiz-pml-select");
-    if (!selectEl) return;
+  // ─── Searchable PML Pengawas (Mendukung Semua Pegawai & Semua Mitra) ───
+  function onSearchPml() {
+    const q = (document.getElementById("wiz-search-pml")?.value || "").toLowerCase().trim();
+    const resultsEl = document.getElementById("wiz-pml-live-results");
+    if (!resultsEl) return;
 
-    const currentVal = selectedPmlId || selectEl.value;
+    // Kumpulkan kandidat: 1) PML di kegiatan ini, 2) Semua Pegawai BPS, 3) Semua Mitra Lapangan
     const assignedPmls = _wizAssignedOfficers.filter(p => p.peran === "pml");
     const pegawaiList  = _allPegawai || [];
-    const mitraPmls    = (_allMitra || []).filter(m => (m.Posisi || m.posisi || "").toLowerCase().includes("pml"));
+    const mitraList    = _allMitra || [];
 
-    let html = `<option value="">-- Pilih PML Pengawas --</option>`;
-
-    if (assignedPmls.length > 0) {
-      html += `<optgroup label="⭐ PML Terpilih di Kegiatan Ini">`;
-      assignedPmls.forEach(p => {
-        const isSel = String(p.id) === String(currentVal) ? "selected" : "";
-        html += `<option value="${escapeHtml(p.id)}" data-nama="${escapeHtml(p.nama)}" ${isSel}>⭐ ${escapeHtml(p.nama)} (${p.tipe === 'mitra' ? 'Mitra' : 'Pegawai'})</option>`;
-      });
-      html += `</optgroup>`;
-    }
-
-    html += `<optgroup label="🏛️ Pegawai BPS Organik">`;
+    const list = [];
+    assignedPmls.forEach(p => {
+      list.push({ id: p.id, nama: p.nama, tipe: p.tipe, isAssigned: true, desc: `⭐ PML di Kegiatan Ini (${p.tipe === 'mitra' ? 'Mitra' : 'Pegawai'})` });
+    });
     pegawaiList.forEach(p => {
       const nip = (typeof getPegawaiNip === "function") ? getPegawaiNip(p) : (p.NIP || p.nip || "");
       const nama = (typeof getPegawaiName === "function") ? getPegawaiName(p) : (p.Nama_Pegawai || p.Nama || "");
-      if (!assignedPmls.some(ap => String(ap.id) === String(nip))) {
-        const isSel = String(nip) === String(currentVal) ? "selected" : "";
-        html += `<option value="${escapeHtml(nip)}" data-nama="${escapeHtml(nama)}" ${isSel}>${escapeHtml(nama)} (NIP: ${escapeHtml(nip)})</option>`;
+      if (!list.some(item => String(item.id) === String(nip))) {
+        list.push({ id: nip, nama: nama, tipe: "pegawai", desc: `Pegawai BPS · NIP: ${nip}` });
       }
     });
-    html += `</optgroup>`;
+    mitraList.forEach(m => {
+      const id = (typeof getMitraId === "function") ? getMitraId(m) : (m.ID_Mitra || m.ID || "");
+      const nama = (typeof getMitraName === "function") ? getMitraName(m) : (m.Nama_Mitra || m.Nama || "");
+      if (!list.some(item => String(item.id) === String(id))) {
+        list.push({ id: id, nama: nama, tipe: "mitra", desc: `Mitra Lapangan · ${m.Asal || m.asal || "Subulussalam"}` });
+      }
+    });
 
-    if (mitraPmls.length > 0) {
-      html += `<optgroup label="👥 Mitra PML">`;
-      mitraPmls.forEach(m => {
-        const id = (typeof getMitraId === "function") ? getMitraId(m) : (m.ID_Mitra || m.ID || "");
-        const nama = (typeof getMitraName === "function") ? getMitraName(m) : (m.Nama_Mitra || m.Nama || "");
-        if (!assignedPmls.some(ap => String(ap.id) === String(id))) {
-          const isSel = String(id) === String(currentVal) ? "selected" : "";
-          html += `<option value="${escapeHtml(id)}" data-nama="${escapeHtml(nama)}" ${isSel}>${escapeHtml(nama)} (Mitra)</option>`;
-        }
-      });
-      html += `</optgroup>`;
+    const filtered = list.filter(item => {
+      return !q || item.nama.toLowerCase().includes(q) || String(item.id).toLowerCase().includes(q);
+    }).slice(0, 25);
+
+    if (filtered.length === 0) {
+      resultsEl.innerHTML = `<div class="live-result-item" style="color:var(--gray-400);">Tidak ada nama PML yang cocok dengan "${escapeHtml(q)}".</div>`;
+    } else {
+      resultsEl.innerHTML = filtered.map(item => {
+        const initial = (item.nama || "?")[0].toUpperCase();
+        const iconClass = item.isAssigned ? "keg" : item.tipe;
+        return `
+          <div class="live-result-item" onclick="selectPmlAutocomplete('${escapeHtml(item.id)}', '${escapeHtml(item.nama)}', '${item.tipe}')">
+            <div class="lri-avatar ${iconClass}" style="width:28px; height:28px; font-size:.78rem;">${initial}</div>
+            <div style="flex:1; min-width:0;">
+              <div class="lri-name" style="font-size:.85rem; font-weight:700;">${escapeHtml(item.nama)}</div>
+              <div class="lri-meta" style="font-size:.72rem;">${escapeHtml(item.desc)}</div>
+            </div>
+          </div>`;
+      }).join("");
     }
 
-    selectEl.innerHTML = html;
+    resultsEl.classList.add("visible");
+  }
+
+  function selectPmlAutocomplete(id, nama, tipe) {
+    document.getElementById("wiz-pml-temp-id").value   = id;
+    document.getElementById("wiz-pml-temp-nama").value = nama;
+    document.getElementById("wiz-pml-temp-tipe").value = tipe;
+    document.getElementById("wiz-search-pml").value    = nama;
+    document.getElementById("wiz-pml-live-results")?.classList.remove("visible");
   }
 
   function getPetugasMonthlyHonor(petugasId, tglMulaiStr, addHonor = 0) {
@@ -1722,13 +1750,32 @@
     // Ambil info PML jika perannya PPL
     let pmlId = "", pmlNama = "";
     if (peran === "ppl") {
-      const pmlSel = document.getElementById("wiz-pml-select");
-      if (pmlSel && pmlSel.value) {
-        pmlId = pmlSel.value;
-        const opt = pmlSel.options[pmlSel.selectedIndex];
-        pmlNama = opt?.getAttribute("data-nama") || opt?.text || pmlId;
-        // Bersihkan prefix label jika ada
-        pmlNama = pmlNama.replace(/^⭐\s*/, "").replace(/\s*\(.*?\)$/, "").trim();
+      pmlId = document.getElementById("wiz-pml-temp-id")?.value || "";
+      pmlNama = document.getElementById("wiz-pml-temp-nama")?.value || document.getElementById("wiz-search-pml")?.value.trim() || "";
+
+      // Fallback search jika user mengetik nama tanpa klik autocomplete
+      if (!pmlId && pmlNama) {
+        const qPml = pmlNama.toLowerCase();
+        const foundAssigned = _wizAssignedOfficers.find(p => p.peran === "pml" && p.nama.toLowerCase().includes(qPml));
+        const foundP = _allPegawai.find(p => ((typeof getPegawaiName === "function") ? getPegawaiName(p) : (p.Nama_Pegawai || p.Nama || "")).toLowerCase().includes(qPml));
+        const foundM = _allMitra.find(m => ((typeof getMitraName === "function") ? getMitraName(m) : (m.Nama_Mitra || m.Nama || "")).toLowerCase().includes(qPml));
+
+        if (foundAssigned) {
+          pmlId = foundAssigned.id;
+          pmlNama = foundAssigned.nama;
+        } else if (foundP) {
+          pmlId = (typeof getPegawaiNip === "function") ? getPegawaiNip(foundP) : (foundP.NIP || foundP.nip || "");
+          pmlNama = (typeof getPegawaiName === "function") ? getPegawaiName(foundP) : (foundP.Nama_Pegawai || foundP.Nama || "");
+        } else if (foundM) {
+          pmlId = (typeof getMitraId === "function") ? getMitraId(foundM) : (foundM.ID_Mitra || foundM.ID || "");
+          pmlNama = (typeof getMitraName === "function") ? getMitraName(foundM) : (foundM.Nama_Mitra || foundM.Nama || "");
+        }
+      }
+
+      if (!pmlNama) {
+        showToast("Pilih / cari PML Pengawas untuk petugas PPL terlebih dahulu!", "warning");
+        document.getElementById("wiz-search-pml")?.focus();
+        return;
       }
     }
 
@@ -1761,16 +1808,14 @@
 
     renderAssignedOfficers();
     clearPetugasSearchInput();
-    populatePmlDropdown(); // Refresh opsi PML jika yang baru ditambahkan adalah PML
     showToast(`✅ ${nama} (${peran.toUpperCase()}, ${volume} ${satuan}) ditambahkan.`, "success", 2500);
   }
 
   function hapusPetugasRow(idx) {
     const removed = _wizAssignedOfficers.splice(idx, 1);
     renderAssignedOfficers();
-    populatePmlDropdown();
     if (removed[0]) {
-      showToast(`Petugas "${removed[0].nama}" dihapus dari daftar.`, "info", 2000);
+      showToast(`Petugas "${removed[0].nama}" dihapus dari penugasan.`, "info", 2000);
     }
   }
 
@@ -1782,7 +1827,6 @@
         _wizAssignedOfficers[idx].pmlNama = "";
       }
       renderAssignedOfficers();
-      populatePmlDropdown();
     }
   }
 
@@ -1836,10 +1880,11 @@
       return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
     };
 
-    // Daftar PML untuk dropdown per baris
+    // Daftar PML untuk dropdown per baris (PML kegiatan, Semua Pegawai, Semua Mitra)
     const pmlOptions = [
-      ..._wizAssignedOfficers.filter(p => p.peran === "pml").map(p => ({ id: p.id, nama: p.nama, tipe: p.tipe })),
-      ...(_allPegawai || []).map(p => ({ id: (typeof getPegawaiNip === "function" ? getPegawaiNip(p) : p.NIP), nama: (typeof getPegawaiName === "function" ? getPegawaiName(p) : p.Nama_Pegawai), tipe: "pegawai" }))
+      ..._wizAssignedOfficers.filter(p => p.peran === "pml").map(p => ({ id: p.id, nama: `⭐ ${p.nama} (${p.tipe === 'mitra' ? 'Mitra' : 'Pegawai'})` })),
+      ...(_allPegawai || []).map(p => ({ id: (typeof getPegawaiNip === "function" ? getPegawaiNip(p) : (p.NIP || p.nip || "")), nama: `${typeof getPegawaiName === "function" ? getPegawaiName(p) : (p.Nama_Pegawai || p.Nama)} (Pegawai)` })),
+      ...(_allMitra || []).map(m => ({ id: (typeof getMitraId === "function" ? getMitraId(m) : (m.ID_Mitra || m.ID || "")), nama: `${typeof getMitraName === "function" ? getMitraName(m) : (m.Nama_Mitra || m.Nama)} (Mitra)` }))
     ];
 
     container.innerHTML = `
