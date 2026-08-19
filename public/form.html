@@ -837,37 +837,13 @@
   let _approvedSpkList = []; // SPK yang sudah disetujui PPK
   let _bastMappingRows = [];
 
-  // ─── Init (Instan 0 ms, Tanpa Spinner Memblokir Layar) ───────
-  document.addEventListener("DOMContentLoaded", () => {
-    // 1. Render data dari cache secara instan (0 ms)
-    const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
-    const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
-    const cachedKegiatan= (typeof lsGet === "function" ? lsGet("kegiatan")?.data : null) || _DB.kegiatan;
-    const cachedSpkBast = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
-    const cachedBastSm  = (typeof lsGet === "function" ? lsGet("bastSmPpk")?.data : null) || _DB.bastSmPpk;
-    const cachedMapping = (typeof lsGet === "function" ? lsGet("mappingPetugas")?.data : null) || _DB.mappingPetugas;
-
-    if (cachedMitra)    _allMitra     = cachedMitra;
-    if (cachedPegawai)  _allPegawai   = cachedPegawai;
-    if (cachedKegiatan) _allKegiatan  = cachedKegiatan;
-    if (cachedSpkBast)  _allSpkBast   = cachedSpkBast;
-    if (cachedBastSm)   _allBastSmPpk = cachedBastSm;
-    if (cachedMapping)  _allMapping   = cachedMapping;
-
-    _approvedSpkList = _allSpkBast.filter(r => {
-      if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
-      const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
-      return s === "disetujui" || s === "approved" || s === "sudah";
-    });
-
-    populatePegawaiDropdowns();
-    renderMappedOfficerChips();
+  // ─── Init (Langsung Live dari Database, Tanpa Cache Lokal) ──
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Setup UI listeners
     setupSearchListeners();
     setupDateListeners();
     setupDocNumberListeners();
-    populateSmBulanDropdown();
     setupFormSubmit();
-    applyAutoDocNumber("spk", false);
 
     // Cek URL param ?mode=
     const urlParams = new URLSearchParams(window.location.search);
@@ -882,21 +858,23 @@
       _isEditMode = true;
     }
 
-    // 2. Background Revalidation (update data di latar belakang tanpa spinner)
-    Promise.all([
-      getMitra().catch(() => []),
-      getPegawai().catch(() => []),
-      getKegiatan().catch(() => []),
-      getSpkBast().catch(() => []),
-      getBastSmPpk().catch(() => []),
-      getMappingPetugas().catch(() => []),
-    ]).then(([mitra, pegawai, kegiatan, spkBast, smPpk, mapping]) => {
-      if (Array.isArray(mitra) && mitra.length) _allMitra = mitra;
-      if (Array.isArray(pegawai) && pegawai.length) _allPegawai = pegawai;
-      if (Array.isArray(kegiatan) && kegiatan.length) _allKegiatan = kegiatan;
-      if (Array.isArray(spkBast) && spkBast.length) _allSpkBast = spkBast;
-      if (Array.isArray(smPpk) && smPpk.length) _allBastSmPpk = smPpk;
-      if (Array.isArray(mapping) && mapping.length) _allMapping = mapping;
+    // 2. Fetch live data dari database Google Sheets
+    try {
+      const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
+        getMitra().catch(() => []),
+        getPegawai().catch(() => []),
+        getKegiatan().catch(() => []),
+        getSpkBast().catch(() => []),
+        getBastSmPpk().catch(() => []),
+        getMappingPetugas().catch(() => []),
+      ]);
+
+      _allMitra     = Array.isArray(mitra) ? mitra : [];
+      _allPegawai   = Array.isArray(pegawai) ? pegawai : [];
+      _allKegiatan  = Array.isArray(kegiatan) ? kegiatan : [];
+      _allSpkBast   = Array.isArray(spkBast) ? spkBast : [];
+      _allBastSmPpk = Array.isArray(smPpk) ? smPpk : [];
+      _allMapping   = Array.isArray(mapping) ? mapping : [];
 
       _approvedSpkList = _allSpkBast.filter(r => {
         if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
@@ -907,32 +885,11 @@
       populatePegawaiDropdowns();
       renderMappedOfficerChips();
       populateSmBulanDropdown();
-      applyAutoDocNumber("spk", false);
+      applyAutoDocNumber("spk", true);
       validateDocNumberInput("spk");
-      validateDocNumberInput("bast_ppl_pml");
-      validateDocNumberInput("bast_ppl_sm");
-      validateDocNumberInput("bast_pml_sm");
-      validateDocNumberInput("bast_sm");
-    }).catch(err => {
-      console.warn("[form.html] silent bg sync error:", err);
-    });
-
-    // 3. Listen live sheet-refreshed event
-    window.addEventListener("sheet-refreshed", (e) => {
-      if (e.detail) {
-        if (e.detail.sheet === "spkBast") {
-          _allSpkBast = e.detail.data || [];
-          validateDocNumberInput("spk");
-          validateDocNumberInput("bast_ppl_pml");
-          validateDocNumberInput("bast_ppl_sm");
-          validateDocNumberInput("bast_pml_sm");
-        }
-        if (e.detail.sheet === "bastSmPpk") {
-          _allBastSmPpk = e.detail.data || [];
-          validateDocNumberInput("bast_sm");
-        }
-      }
-    });
+    } catch (err) {
+      console.warn("[form.html] live init error:", err);
+    }
   });
 
   // ─── Mode selector ───────────────────────────────────────────

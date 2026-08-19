@@ -132,42 +132,21 @@ async function _fetchFromNetwork(sheetKey) {
 // ─── Request Deduplication Map ──────────────────────────────
 const _inflightFetches = {};
 
-// ─── Core: fetch satu sheet (True Stale-While-Revalidate) ────
+// Clean up any stale localStorage keys
+try {
+  Object.keys(localStorage).filter(k => k.startsWith("spk_db_")).forEach(k => localStorage.removeItem(k));
+} catch (_) {}
+
+// ─── Core: fetch satu sheet (Live dari Google Sheets) ─────────
 async function fetchSheet(sheetKey, forceRefresh = false) {
-  // 1. Jika forceRefresh, lewati cache
-  if (!forceRefresh) {
-    // 2. Ambil dari memory atau localStorage secara instan (0 ms)
-    const cachedData = (_DB[sheetKey] && Array.isArray(_DB[sheetKey]) && _DB[sheetKey].length > 0)
-      ? _DB[sheetKey]
-      : (lsGet(sheetKey)?.data);
-
-    if (Array.isArray(cachedData) && cachedData.length > 0) {
-      _DB[sheetKey] = cachedData;
-
-      // Always trigger background revalidation if not already in flight
-      if (!_inflightFetches[sheetKey]) {
-        _inflightFetches[sheetKey] = _fetchFromNetwork(sheetKey)
-          .then(freshData => {
-            delete _inflightFetches[sheetKey];
-            if (Array.isArray(freshData)) {
-              _DB[sheetKey] = freshData;
-              lsSet(sheetKey, freshData);
-              try {
-                window.dispatchEvent(new CustomEvent('sheet-refreshed', {
-                  detail: { sheet: sheetKey, data: freshData }
-                }));
-              } catch(e) {}
-            }
-          })
-          .catch(() => {
-            delete _inflightFetches[sheetKey];
-          });
-      }
-      return cachedData;
-    }
+  if (forceRefresh) {
+    _DB[sheetKey] = null;
   }
 
-  // 3. Fetch dari network (pertama kali / belum ada cache / forceRefresh)
+  if (_DB[sheetKey] && Array.isArray(_DB[sheetKey]) && _DB[sheetKey].length > 0 && !forceRefresh) {
+    return _DB[sheetKey];
+  }
+
   if (_inflightFetches[sheetKey]) {
     return _inflightFetches[sheetKey];
   }
@@ -175,17 +154,8 @@ async function fetchSheet(sheetKey, forceRefresh = false) {
   _inflightFetches[sheetKey] = (async () => {
     try {
       const data = await _fetchFromNetwork(sheetKey);
-      if (Array.isArray(data)) {
-        _DB[sheetKey] = data;
-        lsSet(sheetKey, data);
-        try {
-          window.dispatchEvent(new CustomEvent('sheet-refreshed', {
-            detail: { sheet: sheetKey, data: data }
-          }));
-        } catch(e) {}
-        return data;
-      }
-      return _DB[sheetKey] || [];
+      _DB[sheetKey] = Array.isArray(data) ? data : [];
+      return _DB[sheetKey];
     } catch (err) {
       console.error(`[data.js] Gagal fetch sheet '${sheetKey}':`, err);
       return _DB[sheetKey] || [];
@@ -239,43 +209,21 @@ async function postToSheet(sheetKey, action, data, options = {}) {
 
 // ─── Public: Tambah baris baru ────────────────────────────────
 async function appendToSheet(sheetKey, rowData) {
+  _DB[sheetKey] = null;
   const result = await postToSheet(sheetKey, "append", rowData);
-  // Optimistic Cache Insertion agar navigasi antar halaman instan
-  try {
-    const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
-    if (Array.isArray(cached)) {
-      const idKey = Object.keys(rowData).find(k => k.toLowerCase().startsWith("id_")) || "ID_Dokumen";
-      const updated = [rowData, ...cached.filter(item => !item[idKey] || String(item[idKey]) !== String(rowData[idKey]))];
-      _DB[sheetKey] = updated;
-      if (typeof lsSet === "function") lsSet(sheetKey, updated);
-    } else {
-      _DB[sheetKey] = [rowData];
-      if (typeof lsSet === "function") lsSet(sheetKey, [rowData]);
-    }
-  } catch (_) {}
   return result;
 }
 
 // ─── Public: Update baris berdasar key ───────────────────────
 async function updateInSheet(sheetKey, keyField, keyValue, newData) {
-  const result = await postToSheet(sheetKey, "update", newData, { keyField, keyValue });
   _DB[sheetKey] = null;
-  lsDel(sheetKey);
+  const result = await postToSheet(sheetKey, "update", newData, { keyField, keyValue });
   return result;
 }
 
 // ─── Public: Hapus baris berdasar key ────────────────────────
 async function deleteFromSheet(sheetKey, keyField, keyValue) {
-  // Optimistic Cache Removal
-  try {
-    const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
-    if (Array.isArray(cached)) {
-      const updated = cached.filter(item => String(item[keyField]) !== String(keyValue));
-      _DB[sheetKey] = updated;
-      if (typeof lsSet === "function") lsSet(sheetKey, updated);
-    }
-  } catch (_) {}
-
+  _DB[sheetKey] = null;
   const result = await postToSheet(sheetKey, "delete", {}, { keyField, keyValue });
   return result;
 }
@@ -284,9 +232,8 @@ async function deleteFromSheet(sheetKey, keyField, keyValue) {
 function clearCache(sheetKey) {
   if (sheetKey) {
     _DB[sheetKey] = null;
-    lsDel(sheetKey);
   } else {
-    Object.keys(_DB).forEach(k => { _DB[k] = null; lsDel(k); });
+    Object.keys(_DB).forEach(k => { _DB[k] = null; });
   }
 }
 
