@@ -1933,23 +1933,6 @@
     }
   }
 
-      clearCache("mappingPetugas");
-      showToast(`✅ Berhasil menyimpan penugasan ${_wizAssignedOfficers.length} petugas untuk kegiatan "${keg.nama.substring(0,40)}"!`, "success", 5000);
-      cancelWizard();
-
-      // Reload mapping
-      setLoading(true);
-      _allMapping = await getMappingPetugas().catch(() => []);
-      renderMappingList();
-      updateStats();
-    } catch (err) {
-      showToast("Gagal menyimpan: " + err.message, "danger");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function generateId() {
     return "MAP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).substr(2,4).toUpperCase();
   }
@@ -2037,10 +2020,11 @@
         const cardId = `kegcard-${idx}`;
 
         const rowsHTML = items.map(m => {
-          const vol = m.Volume || 1;
+          const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
           const sat = m.Satuan || "Dokumen";
           const hrg = Number(m.Harga_Satuan || 0);
-          const tot = Number(m.Total_Honor || (vol * hrg));
+          const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+          const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
           return `
           <div class="mapping-sub-row">
             <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
@@ -2057,7 +2041,7 @@
               </div>
             </div>
             <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
-            ${m.Batas_Terlambat ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(m.Batas_Terlambat)}</span>` : ""}
+            ${batasT ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(batasT)}</span>` : ""}
             <button type="button" class="btn btn-outline btn-sm"
                     style="color:var(--danger); border-color:var(--gray-200); padding:2px 8px; font-size:.75rem;"
                     onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(m.Nama_Petugas || '')}', '${escapeHtml(kegNama)}')">
@@ -2102,10 +2086,11 @@
         const cardId  = `petcard-${idx}`;
 
         const rowsHTML = items.map(m => {
-          const vol = m.Volume || 1;
+          const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
           const sat = m.Satuan || "Dokumen";
           const hrg = Number(m.Harga_Satuan || 0);
-          const tot = Number(m.Total_Honor || (vol * hrg));
+          const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+          const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
           return `
           <div class="mapping-sub-row">
             <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
@@ -2120,7 +2105,7 @@
               </div>
             </div>
             <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
-            ${m.Batas_Terlambat ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(m.Batas_Terlambat)}</span>` : ""}
+            ${batasT ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(batasT)}</span>` : ""}
             <button type="button" class="btn btn-outline btn-sm"
                     style="color:var(--danger); border-color:var(--gray-200); padding:2px 8px; font-size:.75rem;"
                     onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(nama)}', '${escapeHtml(m.Uraian_Kegiatan || '')}')">
