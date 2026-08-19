@@ -1184,24 +1184,10 @@
     const satuan = keg.Satuan || "Dokumen / OB";
     const honor  = Number(keg.Harga_Satuan || 0);
 
-    // Default tanggal jika kosong
-    const now = new Date();
-    const curYear = now.getFullYear();
-    const curMonth = String(now.getMonth() + 1).padStart(2, "0");
-    const lastDay = new Date(curYear, now.getMonth() + 1, 0).getDate();
-
     const tglMulaiEl = document.getElementById("wiz-tgl-mulai");
     const tglSlsEl   = document.getElementById("wiz-tgl-selesai");
     const batasEl    = document.getElementById("wiz-batas-terlambat");
     const tglKepkaEl = document.getElementById("wiz-tgl-kepka");
-
-    if (!tglMulaiEl.value) tglMulaiEl.value = `${curYear}-${curMonth}-01`;
-    if (!tglSlsEl.value)   tglSlsEl.value   = `${curYear}-${curMonth}-${String(lastDay).padStart(2, "0")}`;
-    if (!batasEl.value)    batasEl.value    = calculateBatasTerlambat(tglSlsEl.value);
-    if (!tglKepkaEl.value) {
-      tglKepkaEl.value = tglMulaiEl.value || `${curYear}-${curMonth}-01`;
-      updateTglKepkaDisplay();
-    }
 
     _wizSelectedKegiatan = {
       id: id,
@@ -1209,11 +1195,11 @@
       mak: mak,
       satuan: satuan,
       honor: honor,
-      tglMulai: tglMulaiEl.value,
-      tglSelesai: tglSlsEl.value,
-      batasTerlambat: batasEl.value,
+      tglMulai: tglMulaiEl.value || "",
+      tglSelesai: tglSlsEl.value || "",
+      batasTerlambat: batasEl.value || "",
       noKepka: document.getElementById("wiz-no-kepka").value.trim(),
-      tglKepka: tglKepkaEl.value,
+      tglKepka: tglKepkaEl.value || "",
     };
 
     document.getElementById("wiz-search-kegiatan").value          = nama;
