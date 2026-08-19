@@ -51,22 +51,22 @@ async function generateAndDownloadWord(tabKey, dataCtx, docRecord, options = {})
     const ctx = dataCtx.spkCtx || dataCtx;
     const nomor = options.noSurat || ctx.NO_SPK || docRecord.ID_Dokumen;
     filename = `SPK_${ctx.NAMA_PETUGAS || docRecord.ID_Dokumen}_${ctx.BULAN || ""}_${ctx.TAHUN || ""}.docx`;
-    content = _buildWordSpkContent(ctx, details, { P, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType, WidthType, BorderStyle, noBorder, thinBorder });
-
-  } else if (tabKey === "ppl-pml") {
+    content = _buildWordSpkContent(ctx, details, { P, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType, WidthType, BorderStyle, noBorder, thinBorder });  } else if (tabKey === "ppl-pml") {
     const ctx = dataCtx.bastPplPmlCtx || dataCtx;
+    const isMitra = !!(options.isPmlMitra !== undefined ? options.isPmlMitra : ctx.IS_PML_MITRA);
     filename = `BAST_PPL_PML_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
-    content = _buildWordBastContent("BAST Penyerahan Hasil Pekerjaan PPL kepada PML", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
+    content = _buildWordBastPplPmlContent(ctx, isMitra, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
 
   } else if (tabKey === "ppl-sm") {
     const ctx = dataCtx.bastPplSmCtx || dataCtx;
     filename = `BAST_PPL_SM_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
-    content = _buildWordBastContent("BAST Penyerahan Hasil Pekerjaan PPL kepada SM/Ketua Tim", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
+    content = _buildWordBastPplSmContent(ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
 
   } else if (tabKey === "pml-sm") {
     const ctx = dataCtx.bastPmlSmCtx || dataCtx;
+    const isMitra = !!(options.isPmlMitra !== undefined ? options.isPmlMitra : ctx.IS_PML_MITRA);
     filename = `BAST_PML_SM_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
-    content = _buildWordBastContent("BAST Penyerahan Hasil Pekerjaan PML kepada SM/Ketua Tim", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
+    content = _buildWordBastPmlSmContent(ctx, isMitra, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
 
   } else if (tabKey === "sm-ppk") {
     const pegawaiArr = options.pegawaiArr || (typeof AppState !== "undefined" ? AppState.pegawai : []);
@@ -75,14 +75,14 @@ async function generateAndDownloadWord(tabKey, dataCtx, docRecord, options = {})
       : (dataCtx.bastSmPpkCtx || dataCtx);
     if (options.noSurat) ctx.NO_BAST_SM_PPK = options.noSurat;
     filename = `BAST_SM_PPK_${docRecord.ID_Dokumen}.docx`;
-    content = _buildWordBastContent("BAST Penyerahan Hasil Pekerjaan SM kepada PPK", ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
+    content = _buildWordBastSmPpkContent(ctx, { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder });
   }
 
   const wordDoc = new Document({
     sections: [{
       properties: {
         page: {
-          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }, // 1 inch = 1440 twip
+          margin: { top: 1417, right: 1134, bottom: 1417, left: 1701 }, // 2.5cm, 2cm, 2.5cm, 3cm
         }
       },
       children: content,
@@ -194,7 +194,7 @@ function _buildWordSpkContent(ctx, details, D) {
     P("Pasal 8", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
     P("PIHAK PERTAMA dapat memutuskan Perjanjian ini secara sepihak sewaktu-waktu dalam hal PIHAK KEDUA tidak dapat melaksanakan kewajibannya sebagaimana dimaksud dalam Pasal 4. dengan menerbitkan Surat Pemutusan Perjanjian Kerja.", { spaceAfter: 100 }),
     P("Pasal 9", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
-    P("Apabila PIHAK KEDUA mengundurkan diri pada saat/setelah pelaksanaan pelatihan atau saat pendataan dengan tidak menyelesaikan pekerjaan yang menjadi tanggung jawabnya. maka wajib membayar ganti rugi kepada PIHAK PERTAMA.", { spaceAfter: 80 }),
+    P("Apabila PIHAK KEDUA mengundurkan diri pada saat/setelah pelatihan atau saat pendataan dengan tidak menyelesaikan pekerjaan yang menjadi tanggung jawabnya. maka wajib membayar ganti rugi kepada PIHAK PERTAMA.", { spaceAfter: 80 }),
     P("Dikecualikan tidak membayar ganti rugi sebagaimana dimaksud pada ayat (1) kepada PIHAK PERTAMA. apabila PIHAK KEDUA meninggal dunia. mengundurkan diri karena sakit dengan keterangan rawat inap. kecelakaan dengan keterangan kepolisian. dan/atau telah diberikan Surat Pemutusan Perjanjian Kerja dari PIHAK PERTAMA.", { spaceAfter: 80 }),
     P("Dalam hal terjadi peristiwa sebagaimana dimaksud pada ayat (2). PIHAK PERTAMA membayarkan honorarium kepada PIHAK KEDUA secara proporsional sesuai pekerjaan yang telah dilaksanakan.", { spaceAfter: 100 }),
     P("Pasal 10", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
@@ -222,12 +222,8 @@ function _buildWordSpkContent(ctx, details, D) {
         ]}),
       ]}),
       new TableRow({ children: [
-        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PETUGAS || ctx.NAMA_PIHAK_KEDUA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
-        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PPK || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
-      ]}),
-      new TableRow({ children: [
-        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `NIK. ${ctx.NIK_PIHAK_PERTAMA || "-"}`, size: 22, font: "Times New Roman" })] })] }),
-        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `NIP. ${ctx.NIP_PPK || "-"}`, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_KEDUA || ctx.NAMA_PETUGAS || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_PERTAMA || ctx.NAMA_PPK || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
       ]}),
     ]
   });
@@ -236,27 +232,36 @@ function _buildWordSpkContent(ctx, details, D) {
   // Lampiran SPK jika ada rincian pekerjaan
   if (details && details.length > 0) {
     body.push(new Paragraph({
-      pageBreakBefore: true,
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 400, after: 40 },
+      children: [new TextRun({ text: "LAMPIRAN", bold: true, size: 24, font: "Times New Roman" })]
+    }));
+    body.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 40 },
-      children: [new TextRun({ text: "LAMPIRAN SURAT PERJANJIAN KERJA", bold: true, size: 24, font: "Times New Roman" })]
+      children: [new TextRun({ text: `PERJANJIAN KERJA ${ctx.URAIAN_PEKERJAAN || ""} PADA BADAN PUSAT STATISTIK KOTA SUBULUSSALAM`, bold: true, size: 20, font: "Times New Roman" })]
+    }));
+    body.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
+      children: [new TextRun({ text: `NOMOR: ${ctx.NO_SPK || ""}`, bold: true, size: 20, font: "Times New Roman" })]
     }));
     body.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 140 },
-      children: [new TextRun({ text: `DAFTAR URAIAN TUGAS, JANGKA WAKTU, NILAI PERJANJIAN, DAN BEBAN ANGGARAN`, bold: true, size: 20, font: "Times New Roman" })]
+      children: [new TextRun({ text: "DAFTAR URAIAN TUGAS, JANGKA WAKTU, NILAI PERJANJIAN, DAN BEBAN ANGGARAN", bold: true, size: 18, font: "Times New Roman" })]
     }));
 
     const tableRows = [
       new TableRow({
         children: [
-          new TableCell({ borders: thinBorder, width: { size: 6, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "No", bold: true, size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, width: { size: 5, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "No", bold: true, size: 18, font: "Times New Roman" })] })] }),
           new TableCell({ borders: thinBorder, width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Uraian Tugas", bold: true, size: 18, font: "Times New Roman" })] })] }),
           new TableCell({ borders: thinBorder, width: { size: 18, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Jangka Waktu", bold: true, size: 18, font: "Times New Roman" })] })] }),
-          new TableCell({ borders: thinBorder, width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Volume", bold: true, size: 18, font: "Times New Roman" })] })] }),
-          new TableCell({ borders: thinBorder, width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Satuan", bold: true, size: 18, font: "Times New Roman" })] })] }),
-          new TableCell({ borders: thinBorder, width: { size: 13, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Harga Satuan", bold: true, size: 18, font: "Times New Roman" })] })] }),
-          new TableCell({ borders: thinBorder, width: { size: 13, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Nilai (Rp)", bold: true, size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, width: { size: 8, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Volume", bold: true, size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, width: { size: 9, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Satuan", bold: true, size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, width: { size: 15, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Harga Satuan", bold: true, size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, width: { size: 15, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Nilai Perjanjian", bold: true, size: 18, font: "Times New Roman" })] })] }),
         ]
       })
     ];
@@ -278,8 +283,7 @@ function _buildWordSpkContent(ctx, details, D) {
     // Total Row — hanya terbilang (konsisten dengan template HTML)
     tableRows.push(new TableRow({
       children: [
-        new TableCell({ borders: thinBorder, columnSpan: 6, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "Terbilang:", bold: true, size: 18, font: "Times New Roman" })] })] }),
-        new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: ctx.TERBILANG_TOTAL_HONOR || ctx.TERBILANG || "—", size: 18, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: thinBorder, columnSpan: 7, children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: `Terbilang: ${ctx.TERBILANG_TOTAL_HONOR || ctx.TERBILANG || "—"}`, bold: true, size: 18, font: "Times New Roman" })] })] }),
       ]
     }));
 
@@ -293,54 +297,193 @@ function _buildWordSpkContent(ctx, details, D) {
   return body;
 }
 
-// ─── Builder BAST ─────────────────────────────────────────────
-function _buildWordBastContent(title, ctx, D) {
-  const { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, noBorder } = D;
+// ─── Helper: BAST Identity Row ─────────────────────────────────
+function _idRow(no, label, val, D) {
+  const { P, TableRow, TableCell, WidthType, noBorder } = D;
+  return new TableRow({
+    children: [
+      new TableCell({ borders: noBorder, width: { size: 5, type: WidthType.PERCENTAGE }, children: [P(no || "", { spaceAfter: 20 })] }),
+      new TableCell({ borders: noBorder, width: { size: 25, type: WidthType.PERCENTAGE }, children: [P(label || "", { spaceAfter: 20 })] }),
+      new TableCell({ borders: noBorder, width: { size: 3, type: WidthType.PERCENTAGE }, children: [P(":", { spaceAfter: 20 })] }),
+      new TableCell({ borders: noBorder, width: { size: 67, type: WidthType.PERCENTAGE }, children: [P(val || "-", { bold: label === "Nama", spaceAfter: 20 })] }),
+    ]
+  });
+}
 
-  const noDoc = ctx.NO_BAST_PPL_PML || ctx.NO_BAST_PPL_SM || ctx.NO_BAST_PML_SM || ctx.NO_BAST_SM_PPK || ctx["NO_BAST_PPL-PML"] || "";
+// ─── Builder BAST PPL -> PML ──────────────────────────────────
+function _buildWordBastPplPmlContent(ctx, isMitra, D) {
+  const { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, noBorder } = D;
 
-  const body = [
-    new Paragraph({
-      alignment: AlignmentType.CENTER, spacing: { after: 40 },
-      children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 26, font: "Times New Roman" })]
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER, spacing: { after: 180 },
-      children: [new TextRun({ text: `NOMOR: ${noDoc}`, size: 22, font: "Times New Roman" })]
-    }),
-    P(`Pada hari ini, ${ctx.HARI_TERBILANG || ""} tanggal ${ctx.TANGGAL_TERBILANG || ""} bulan ${ctx.BULAN_TERBILANG || ""} tahun ${ctx.TAHUN_TERBILANG || ""} (${ctx.TANGGAL_BAST || ctx.TANGGAL || ""}), bertempat di BPS Kota Subulussalam, kami yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
-    P("1. PIHAK PERTAMA:", { bold: true, spaceAfter: 40 }),
-    P(`Nama\t\t: ${ctx.NAMA_PIHAK_PERTAMA || ""}`, { spaceAfter: 30 }),
-    P(`NIK / NIP\t: ${ctx.NIK_PIHAK_PERTAMA || ctx.NIP_PIHAK_PERTAMA || "-"}`, { spaceAfter: 30 }),
-    P(`Jabatan\t\t: ${ctx.JABATAN_PIHAK_PERTAMA || ""}`, { spaceAfter: 100 }),
-    P("2. PIHAK KEDUA:", { bold: true, spaceAfter: 40 }),
-    P(`Nama\t\t: ${ctx.NAMA_PIHAK_KEDUA || ctx.NAMA_KETUA_TIM || ctx.NAMA_PPK || ""}`, { spaceAfter: 30 }),
-    P(`NIK / NIP\t: ${ctx.NIK_PIHAK_KEDUA || ctx.NIP_PIHAK_KEDUA || ctx.NIP_KETUA_TIM || ctx.NIP_PPK || "-"}`, { spaceAfter: 30 }),
-    P(`Jabatan\t\t: ${ctx.JABATAN_PIHAK_KEDUA || ctx.JABATAN_KETUA_TIM || "Pejabat Pembuat Komitmen"}`, { spaceAfter: 100 }),
-    P(`PIHAK PERTAMA telah menyerahkan kepada PIHAK KEDUA, dan PIHAK KEDUA telah menerima hasil pekerjaan: ${ctx.JUDUL_PEKERJAAN_DOKUMEN || ctx.URAIAN_PEKERJAAN || ""} sesuai ketentuan yang berlaku.`, { spaceAfter: 120 }),
-    P(`Total Nilai Honorarium: Rp ${ctx.TOTAL_HONOR || "0"} (${ctx.TERBILANG_TOTAL_HONOR || ctx.TERBILANG || ""}).`, { spaceAfter: 140 }),
-    P("Demikian Berita Acara Serah Terima ini dibuat dalam rangkap yang cukup untuk dapat dipergunakan sebagaimana mestinya.", { spaceAfter: 180 }),
+  const header = [
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: "BERITA ACARA SERAH TERIMA", bold: true, size: 26, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: `HASIL ${ctx.JUDUL_PEKERJAAN_DOKUMEN || ctx.URAIAN_PEKERJAAN || ""} TAHUN ${ctx.TAHUN || "2026"}`, bold: true, size: 22, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: "BPS KOTA SUBULUSSALAM", bold: true, size: 22, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 180 }, children: [new TextRun({ text: `Nomor ${ctx.NO_BAST_PPL_PML || ctx["NO_BAST_PPL-PML"] || ""}`, size: 22, font: "Times New Roman" })] }),
+    P(`Pada hari ini ${ctx.HARI_TERBILANG || ""}, tanggal ${ctx.TANGGAL_TERBILANG || ""}, bulan ${ctx.BULAN_TERBILANG || ""}, tahun ${ctx.TAHUN_TERBILANG || ""} (${ctx.TANGGAL_BAST || ctx.TANGGAL || ""}), bertempat di Kantor BPS Kota Subulussalam, kami yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
   ];
 
-  // Tabel Tanda Tangan BAST
+  const pihakRows = [
+    _idRow("1.", "Nama", ctx.NAMA_PIHAK_PERTAMA, D),
+    _idRow("", "NIK", ctx.NIK_PIHAK_PERTAMA, D),
+    _idRow("", "Jabatan", ctx.JABATAN_PIHAK_PERTAMA, D),
+    _idRow("", "Tugas", ctx.URAIAN_PEKERJAAN, D),
+    new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK PERTAMA.", { spaceAfter: 80, spaceBefore: 40 })] })] }),
+  ];
+
+  if (isMitra) {
+    pihakRows.push(
+      _idRow("2.", "Nama", ctx.NAMA_PIHAK_KEDUA, D),
+      _idRow("", "NIK", ctx.NIK_PIHAK_KEDUA, D),
+      _idRow("", "Jabatan", ctx.JABATAN_PIHAK_KEDUA, D),
+      _idRow("", "Tugas", `Pengawasan Lapangan ${ctx.URAIAN_PEKERJAAN || ""}`, D),
+      new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK KEDUA.", { spaceAfter: 80, spaceBefore: 40 })] })] })
+    );
+  } else {
+    pihakRows.push(
+      _idRow("2.", "Nama", ctx.NAMA_PIHAK_KEDUA, D),
+      _idRow("", "NIP", ctx.NIP_PIHAK_KEDUA, D),
+      _idRow("", "Golongan/Pangkat", ctx["GOLONGAN/PANGKAT_PIHAK_KEDUA"] || "-", D),
+      _idRow("", "Jabatan", ctx.JABATAN_PIHAK_KEDUA, D),
+      _idRow("", "Unit Kerja", "BPS Kota Subulussalam", D),
+      new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK KEDUA.", { spaceAfter: 80, spaceBefore: 40 })] })] })
+    );
+  }
+
+  const pihakTable = new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: pihakRows });
+
+  const isiPoin = [
+    P("Menyatakan bahwa:", { spaceBefore: 80, spaceAfter: 40 }),
+    P(`1. PIHAK PERTAMA telah melaksanakan pekerjaan ${ctx.URAIAN_PEKERJAAN || ""} berdasarkan Perjanjian Kerja Nomor ${ctx.NO_SPK || ""}, tanggal ${ctx.TANGGAL || ""}, bulan ${ctx.BULAN || ""}, ${ctx.TAHUN || ""};`, { spaceAfter: 40 }),
+    P(`2. Berdasarkan angka 1 tersebut di atas, PIHAK PERTAMA menyerahkan hasil pekerjaan kepada PIHAK KEDUA dan PIHAK KEDUA menerima hasil pekerjaan dari PIHAK PERTAMA;`, { spaceAfter: 40 }),
+    P(`3. Hasil pekerjaan PIHAK PERTAMA telah sesuai dengan jumlah dan spesifikasi teknis/kualitas yang ditetapkan dalam SK;`, { spaceAfter: 40 }),
+    P(`4. Pelaksanaan penyerahan hasil pekerjaan tersebut di atas dilaksanakan secara langsung di BPS Kota Subulussalam, Jl. Lae Oram Kompleks Perkantoran Walikota Subulussalam.`, { spaceAfter: 80 }),
+    P("Demikian Berita Acara ini dibuat untuk dipergunakan sebagaimana mestinya.", { spaceAfter: 140 }),
+  ];
+
   const ttdTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [
       new TableRow({ children: [
-        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [
-          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK KEDUA,", bold: true, size: 22, font: "Times New Roman" })] })
-        ]}),
-        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [
-          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK PERTAMA,", bold: true, size: 22, font: "Times New Roman" })] })
-        ]}),
+        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK KEDUA,", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK PERTAMA,", bold: true, size: 22, font: "Times New Roman" })] })] }),
       ]}),
       new TableRow({ children: [
-        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_KEDUA || ctx.NAMA_KETUA_TIM || ctx.NAMA_PPK || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
-        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_PERTAMA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1000 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_KEDUA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1000 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_PERTAMA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
       ]}),
     ]
   });
-  body.push(ttdTable);
 
-  return body;
+  return [...header, pihakTable, ...isiPoin, ttdTable];
+}
+
+// ─── Builder BAST PPL -> SM ───────────────────────────────────
+function _buildWordBastPplSmContent(ctx, D) {
+  const { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, noBorder } = D;
+
+  const header = [
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: "BERITA ACARA SERAH TERIMA", bold: true, size: 26, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: `HASIL ${ctx.JUDUL_PEKERJAAN_DOKUMEN || ctx.URAIAN_PEKERJAAN || ""} TAHUN ${ctx.TAHUN || "2026"}`, bold: true, size: 22, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: "BPS KOTA SUBULUSSALAM", bold: true, size: 22, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 180 }, children: [new TextRun({ text: `Nomor ${ctx.NO_BAST_PPL_SM || ""}`, size: 22, font: "Times New Roman" })] }),
+    P(`Pada hari ini ${ctx.HARI_TERBILANG || ""}, tanggal ${ctx.TANGGAL_TERBILANG || ""}, bulan ${ctx.BULAN_TERBILANG || ""}, tahun ${ctx.TAHUN_TERBILANG || ""} (${ctx.TANGGAL_BAST || ctx.TANGGAL || ""}), bertempat di Kantor BPS Kota Subulussalam, kami yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
+  ];
+
+  const pihakRows = [
+    _idRow("1.", "Nama", ctx.NAMA_PIHAK_PERTAMA, D),
+    _idRow("", "NIK", ctx.NIK_PIHAK_PERTAMA, D),
+    _idRow("", "Jabatan", ctx.JABATAN_PIHAK_PERTAMA, D),
+    _idRow("", "Tugas", ctx.URAIAN_PEKERJAAN, D),
+    new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK PERTAMA.", { spaceAfter: 80, spaceBefore: 40 })] })] }),
+    _idRow("2.", "Nama", ctx.NAMA_KETUA_TIM || ctx.NAMA_PIHAK_KEDUA, D),
+    _idRow("", "NIP", ctx.NIP_KETUA_TIM || ctx.NIP_PIHAK_KEDUA, D),
+    _idRow("", "Golongan/Pangkat", ctx["GOLONGAN/PANGKAT_KETUA_TIM"] || ctx["GOLONGAN/PANGKAT_PIHAK_KEDUA"] || "-", D),
+    _idRow("", "Jabatan", ctx.JABATAN_KETUA_TIM || ctx.JABATAN_PIHAK_KEDUA || "Ketua Tim", D),
+    _idRow("", "Unit Kerja", "BPS Kota Subulussalam", D),
+    new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK KEDUA.", { spaceAfter: 80, spaceBefore: 40 })] })] })
+  ];
+
+  const pihakTable = new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: pihakRows });
+
+  const isiPoin = [
+    P("Menyatakan bahwa:", { spaceBefore: 80, spaceAfter: 40 }),
+    P(`1. PIHAK PERTAMA telah melaksanakan pekerjaan ${ctx.URAIAN_PEKERJAAN || ""} berdasarkan Perjanjian Kerja Nomor ${ctx.NO_SPK || ""}, tanggal ${ctx.TANGGAL || ""}, bulan ${ctx.BULAN || ""}, ${ctx.TAHUN || ""};`, { spaceAfter: 40 }),
+    P(`2. Berdasarkan angka 1 tersebut di atas, PIHAK PERTAMA menyerahkan hasil pekerjaan kepada PIHAK KEDUA dan PIHAK KEDUA menerima hasil pekerjaan dari PIHAK PERTAMA;`, { spaceAfter: 40 }),
+    P(`3. Hasil pekerjaan PIHAK PERTAMA telah sesuai dengan jumlah dan spesifikasi teknis/kualitas yang ditetapkan dalam SK;`, { spaceAfter: 40 }),
+    P(`4. Pelaksanaan penyerahan hasil pekerjaan tersebut di atas dilaksanakan secara langsung di BPS Kota Subulussalam, Jl. Lae Oram Kompleks Perkantoran Walikota Subulussalam.`, { spaceAfter: 80 }),
+    P("Demikian Berita Acara ini dibuat untuk dipergunakan sebagaimana mestinya.", { spaceAfter: 140 }),
+  ];
+
+  const ttdTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({ children: [
+        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK KEDUA,", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK PERTAMA,", bold: true, size: 22, font: "Times New Roman" })] })] }),
+      ]}),
+      new TableRow({ children: [
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1000 }, children: [new TextRun({ text: ctx.NAMA_KETUA_TIM || ctx.NAMA_PIHAK_KEDUA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1000 }, children: [new TextRun({ text: ctx.NAMA_PIHAK_PERTAMA || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+      ]}),
+    ]
+  });
+
+  return [...header, pihakTable, ...isiPoin, ttdTable];
+}
+
+// ─── Builder BAST PML -> SM ───────────────────────────────────
+function _buildWordBastPmlSmContent(ctx, isMitra, D) {
+  return _buildWordBastPplPmlContent(ctx, isMitra, D);
+}
+
+// ─── Builder BAST SM -> PPK ───────────────────────────────────
+function _buildWordBastSmPpkContent(ctx, D) {
+  const { P, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, noBorder } = D;
+
+  const header = [
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: "BERITA ACARA SERAH TERIMA", bold: true, size: 26, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: `HASIL ${ctx.JUDUL_PEKERJAAN_DOKUMEN || ctx.URAIAN_PEKERJAAN || ""}`, bold: true, size: 22, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: "BPS KOTA SUBULUSSALAM", bold: true, size: 22, font: "Times New Roman" })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 180 }, children: [new TextRun({ text: `NOMOR ${ctx.NO_BAST_SM_PPK || ctx["NO_BAST_SM-PPK"] || ""}`, size: 22, font: "Times New Roman" })] }),
+    P(`Pada hari ini ${ctx.HARI_TERBILANG || ""}, tanggal ${ctx.TANGGAL_TERBILANG || ""}, bulan ${ctx.BULAN_TERBILANG || ""}, tahun ${ctx.TAHUN_TERBILANG || ""} (${ctx.TANGGAL_BAST || ctx.TANGGAL || ""}), bertempat di Kantor BPS Kota Subulussalam, antara:`, { spaceAfter: 120 }),
+  ];
+
+  const pihakRows = [
+    _idRow("", "Nama", ctx.NAMA_KETUA_TIM, D),
+    _idRow("", "NIP", ctx.NIP_KETUA_TIM, D),
+    _idRow("", "Golongan/Pangkat", ctx["GOLONGAN/PANGKAT_KETUA_TIM"] || "-", D),
+    _idRow("", "Jabatan", `${ctx.JABATAN_KETUA_TIM || "Ketua Tim"} BPS Kota Subulussalam`, D),
+    new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK PERTAMA.", { spaceAfter: 80, spaceBefore: 40 })] })] }),
+    _idRow("", "Nama", ctx.NAMA_PPK, D),
+    _idRow("", "NIP", ctx.NIP_PPK, D),
+    _idRow("", "Golongan/Pangkat", ctx["GOLONGAN/PANGKAT_PPK"] || "-", D),
+    _idRow("", "Jabatan", "Pejabat Pembuat Komitmen BPS Kota Subulussalam", D),
+    new TableRow({ children: [new TableCell({ borders: noBorder, columnSpan: 4, children: [P("selanjutnya disebut sebagai PIHAK KEDUA.", { spaceAfter: 80, spaceBefore: 40 })] })] })
+  ];
+
+  const pihakTable = new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: pihakRows });
+
+  const isiPoin = [
+    P(`Telah bersepakat untuk menyelesaikan administrasi dalam rangka kegiatan ${ctx.URAIAN_PEKERJAAN || ctx.JUDUL_PEKERJAAN_DOKUMEN || ""} dengan ketentuan:`, { spaceBefore: 80, spaceAfter: 40 }),
+    P(`1. PIHAK PERTAMA menyatakan bahwa pekerjaan yang menjadi tanggung jawab dan wewenangnya telah dilaksanakan dengan baik sesuai dengan prosedur yang berlaku;`, { spaceAfter: 40 }),
+    P(`2. PIHAK PERTAMA menyerahkan nama-nama petugas pendataan lapangan sesuai dengan jabatan dan wilayah tugasnya dalam kegiatan ${ctx.URAIAN_PEKERJAAN || ""};`, { spaceAfter: 40 }),
+    P(`3. PIHAK KEDUA setelah menerima dokumen administrasi pendukung dari pihak pertama dinyatakan lengkap maka akan segera membuat dan melunasi hak-hak petugas.`, { spaceAfter: 80 }),
+    P(`Demikian Berita Acara ini dibuat sebagai bentuk tanggung jawab masing-masing pihak dalam rangka kegiatan ${ctx.URAIAN_PEKERJAAN || ""}.`, { spaceAfter: 140 }),
+  ];
+
+  const ttdTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({ children: [
+        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK PERTAMA", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PIHAK KEDUA", bold: true, size: 22, font: "Times New Roman" })] })] }),
+      ]}),
+      new TableRow({ children: [
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1000 }, children: [new TextRun({ text: ctx.NAMA_KETUA_TIM || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: noBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1000 }, children: [new TextRun({ text: ctx.NAMA_PPK || "", bold: true, size: 22, font: "Times New Roman" })] })] }),
+      ]}),
+    ]
+  });
+
+  return [...header, pihakTable, ...isiPoin, ttdTable];
 }
