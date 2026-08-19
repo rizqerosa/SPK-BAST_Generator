@@ -2068,6 +2068,7 @@
 
     setLoading(true, "Menyimpan penugasan ke database...");
     try {
+      const recordsToSave = [];
       for (const p of _wizAssignedOfficers) {
         const vol = Number(p.volume) || 1;
         const sat = p.satuan || keg.satuan || "Dokumen";
@@ -2139,19 +2140,25 @@
           Harga_Satuan:        hrg,
           Total_Honor:         tot,
         };
-        await appendToSheet("mappingPetugas", record);
+        recordsToSave.push(record);
       }
 
-      clearCache("mappingPetugas");
+      // Optimistic UI update: langsung render ke UI dan update cache
+      _allMapping = [...recordsToSave, ..._allMapping];
+      lsSet("mappingPetugas", _allMapping);
+      _DB["mappingPetugas"] = _allMapping;
+
       const targetKegNama = keg.nama;
+      const totalCount = recordsToSave.length;
       cancelWizard();
-
-      showToast(`✅ Berhasil menyimpan penugasan ${_wizAssignedOfficers.length} petugas untuk kegiatan "${targetKegNama.substring(0,40)}"!`, "success", 5000);
-
-      // Reload mapping
-      _allMapping = await getMappingPetugas().catch(() => []);
       renderMappingList();
       updateStats();
+
+      // Kirim semua record secara PARALEL (Promise.all) agar sangat cepat (< 3 detik)
+      await Promise.all(recordsToSave.map(rec => appendToSheet("mappingPetugas", rec)));
+      clearCache("mappingPetugas");
+
+      showToast(`✅ Berhasil menyimpan penugasan ${totalCount} petugas untuk "${targetKegNama.substring(0,40)}"!`, "success", 5000);
 
       // Scroll ke bagian daftar mapping agar user langsung bisa melihat hasilnya
       setTimeout(() => {
@@ -2159,7 +2166,16 @@
         if (daftarSec) {
           daftarSec.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-      }, 300);
+      }, 200);
+
+      // Silent background sync
+      getMappingPetugas().then(fresh => {
+        if (Array.isArray(fresh) && fresh.length > 0) {
+          _allMapping = fresh;
+          renderMappingList();
+          updateStats();
+        }
+      }).catch(() => {});
 
     } catch (err) {
       showToast("Gagal menyimpan: " + err.message, "danger");
