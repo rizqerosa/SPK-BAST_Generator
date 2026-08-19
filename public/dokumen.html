@@ -1000,6 +1000,9 @@
 
   // ─── Init (Instan dengan Cache-First) ────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
+    const cleanSpk = (arr) => (arr || []).filter(r => r && (r.Nomor_SPK || r.ID_Mitra || r.Judul_Pekerjaan_Dokumen) && r.Status_Verifikasi_PPK !== 'DELETED');
+    const cleanSm  = (arr) => (arr || []).filter(r => r && (r.No_BAST_SM_PPK || r.Uraian_Tugas || r.Ketua_Tim) && r.Status_Verifikasi_PPK !== 'DELETED');
+
     const cachedDocs    = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
     const cachedSmDocs  = (typeof lsGet === "function" ? lsGet("bastSmPpk")?.data : null) || _DB.bastSmPpk;
     const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
@@ -1007,8 +1010,8 @@
 
     if (cachedMitra)   _allMitra   = cachedMitra;
     if (cachedPegawai) _allPegawai = cachedPegawai;
-    if (Array.isArray(cachedDocs) && cachedDocs.length > 0) _allDocs = cachedDocs;
-    if (Array.isArray(cachedSmDocs) && cachedSmDocs.length > 0) _allBastSmDocs = cachedSmDocs;
+    if (Array.isArray(cachedDocs)) _allDocs = cleanSpk(cachedDocs);
+    if (Array.isArray(cachedSmDocs)) _allBastSmDocs = cleanSm(cachedSmDocs);
 
     updateStats();
     applyFilters();
@@ -1025,8 +1028,8 @@
 
     window.addEventListener("sheet-refreshed", (e) => {
       if (e.detail) {
-        if (e.detail.sheet === "spkBast") _allDocs = e.detail.data || [];
-        if (e.detail.sheet === "bastSmPpk") _allBastSmDocs = e.detail.data || [];
+        if (e.detail.sheet === "spkBast") _allDocs = cleanSpk(e.detail.data || []);
+        if (e.detail.sheet === "bastSmPpk") _allBastSmDocs = cleanSm(e.detail.data || []);
         updateStats();
         applyFilters();
       }
@@ -1038,8 +1041,8 @@
       getMitra().catch(() => []),
       getPegawai().catch(() => []),
     ]).then(([spkBastData, bastSmData, mitraData, pegawaiData]) => {
-      if (Array.isArray(spkBastData)) _allDocs = spkBastData;
-      if (Array.isArray(bastSmData)) _allBastSmDocs = bastSmData;
+      if (Array.isArray(spkBastData)) _allDocs = cleanSpk(spkBastData);
+      if (Array.isArray(bastSmData)) _allBastSmDocs = cleanSm(bastSmData);
       if (Array.isArray(mitraData) && mitraData.length) _allMitra = mitraData;
       if (Array.isArray(pegawaiData) && pegawaiData.length) _allPegawai = pegawaiData;
       updateStats();

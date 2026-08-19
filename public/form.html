@@ -820,11 +820,14 @@
     const cBastSm  = lsGet("bastSmPpk")?.data || _DB.bastSmPpk || [];
     const cMapping = lsGet("mappingPetugas")?.data || _DB.mappingPetugas || [];
 
+    const cleanSpk = (arr) => (arr || []).filter(r => r && (r.Nomor_SPK || r.ID_Mitra || r.Judul_Pekerjaan_Dokumen) && r.Status_Verifikasi_PPK !== 'DELETED');
+    const cleanSm  = (arr) => (arr || []).filter(r => r && (r.No_BAST_SM_PPK || r.Uraian_Tugas || r.Ketua_Tim) && r.Status_Verifikasi_PPK !== 'DELETED');
+
     _allMitra     = cMitra;
     _allPegawai   = cPegawai;
     _allKegiatan  = cKegiatan;
-    _allSpkBast   = cSpkBast;
-    _allBastSmPpk = cBastSm;
+    _allSpkBast   = cleanSpk(cSpkBast);
+    _allBastSmPpk = cleanSm(cBastSm);
     _allMapping   = cMapping;
 
     _approvedSpkList = _allSpkBast.filter(r => {
@@ -867,8 +870,8 @@
       if (Array.isArray(mitra) && mitra.length) _allMitra = mitra;
       if (Array.isArray(pegawai) && pegawai.length) _allPegawai = pegawai;
       if (Array.isArray(kegiatan) && kegiatan.length) _allKegiatan = kegiatan;
-      if (Array.isArray(spkBast)) _allSpkBast = spkBast;
-      if (Array.isArray(smPpk)) _allBastSmPpk = smPpk;
+      if (Array.isArray(spkBast)) _allSpkBast = cleanSpk(spkBast);
+      if (Array.isArray(smPpk)) _allBastSmPpk = cleanSm(smPpk);
       if (Array.isArray(mapping)) _allMapping = mapping;
 
       _approvedSpkList = _allSpkBast.filter(r => {
@@ -880,7 +883,7 @@
       populatePegawaiDropdowns();
       renderMappedOfficerChips();
       populateSmKegiatanDropdown();
-      applyAutoDocNumber("spk", false);
+      applyAutoDocNumber(_currentMode === "bast_sm" ? "bast_sm" : (_currentMode === "bast" ? "bast" : "spk"), false);
       validateDocNumberInput("spk");
     }).catch(err => {
       console.warn("[form.html] bg sync error:", err);
