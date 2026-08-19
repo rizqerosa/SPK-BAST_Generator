@@ -398,6 +398,73 @@
     });
   });
 
+  // ─── Penyatuan Baris SPK & BAST Jadi 1 Baris Tunggal ─────────
+  function getUnifiedDocs(rawDocs) {
+    const map = new Map();
+
+    (rawDocs || []).forEach(d => {
+      const noSpk = String(d.Nomor_SPK || d.No_SPK || "").trim();
+      const idMitra = String(d.ID_Mitra || "").trim();
+      const idDoc = String(d.ID_Dokumen || "").trim();
+
+      // Kunci penyatuan: jika ada Nomor_SPK + ID_Mitra yang sama, gabungkan ke 1 kartu dokumen!
+      const key = (noSpk && idMitra) ? `${noSpk}__${idMitra}` : (idDoc || Math.random().toString());
+
+      if (!map.has(key)) {
+        map.set(key, { ...d });
+      } else {
+        const existing = map.get(key);
+        const merged = { ...existing };
+
+        // Gabungkan field non-kosong
+        Object.keys(d).forEach(k => {
+          if (d[k] !== undefined && d[k] !== null && d[k] !== "" && (!merged[k] || merged[k] === "Belum" || merged[k] === "—")) {
+            merged[k] = d[k];
+          }
+        });
+
+        // Cek apakah ada nomor BAST
+        const hasBast = Boolean(
+          d.No_BAST_PPL_PML || d.No_BAST_PPL_SM || d.No_BAST_PML_SM || d.No_BAST_SM_PPK ||
+          existing.No_BAST_PPL_PML || existing.No_BAST_PPL_SM || existing.No_BAST_PML_SM || existing.No_BAST_SM_PPK ||
+          d.Jenis_Dokumen === "BAST" || existing.Jenis_Dokumen === "BAST"
+        );
+
+        const hasSpk = Boolean(
+          d.Nomor_SPK || d.No_SPK || existing.Nomor_SPK || existing.No_SPK ||
+          d.Jenis_Dokumen === "SPK" || existing.Jenis_Dokumen === "SPK"
+        );
+
+        if (hasBast && hasSpk) {
+          merged.Jenis_Dokumen = "SPK_BAST";
+        } else if (hasBast) {
+          merged.Jenis_Dokumen = "BAST";
+        } else {
+          merged.Jenis_Dokumen = "SPK";
+        }
+
+        // Ambil status persetujuan terbaik
+        const s1 = String(existing.Status_Generate_SPK || existing.Status_Verifikasi_PPK || "").toLowerCase();
+        const s2 = String(d.Status_Generate_SPK || d.Status_Verifikasi_PPK || "").toLowerCase();
+        if (s1 === "disetujui" || s1 === "approved" || s1 === "sudah" || s2 === "disetujui" || s2 === "approved" || s2 === "sudah") {
+          merged.Status_Generate_SPK = "Sudah";
+          merged.Status_Verifikasi_PPK = "Disetujui";
+        }
+
+        map.set(key, merged);
+      }
+    });
+
+    return Array.from(map.values()).map(doc => {
+      const hasBast = Boolean(doc.No_BAST_PPL_PML || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.No_BAST_SM_PPK || doc.Jenis_Dokumen === "BAST");
+      const hasSpk  = Boolean(doc.Nomor_SPK || doc.No_SPK || doc.Jenis_Dokumen === "SPK");
+      if (hasBast && hasSpk) {
+        doc.Jenis_Dokumen = "SPK_BAST";
+      }
+      return doc;
+    });
+  }
+
   // ─── Render tabel ───────────────────────────────────────────
   function renderTable(data) {
     const tbody = document.getElementById("doc-tbody");
@@ -424,27 +491,23 @@
         namaPetugas = p ? getPegawaiName(p) : doc.Ketua_Tim;
       }
 
-      const isBast = (doc.Jenis_Dokumen === 'BAST');
+      const isBast = (doc.Jenis_Dokumen === 'BAST' || doc.Jenis_Dokumen === 'SPK_BAST');
       let isApproved = false;
       let isRejected = false;
       let statusBadge = "";
 
-      if (isBast) {
-        isApproved = true;
-        statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Siap Ekspor</span>`;
-      } else {
-        const rawStatus = doc.Status_Generate_SPK || doc.Status_Verifikasi_PPK || "Belum";
-        const vStatus = String(rawStatus).toLowerCase().trim();
-        isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
-        isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+      const rawStatus = doc.Status_Generate_SPK || doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK || "Belum";
+      const vStatus = String(rawStatus).toLowerCase().trim();
+      isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+      isRejected = (vStatus === "ditolak" || vStatus === "rejected");
 
+      if (isApproved) {
+        statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
+      } else if (isRejected) {
+        const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
+        statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
+      } else {
         statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
-        if (isApproved) {
-          statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
-        } else if (isRejected) {
-          const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
-          statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
-        }
       }
 
       // Kolom Aksi — disesuaikan per role
@@ -482,15 +545,20 @@
 
       aksiHTML += `</div>`;
 
+      let jenisLabelHTML = "";
+      if (doc.Jenis_Dokumen === "SPK_BAST") {
+        jenisLabelHTML = '<span style="background:#e0f2fe; color:#0369a1; font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:20px; border:1px solid #bae6fd;">📜 SPK + 📄 BAST</span>';
+      } else if (doc.Jenis_Dokumen === "BAST") {
+        jenisLabelHTML = '<span style="background:#dcfce7; color:#166534; font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:20px; border:1px solid #bbf7d0;">📄 BAST</span>';
+      } else {
+        jenisLabelHTML = '<span style="background:#dbeafe; color:#1e40af; font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:20px; border:1px solid #bfdbfe;">📜 SPK</span>';
+      }
+
       return `
         <tr>
           <td class="tc text-muted">${i + 1}</td>
           <td><div style="font-weight:600; font-size:.88rem;">${namaPetugas}</div></td>
-          <td>
-            ${doc.Jenis_Dokumen === 'BAST'
-              ? '<span style="background:#dcfce7; color:#166534; font-size:.68rem; font-weight:800; padding:2px 7px; border-radius:20px;">📄 BAST</span>'
-              : '<span style="background:#dbeafe; color:#1e40af; font-size:.68rem; font-weight:800; padding:2px 7px; border-radius:20px;">📜 SPK</span>'}
-          </td>
+          <td>${jenisLabelHTML}</td>
           <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
           <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
           <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
@@ -502,25 +570,19 @@
 
   function applyFilters() {
     const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
-    const data = _allDocs.filter(d => {
+    const unified = getUnifiedDocs(_allDocs);
+
+    const data = unified.filter(d => {
       // Jenis filter
       if (_activeJenisFilter !== "all") {
-        const jenis = d.Jenis_Dokumen || "SPK";
-        if (jenis !== _activeJenisFilter) return false;
+        if (_activeJenisFilter === "SPK" && d.Jenis_Dokumen !== "SPK" && d.Jenis_Dokumen !== "SPK_BAST") return false;
+        if (_activeJenisFilter === "BAST" && d.Jenis_Dokumen !== "BAST" && d.Jenis_Dokumen !== "SPK_BAST") return false;
       }
       // Status filter
-      const isBast = (d.Jenis_Dokumen === 'BAST');
-      let isApproved = false;
-      let isRejected = false;
-
-      if (isBast) {
-        isApproved = true;
-      } else {
-        const rawStatus = d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
-        const vStatus = String(rawStatus).toLowerCase().trim();
-        isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
-        isRejected = (vStatus === "ditolak" || vStatus === "rejected");
-      }
+      const rawStatus = d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
+      const vStatus = String(rawStatus).toLowerCase().trim();
+      const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah" || d.Jenis_Dokumen === "BAST" || d.Jenis_Dokumen === "SPK_BAST");
+      const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
       const isPending = !isApproved && !isRejected;
 
       let matchStatus = false;
@@ -540,7 +602,8 @@
   // ─── Export Modal ────────────────────────────────────────────
   function openExportModal(docId) {
     _selectedDocId = docId;
-    const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
+    const unified = getUnifiedDocs(_allDocs);
+    const doc = unified.find(d => String(d.ID_Dokumen) === String(docId)) || _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
     if (!doc) return;
 
     const noSurat = doc.Nomor_SPK || doc.No_SPK || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.No_BAST_PPL_PML || doc.No_BAST_SM_PPK || "";
@@ -692,10 +755,11 @@
   // ─── Update Stats & Render ──────────────────────────────────
   function updateStatsAndRender(docs) {
     _allDocs = docs || [];
-    const total = _allDocs.length;
-    const sudah = _allDocs.filter(d => (d.Status_Generate_SPK || "").toLowerCase() === "sudah" || d.Jenis_Dokumen === "BAST").length;
+    const unified = getUnifiedDocs(_allDocs);
+    const total = unified.length;
+    const sudah = unified.filter(d => (d.Status_Generate_SPK || "").toLowerCase() === "sudah" || (d.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui" || d.Jenis_Dokumen === "BAST" || d.Jenis_Dokumen === "SPK_BAST").length;
     const belum = total - sudah;
-    const honor = _allDocs.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
+    const honor = unified.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
 
     const elTotal = document.getElementById("stat-total");
     const elSudah = document.getElementById("stat-sudah");
