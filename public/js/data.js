@@ -45,8 +45,8 @@ function lsGet(key) {
     if (!raw) return null;
     const { ts, data } = JSON.parse(raw);
     const ttl = CACHE_TTL_MS[key] || 5 * 60 * 1000;
-    if (Date.now() - ts > ttl) return null; // expired
-    return data;
+    const isStale = (Date.now() - ts > ttl);
+    return { data, isStale, ts };
   } catch { return null; }
 }
 
@@ -66,7 +66,7 @@ function resolveSheetName(sheetKey) {
   return CONFIG.SHEETS[formattedKey] || CONFIG.SHEETS[sheetKey.toUpperCase()] || sheetKey;
 }
 
-// ─── Fetch dari Apps Script (murni, tanpa cache) ──────────────
+// ─── Fetch dari Apps Script (dengan timeout 12s) ──────────────
 async function _fetchFromNetwork(sheetKey) {
   const url = CONFIG.APPS_SCRIPT_URL;
   if (!url || url.startsWith("GANTI")) {
@@ -74,30 +74,58 @@ async function _fetchFromNetwork(sheetKey) {
     return [];
   }
   const sheetName = resolveSheetName(sheetKey);
-  const res = await fetch(`${url}?sheet=${encodeURIComponent(sheetName)}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  if (json.status !== "ok") throw new Error(json.message || "Error dari Apps Script");
-  return (json.data || []).map(row => normalizeRow(row, sheetKey));
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const res = await fetch(`${url}?sheet=${encodeURIComponent(sheetName)}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.status !== "ok") throw new Error(json.message || "Error dari Apps Script");
+    const normalized = (json.data || []).map(row => normalizeRow(row, sheetKey));
+    return normalized;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      console.warn(`[data.js] Timeout fetch sheet '${sheetKey}' (>12s)`);
+    } else {
+      console.error(`[data.js] Network error '${sheetKey}':`, err.message);
+    }
+    throw err;
+  }
 }
 
-// ─── Core: fetch satu sheet (cache-first) ─────────────────────
+// ─── Core: fetch satu sheet (Stale-While-Revalidate) ──────────
 async function fetchSheet(sheetKey) {
   // 1. In-memory cache (paling cepat)
   if (_DB[sheetKey] !== null && _DB[sheetKey] !== undefined) return _DB[sheetKey];
 
   // 2. LocalStorage cache (cepat, lintas halaman)
   const cached = lsGet(sheetKey);
-  if (cached) {
-    _DB[sheetKey] = cached;
-    // Refresh di background agar data tetap segar
-    _fetchFromNetwork(sheetKey)
-      .then(data => { _DB[sheetKey] = data; lsSet(sheetKey, data); })
-      .catch(() => {}); // silent fail — cache masih valid
-    return cached;
+  if (cached && cached.data) {
+    _DB[sheetKey] = cached.data;
+    // Jika stale atau sudah lewat 15 detik, refresh di background
+    if (cached.isStale || (Date.now() - (cached.ts || 0) > 15000)) {
+      _fetchFromNetwork(sheetKey)
+        .then(freshData => {
+          _DB[sheetKey] = freshData;
+          lsSet(sheetKey, freshData);
+          try {
+            window.dispatchEvent(new CustomEvent('sheet-refreshed', {
+              detail: { sheet: sheetKey, data: freshData }
+            }));
+          } catch(e) {}
+        })
+        .catch(() => {});
+    }
+    return cached.data;
   }
 
-  // 3. Fetch dari network (pertama kali / cache expired)
+  // 3. Fetch dari network (pertama kali / belum ada cache sama sekali)
   try {
     const data = await _fetchFromNetwork(sheetKey);
     _DB[sheetKey] = data;

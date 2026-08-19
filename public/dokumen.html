@@ -656,13 +656,63 @@
     _deleteDocId = null;
   }
 
-  // ─── Init ────────────────────────────────────────────────────
+  // ─── Update Stats & Render ──────────────────────────────────
+  function updateStatsAndRender(docs) {
+    _allDocs = docs || [];
+    const total = _allDocs.length;
+    const sudah = _allDocs.filter(d => (d.Status_Generate_SPK || "").toLowerCase() === "sudah" || d.Jenis_Dokumen === "BAST").length;
+    const belum = total - sudah;
+    const honor = _allDocs.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
+
+    const elTotal = document.getElementById("stat-total");
+    const elSudah = document.getElementById("stat-sudah");
+    const elBelum = document.getElementById("stat-belum");
+    const elHonor = document.getElementById("stat-honor");
+
+    if (elTotal) elTotal.textContent = total;
+    if (elSudah) elSudah.textContent = sudah;
+    if (elBelum) elBelum.textContent = belum;
+    if (elHonor) elHonor.textContent = "Rp " + formatRupiah(honor);
+
+    applyFilters();
+  }
+
+  // ─── Init (Instan dengan Cache-First) ────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    setLoading(true);
+    // 1. Tampilkan data dari cache secara instan (0 ms) jika ada
+    const cachedDocs = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
+    const cachedMitra = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
+    const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
+
+    if (cachedMitra)   _allMitra   = cachedMitra;
+    if (cachedPegawai) _allPegawai = cachedPegawai;
+
+    if (cachedDocs && cachedDocs.length > 0) {
+      updateStatsAndRender(cachedDocs);
+    } else {
+      setLoading(true);
+    }
+
+    // 2. Event listeners
+    document.getElementById("search-input")?.addEventListener("input", applyFilters);
+    document.querySelectorAll("[data-filter]").forEach(btn => {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+        this.classList.add("active");
+        _activeFilter = this.dataset.filter;
+        applyFilters();
+      });
+    });
+
+    // 3. Listen background refresh event
+    window.addEventListener("sheet-refreshed", (e) => {
+      if (e.detail && e.detail.sheet === "spkBast") {
+        updateStatsAndRender(e.detail.data);
+      }
+    });
+
+    // 4. Fetch / Revalidate data terbaru
     try {
-      // Selalu bersihkan cache agar status verifikasi terbaru tampil
-      clearCache("spkBast");
-      clearCache("bastSmPpk");
       const [spkBastData, mitraData, pegawaiData] = await Promise.all([
         getSpkBast(),
         getMitra(),
@@ -673,53 +723,32 @@
       _allMitra   = mitraData   || [];
       _allPegawai = pegawaiData || [];
 
-      // Stats
-      const total = _allDocs.length;
-      const sudah = _allDocs.filter(d => (d.Status_Generate_SPK || "").toLowerCase() === "sudah").length;
-      const belum = total - sudah;
-      const honor = _allDocs.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
-
-      document.getElementById("stat-total").textContent = total;
-      document.getElementById("stat-sudah").textContent = sudah;
-      document.getElementById("stat-belum").textContent = belum;
-      document.getElementById("stat-honor").textContent = "Rp " + formatRupiah(honor);
-
-      renderTable(_allDocs);
-
-      // Event listeners
-      document.getElementById("search-input").addEventListener("input", applyFilters);
-      document.querySelectorAll("[data-filter]").forEach(btn => {
-        btn.addEventListener("click", function() {
-          document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
-          this.classList.add("active");
-          _activeFilter = this.dataset.filter;
-          applyFilters();
-        });
-      });
-
-      // Confirm delete
-      document.getElementById("btn-confirm-delete").addEventListener("click", async () => {
-        if (!_deleteDocId) return;
-        setLoading(true);
-        try {
-          await deleteFromSheet("spkBast", "ID_Dokumen", _deleteDocId);
-          clearCache("spkBast");
-          showToast("Dokumen berhasil dihapus", "success");
-          _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(_deleteDocId));
-          applyFilters();
-        } catch (err) {
-          showToast("Gagal menghapus dokumen: " + err.message, "danger");
-        } finally {
-          setLoading(false);
-          closeDeleteModal();
-        }
-      });
-
+      updateStatsAndRender(_allDocs);
     } catch (err) {
-      showToast("Gagal memuat dokumen: " + err.message, "danger");
+      if (!cachedDocs || cachedDocs.length === 0) {
+        showToast("Gagal memuat dokumen: " + err.message, "danger");
+      }
     } finally {
       setLoading(false);
     }
+
+    // 5. Confirm delete
+    document.getElementById("btn-confirm-delete")?.addEventListener("click", async () => {
+      if (!_deleteDocId) return;
+      setLoading(true);
+      try {
+        await deleteFromSheet("spkBast", "ID_Dokumen", _deleteDocId);
+        clearCache("spkBast");
+        showToast("Dokumen berhasil dihapus", "success");
+        _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(_deleteDocId));
+        updateStatsAndRender(_allDocs);
+      } catch (err) {
+        showToast("Gagal menghapus dokumen: " + err.message, "danger");
+      } finally {
+        setLoading(false);
+        closeDeleteModal();
+      }
+    });
   });
 </script>
 </body>
