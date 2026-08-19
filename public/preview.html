@@ -317,10 +317,19 @@
   // ─── Render Utuh Pratinjau Dokumen ───────────────────────────
   async function renderPreviewContent(record, details, allMitra, allPegawai, defaultTab) {
     _previewRecord  = record;
-    _previewDetails = details;
+    _previewDetails = details || [];
+    allMitra = allMitra || [];
+    allPegawai = allPegawai || [];
 
-    _isPmlMitra = checkIsPmlMitra(_previewRecord, allMitra, allPegawai);
-    _previewCtx = buildDocContexts(_previewRecord, _previewDetails, _isPmlMitra, allMitra, allPegawai);
+    AppState.mitra   = allMitra;
+    AppState.pegawai = allPegawai;
+
+    _previewCtx = buildDataContext(_previewRecord, {
+      mitraArr: allMitra,
+      pegawaiArr: allPegawai,
+      detailArr: _previewDetails
+    });
+    _isPmlMitra = !!(_previewCtx?.bastPplPmlCtx?.IS_PML_MITRA || _previewCtx?.bastPplSmCtx?.IS_PML_MITRA);
 
     const petugasName = _previewCtx?.spkCtx?.mitra_nama || _previewCtx?.bastPplSmCtx?.mitra_nama || _previewRecord?.ID_Mitra || "—";
     const docTitle = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Nomor_SPK || _previewRecord.ID_Dokumen || "Dokumen SPK/BAST";
