@@ -168,15 +168,16 @@ async function fetchSheet(sheetKey) {
 function normalizeRow(row, sheetKey) {
   const r = { ...row };
   const angkaFields = {
-    spkBast:          ["Tahun", "Total_Honor"],
-    spk_bast:         ["Tahun", "Total_Honor"],
-    detailPekerjaan:  ["No_Urut", "Volume", "Harga_Satuan", "Nilai_Perjanjian"],
-    detail_pekerjaan: ["No_Urut", "Volume", "Harga_Satuan", "Nilai_Perjanjian"],
+    spkBast:          ["Tahun", "Total_Honor", "Triwulan", "Subround"],
+    spk_bast:         ["Tahun", "Total_Honor", "Triwulan", "Subround"],
+    detailPekerjaan:  ["No_Urut", "Volume", "volume", "Harga_Satuan", "Nilai_Perjanjian", "Tahun", "Triwulan", "Subround"],
+    detail_pekerjaan: ["No_Urut", "Volume", "volume", "Harga_Satuan", "Nilai_Perjanjian", "Tahun", "Triwulan", "Subround"],
     kegiatan:         ["Harga_Satuan"],
-    mappingPetugas:   ["Volume", "Harga_Satuan", "Total_Honor"],
-    mapping_petugas:  ["Volume", "Harga_Satuan", "Total_Honor"],
-    bastSmPpk:        ["Tahun", "Total_Honor"],
-    bast_sm_ppk:      ["Tahun", "Total_Honor"],
+    mappingPetugas:   ["Volume", "volume", "Harga_Satuan", "Total_Honor", "Tahun", "Triwulan", "Subround"],
+    mapping_petugas:  ["Volume", "volume", "Harga_Satuan", "Total_Honor", "Tahun", "Triwulan", "Subround"],
+    mapping:          ["Volume", "volume", "Harga_Satuan", "Total_Honor", "Tahun", "Triwulan", "Subround"],
+    bastSmPpk:        ["Tahun", "Total_Honor", "Triwulan", "Subround"],
+    bast_sm_ppk:      ["Tahun", "Total_Honor", "Triwulan", "Subround"],
     parameter:        ["TAHUN_AKTIF", "BATAS_HONOR_MAKSIMUM"],
   };
   const fields = angkaFields[sheetKey] || [];

@@ -23,6 +23,7 @@ const CONFIG = {
     PENGGUNA: "user",              // Akun pengguna & role (mendukung tab 'user' dan 'pengguna')
     USER: "user",
     USERS: "user",
-    MAPPING_PETUGAS: "mapping_petugas", // Mapping KATIM: petugas → kegiatan + tanggal
+    MAPPING: "mapping",            // Mapping KATIM: petugas → kegiatan
+    MAPPING_PETUGAS: "mapping",    // Mapping alias
   },
 };

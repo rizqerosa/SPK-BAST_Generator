@@ -1777,8 +1777,7 @@
     const batasTerlambat = batasList.length ? new Date(Math.max(...batasList)).toISOString().split("T")[0] : "";
 
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    const bulan  = months[new Date(tglSpk).getMonth()] || "";
-    const tahun  = new Date(tglSpk).getFullYear();
+    const meta = getPeriodMeta(tglSpk, bulan, tahun);
 
     let totalHonor = 0;
     _spkMappingRows.forEach(m => {
@@ -1792,33 +1791,38 @@
     const docId = generateId("SPK");
     const record = {
       ID_Dokumen:              docId,
-      Jenis_Dokumen:           "SPK",
-      Tahun:                   tahun,
-      Bulan:                   bulan,
-      Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
-      ID_Mitra:                petugasId,
-      PML:                     "",
-      PPK:                     ppk,
-      Ketua_Tim:               "",
-      "Kepala/PLH":            "",
-      Nomor_Kepka:             noKepka,
-      Tanggal_Kepka:           tglKepka,
-      No_SPK:                  noSpk,
       Nomor_SPK:               noSpk,
       "Tanggal SPK":           tglSpk,
       Tanggal_SPK:             tglSpk,
+      Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
+      ID_Mitra:                petugasId,
+      PML:                     "",
+      Ketua_Tim:               "",
+      PPK:                     ppk,
+      Nomor_Kepka:             noKepka,
+      Tanggal_Kepka:           tglKepka,
+      No_BAST_PPL_PML:         "",
+      Tanggal_BAST_PPL_PML:    "",
+      No_BAST_PPL_SM:          "",
+      Tanggal_BAST_PPL_SM:     "",
+      No_BAST_PML_SM:          "",
+      Tanggal_BAST_PML_SM:     "",
+      No_BAST_SM_PPK:          "",
+      Tanggal_BAST_SM_PPK:     "",
       Judul_Pekerjaan_Dokumen: judul,
       Tanggal_Mulai:           tglMulai,
       Tanggal_Selesai:         tglSelesai,
       Batas_Penyerahan:        batasTerlambat,
-      Batas_Penyerahan_Telat:  batasTerlambat,
       Total_Honor:             totalHonor,
       Terbilang:               terbilang(totalHonor) + " Rupiah",
-      Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
       Status_Generate_SPK:     "Belum",
-      Tanggal_Verifikasi_PPK:  "",
-      Catatan_Verifikasi_PPK:  "",
-      PPK_Verifikator:         "",
+      Bulan:                   meta.bulan,
+      Triwulan:                meta.triwulan,
+      Tahap:                   "",
+      Subround:                meta.subround,
+      Tahun:                   meta.tahun,
+      Jenis_Dokumen:           "SPK",
+      Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
     };
 
     setLoading(true);
@@ -1834,18 +1838,25 @@
         const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
 
         const detail = {
-          ID_Detail:      generateId("DET"),
-          ID_Dokumen:     docId,
-          No_Urut:        i + 1,
-          ID_Kegiatan:    m.ID_Kegiatan,
-          Uraian_Tugas:   m.Uraian_Kegiatan || "",
-          Buku_Pedoman:   keg?.Buku_Pedoman || "",
-          Jangka_Waktu:   formatJangkaWaktuDetail(m.Tanggal_Mulai, m.Tanggal_Selesai),
-          Volume:         vol,
-          Satuan:         sat,
-          Harga_Satuan:   hrg,
+          ID_Detail:        generateId("DET"),
+          ID_Dokumen:       docId,
+          No_Urut:          i + 1,
+          ID_Kegiatan:      m.ID_Kegiatan,
+          Fungsi:           keg?.Fungsi || keg?.Nama_Tim_Teknis || "",
+          Uraian_Tugas:     m.Uraian_Kegiatan || keg?.Uraian_Tugas || "",
+          Bulan:            m.Bulan || meta.bulan,
+          Triwulan:         m.Triwulan || meta.triwulan,
+          Tahap:            m.Tahap || "",
+          Subround:         m.Subround || meta.subround,
+          Tahun:            m.Tahun || meta.tahun,
+          Buku_Pedoman:     keg?.Buku_Pedoman || "",
+          Jangka_Waktu:     formatJangkaWaktuDetail(m.Tanggal_Mulai, m.Tanggal_Selesai),
+          Volume:           vol,
+          volume:           vol,
+          Satuan:           sat,
+          Harga_Satuan:     hrg,
           Nilai_Perjanjian: subtotal,
-          Beban_Anggaran: keg?.Beban_Anggaran || "",
+          Beban_Anggaran:   keg?.Beban_Anggaran || "",
         };
         await appendToSheet("detailPekerjaan", detail);
       }
@@ -1902,6 +1913,7 @@
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
     const bulan  = months[new Date(primaryTgl).getMonth()] || "";
     const tahun  = new Date(primaryTgl).getFullYear();
+    const meta   = getPeriodMeta(primaryTgl, bulan, tahun);
 
     const keg = _allKegiatan.find(k => getKegiatanId(k) === kegId);
     const vol = Number(mappingItem.Volume !== undefined && mappingItem.Volume !== "" ? mappingItem.Volume : (mappingItem.volume || 1));
@@ -1927,16 +1939,14 @@
     const docId = generateId("BAST");
     const record = {
       ID_Dokumen:              docId,
-      Jenis_Dokumen:           "BAST",
-      ID_SPK_Induk:            spkId || "",
-      Tahun:                   tahun,
-      Bulan:                   bulan,
+      Nomor_SPK:               spkRecord.Nomor_SPK || spkRecord.No_SPK || "",
+      "Tanggal SPK":           spkRecord["Tanggal SPK"] || spkRecord.Tanggal_SPK || "",
+      Tanggal_SPK:             spkRecord["Tanggal SPK"] || spkRecord.Tanggal_SPK || "",
       Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
       ID_Mitra:                petugasId,
       PML:                     pmlNama || spkRecord.PML || "",
-      PPK:                     spkRecord.PPK || "",
       Ketua_Tim:               targetKetua || spkRecord.Ketua_Tim || "",
-      "Kepala/PLH":            spkRecord["Kepala/PLH"] || "",
+      PPK:                     spkRecord.PPK || "",
       Nomor_Kepka:             mappingItem.Nomor_Kepka || spkRecord.Nomor_Kepka || "",
       Tanggal_Kepka:           mappingItem.Tanggal_Kepka || spkRecord.Tanggal_Kepka || "",
       No_BAST_PPL_PML:         noBastPplPml,
@@ -1945,13 +1955,21 @@
       Tanggal_BAST_PPL_SM:     tglBastPplSm,
       No_BAST_PML_SM:          noBastPmlSm,
       Tanggal_BAST_PML_SM:     tglBastPmlSm,
+      No_BAST_SM_PPK:          "",
+      Tanggal_BAST_SM_PPK:     "",
       Judul_Pekerjaan_Dokumen: kegNama || "",
       Tanggal_Mulai:           mappingItem?.Tanggal_Mulai || "",
       Tanggal_Selesai:         mappingItem?.Tanggal_Selesai || "",
-      Batas_Penyerahan:        mappingItem?.Batas_Terlambat || "",
+      Batas_Penyerahan:        mappingItem?.Batas_Terlambar || mappingItem?.Batas_Terlambat || "",
       Total_Honor:             harga,
       Terbilang:               terbilang(harga) + " Rupiah",
       Status_Generate_SPK:     "Sudah",
+      Bulan:                   meta.bulan,
+      Triwulan:                meta.triwulan,
+      Tahap:                   "",
+      Subround:                meta.subround,
+      Tahun:                   meta.tahun,
+      Jenis_Dokumen:           "BAST",
       Status_Verifikasi_PPK:   "Tidak_Perlu",
     };
 
@@ -1988,27 +2006,31 @@
     if (!ketua)   { showToast("Pilih Ketua Tim/SM!", "warning"); return; }
 
     const honorVal = Number(document.getElementById("sm-selected-keg-honor")?.value) || 0;
+    const meta     = getPeriodMeta(tglBast, bulan, parseInt(tahun));
+    const tBAST    = tanggalTerbilang(tglBast);
 
     const docId = generateId("BSM");
     const record = {
-      ID_BAST_SM_PPK:          docId,
-      Tahun:                   parseInt(tahun),
-      Bulan:                   bulan,
-      ID_Kegiatan:             kegId,
-      Uraian_Tugas:            judul,
-      PPK:                     ppk,
-      Ketua_Tim:               ketua,
-      "Kepala/Plh":            "",
-      No_BAST_SM_PPK:          noBast,
-      Judul_Pekerjaan_Dokumen: judul,
-      Tanggal_BAST_SM_PPK:     tglBast,
-      Total_Honor:             honorVal,
-      Terbilang:               terbilang(honorVal) + " Rupiah",
-      Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
+      ID_BAST_SM_PPK:              docId,
+      Hari:                        tBAST.hari,
+      Tanggal:                     tglBast,
+      Bulan:                       meta.bulan,
+      Tahun:                       meta.tahun,
+      Uraian_Tugas:                judul,
+      PPK:                         ppk,
+      Ketua_Tim:                   ketua,
+      No_BAST_SM_PPK:              noBast,
+      Judul_Pekerjaan_Dokumen:     judul,
       Status_Generate_BAST_SM_PPK: "Belum",
-      Tanggal_Verifikasi_PPK:  "",
-      Catatan_Verifikasi_PPK:  "",
-      PPK_Verifikator:         "",
+      Link_GDocs_BAST_SM_PPK:      "",
+      Link_PDF_BAST_SM_PPK:        "",
+      Triwulan:                    meta.triwulan,
+      Tahap:                       "",
+      Subround:                    meta.subround,
+      Tanggal_BAST_SM_PPK:         tglBast,
+      Total_Honor:                 honorVal,
+      Terbilang:                   terbilang(honorVal) + " Rupiah",
+      Status_Verifikasi_PPK:       "Menunggu_Verifikasi",
     };
 
     setLoading(true);
@@ -2022,6 +2044,28 @@
     } finally {
       setLoading(false);
     }
+  }
+
+  function getPeriodMeta(dateStr, defaultMonth, defaultYear) {
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    let mIdx = -1;
+    let yr = defaultYear || new Date().getFullYear();
+    if (dateStr) {
+      const d = new Date(dateStr);
+      if (!isNaN(d)) {
+        mIdx = d.getMonth();
+        yr = d.getFullYear();
+      }
+    }
+    if (mIdx === -1 && defaultMonth) {
+      mIdx = months.indexOf(defaultMonth);
+    }
+    if (mIdx === -1) mIdx = new Date().getMonth();
+
+    const bulan = months[mIdx];
+    const triwulan = Math.floor(mIdx / 3) + 1;
+    const subround = mIdx < 4 ? 1 : (mIdx < 8 ? 2 : 3);
+    return { bulan, tahun: yr, triwulan, subround, tahap: "" };
   }
 
   function generateId(prefix) {

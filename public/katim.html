@@ -1882,6 +1882,15 @@
         const hrg = Number(p.hargaSatuan !== undefined ? p.hargaSatuan : keg.honor) || 0;
         const tot = Number(p.totalHonor !== undefined ? p.totalHonor : (vol * hrg));
 
+        const tglMulaiVal = p.tglMulai || keg.tglMulai || "";
+        const tglMulaiDate = tglMulaiVal ? new Date(tglMulaiVal) : new Date();
+        const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+        const mMonth = !isNaN(tglMulaiDate) ? months[tglMulaiDate.getMonth()] : (keg.bulan || "");
+        const mYear = !isNaN(tglMulaiDate) ? tglMulaiDate.getFullYear() : (parseInt(keg.tahun) || new Date().getFullYear());
+        const mQuarter = !isNaN(tglMulaiDate) ? Math.floor(tglMulaiDate.getMonth() / 3) + 1 : 1;
+        const mSubround = !isNaN(tglMulaiDate) ? (tglMulaiDate.getMonth() < 4 ? 1 : (tglMulaiDate.getMonth() < 8 ? 2 : 3)) : 1;
+        const batasVal = p.batasTerlambat || keg.batasTerlambat || "";
+
         const record = {
           ID_Mapping:          generateId(),
           ID_Mitra_atau_NIP:   p.id,
@@ -1890,19 +1899,26 @@
           ID_Kegiatan:         keg.id,
           Uraian_Kegiatan:     keg.nama,
           Peran:               p.peran,
-          PML:                 p.pmlNama || p.pmlId || "",
-          Volume:              vol,
+          Tanggal_Mulai:       tglMulaiVal,
+          Tanggal_Selesai:     p.tglSelesai || keg.tglSelesai || "",
+          Batas_Terlambar:     batasVal,
+          Batas_Terlambat:     batasVal,
+          Nomor_Kepka:         keg.noKepka || "",
+          Tanggal_Kepka:       keg.tglKepka || "",
+          DIbuat_Oleh:         currUser.username || "",
+          Dibuat_Oleh:         currUser.username || "",
+          Tanggal_Dibuat:      new Date().toISOString(),
           volume:              vol,
+          Volume:              vol,
+          Bulan:               mMonth,
+          Triwulan:            mQuarter,
+          Tahap:               "",
+          Subround:            mSubround,
+          Tahun:               mYear,
+          PML:                 p.pmlNama || p.pmlId || "",
           Satuan:              sat,
           Harga_Satuan:        hrg,
           Total_Honor:         tot,
-          Tanggal_Mulai:       p.tglMulai || keg.tglMulai || "",
-          Tanggal_Selesai:     p.tglSelesai || keg.tglSelesai || "",
-          Batas_Terlambat:     p.batasTerlambat || keg.batasTerlambat || "",
-          Nomor_Kepka:         keg.noKepka || "",
-          Tanggal_Kepka:       keg.tglKepka || "",
-          Dibuat_Oleh:         currUser.username || "",
-          Tanggal_Dibuat:      new Date().toISOString(),
         };
         await appendToSheet("mappingPetugas", record);
       }
