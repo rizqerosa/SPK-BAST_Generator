@@ -824,11 +824,11 @@
 </div>
 
 <!-- ─── SCRIPTS ─── -->
-<script src="js/config.js?v=4.3"></script>
-<script src="js/data.js?v=4.3"></script>
-<script src="js/utils.js?v=4.3"></script>
-<script src="js/auth.js?v=4.3"></script>
-<script src="js/sidebar.js?v=4.3"></script>
+<script src="js/config.js?v=5.0"></script>
+<script src="js/data.js?v=5.0"></script>
+<script src="js/utils.js?v=5.0"></script>
+<script src="js/auth.js?v=5.0"></script>
+<script src="js/sidebar.js?v=5.0"></script>
 
 <script>
   // ============================================================
@@ -1972,164 +1972,181 @@
     const container = document.getElementById("mapping-list-container");
     if (!container) return;
 
-    const q = (document.getElementById("search-mapping")?.value || "").toLowerCase().trim();
+    try {
+      const q = (document.getElementById("search-mapping")?.value || "").toLowerCase().trim();
 
-    let filtered = _allMapping;
-    if (q) {
-      filtered = filtered.filter(m => {
-        const n  = String(m.Nama_Petugas || "").toLowerCase();
-        const k  = String(m.Uraian_Kegiatan || "").toLowerCase();
-        const id_k = String(m.ID_Kegiatan || "").toLowerCase();
-        const sk = String(m.Nomor_Kepka || "").toLowerCase();
-        return n.includes(q) || k.includes(q) || id_k.includes(q) || sk.includes(q);
-      });
-    }
+      let filtered = _allMapping || [];
+      if (q) {
+        filtered = filtered.filter(m => {
+          if (!m) return false;
+          const n  = String(m.Nama_Petugas || m.Nama || "").toLowerCase();
+          const k  = String(m.Uraian_Kegiatan || m.Uraian_Tugas || "").toLowerCase();
+          const id_k = String(m.ID_Kegiatan || "").toLowerCase();
+          const sk = String(m.Nomor_Kepka || "").toLowerCase();
+          return n.includes(q) || k.includes(q) || id_k.includes(q) || sk.includes(q);
+        });
+      }
 
-    if (filtered.length === 0) {
-      container.innerHTML = `
-        <div style="text-align:center; padding:48px; color:var(--gray-400);">
-          <div style="font-size:2.5rem; margin-bottom:12px;">🗺️</div>
-          <div style="font-weight:600; margin-bottom:4px;">Belum ada data penugasan yang cocok</div>
-          <div style="font-size:.84rem;">Klik tombol "➕ Buat Penugasan Baru" untuk memulai.</div>
-        </div>`;
-      return;
-    }
-
-    const formatTgl = str => {
-      if (!str) return "—";
-      const d = new Date(str);
-      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short", year:"numeric"});
-    };
-
-    if (_viewMode === "kegiatan") {
-      // ── Group by Kegiatan (ID_Kegiatan / Uraian_Kegiatan) ──
-      const grouped = {};
-      filtered.forEach(m => {
-        const key = m.ID_Kegiatan || m.Uraian_Kegiatan || "keg-other";
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(m);
-      });
-
-      container.innerHTML = Object.entries(grouped).map(([key, items], idx) => {
-        const kegNama = items[0].Uraian_Kegiatan || items[0].ID_Kegiatan || "—";
-        const noKepka = items[0].Nomor_Kepka || "—";
-        const tglMulai = items[0].Tanggal_Mulai;
-        const tglSls   = items[0].Tanggal_Selesai;
-        const pplCount = items.filter(m => (m.Peran || "").toLowerCase() === "ppl").length;
-        const pmlCount = items.filter(m => (m.Peran || "").toLowerCase() === "pml").length;
-        const cardId = `kegcard-${idx}`;
-
-        const rowsHTML = items.map(m => {
-          const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
-          const sat = m.Satuan || "Dokumen";
-          const hrg = Number(m.Harga_Satuan || 0);
-          const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
-          const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
-          return `
-          <div class="mapping-sub-row">
-            <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
-              ${(m.Peran||'ppl').toUpperCase()}
-            </span>
-            <div class="msr-title" style="flex:1;">
-              <strong style="color:var(--gray-900);">${escapeHtml(m.Nama_Petugas || '—')}</strong>
-              <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">
-                (${m.Tipe_Petugas === 'mitra' ? '👥 Mitra' : '🏛️ Pegawai'})
-              </span>
-              <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
-                📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
-                ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
-              </div>
-            </div>
-            <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
-            ${batasT ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(batasT)}</span>` : ""}
-            <button type="button" class="btn btn-outline btn-sm"
-                    style="color:var(--danger); border-color:var(--gray-200); padding:2px 8px; font-size:.75rem;"
-                    onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(m.Nama_Petugas || '')}', '${escapeHtml(kegNama)}')">
-              🗑️
-            </button>
+      if (!filtered || filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:48px; color:var(--gray-400);">
+            <div style="font-size:2.5rem; margin-bottom:12px;">🗺️</div>
+            <div style="font-weight:600; margin-bottom:4px;">Belum ada data penugasan yang cocok</div>
+            <div style="font-size:.84rem;">Klik tombol "➕ Buat Penugasan Baru" untuk memulai.</div>
           </div>`;
-        }).join("");
+        return;
+      }
 
-        return `
-          <div class="mapping-card ${idx === 0 ? 'open' : ''}" id="${cardId}">
-            <div class="mapping-header" onclick="toggleCard('${cardId}')">
-              <div class="mh-avatar keg">📋</div>
-              <div style="flex:1;">
-                <div class="mh-name">${escapeHtml(kegNama)}</div>
-                <div class="mh-meta">
-                  🏛️ Kepka: <strong>${escapeHtml(noKepka)}</strong> &nbsp;|&nbsp;
-                  📅 Periode: ${formatTgl(tglMulai)} – ${formatTgl(tglSls)}
+      const formatTgl = str => {
+        if (!str) return "—";
+        const d = new Date(str);
+        return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short", year:"numeric"});
+      };
+
+      if (_viewMode === "kegiatan") {
+        // ── Group by Kegiatan (ID_Kegiatan / Uraian_Kegiatan) ──
+        const grouped = {};
+        filtered.forEach(m => {
+          if (!m) return;
+          const key = m.ID_Kegiatan || m.Uraian_Kegiatan || "keg-other";
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(m);
+        });
+
+        container.innerHTML = Object.entries(grouped).map(([key, items], idx) => {
+          if (!items || items.length === 0) return "";
+          const first = items[0] || {};
+          const kegNama = first.Uraian_Kegiatan || first.Uraian_Tugas || first.ID_Kegiatan || "—";
+          const noKepka = first.Nomor_Kepka || "—";
+          const tglMulai = first.Tanggal_Mulai;
+          const tglSls   = first.Tanggal_Selesai;
+          const pplCount = items.filter(m => (m?.Peran || "").toLowerCase() === "ppl").length;
+          const pmlCount = items.filter(m => (m?.Peran || "").toLowerCase() === "pml").length;
+          const cardId = `kegcard-${idx}`;
+
+          const rowsHTML = items.map(m => {
+            if (!m) return "";
+            const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
+            const sat = m.Satuan || "Dokumen";
+            const hrg = Number(m.Harga_Satuan || 0);
+            const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+            const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
+            return `
+            <div class="mapping-sub-row">
+              <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
+                ${(m.Peran||'ppl').toUpperCase()}
+              </span>
+              <div class="msr-title" style="flex:1;">
+                <strong style="color:var(--gray-900);">${escapeHtml(m.Nama_Petugas || '—')}</strong>
+                <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">
+                  (${m.Tipe_Petugas === 'mitra' ? '👥 Mitra' : '🏛️ Pegawai'})
+                </span>
+                <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
+                  📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
+                  ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
                 </div>
               </div>
-              <span class="mh-count">${items.length} Petugas (${pplCount} PPL, ${pmlCount} PML)</span>
-              <span style="color:var(--gray-400); font-size:.85rem; margin-left:8px;">▼</span>
-            </div>
-            <div class="mapping-body">
-              ${rowsHTML}
-            </div>
-          </div>`;
-      }).join("");
+              <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+              ${batasT ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(batasT)}</span>` : ""}
+              <button type="button" class="btn btn-outline btn-sm"
+                      style="color:var(--danger); border-color:var(--gray-200); padding:2px 8px; font-size:.75rem;"
+                      onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(m.Nama_Petugas || '')}', '${escapeHtml(kegNama)}')">
+                🗑️
+              </button>
+            </div>`;
+          }).join("");
 
-    } else {
-      // ── Group by Petugas (ID_Mitra_atau_NIP / Nama_Petugas) ──
-      const grouped = {};
-      filtered.forEach(m => {
-        const key = m.ID_Mitra_atau_NIP || m.Nama_Petugas || "pet-other";
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(m);
-      });
-
-      container.innerHTML = Object.entries(grouped).map(([key, items], idx) => {
-        const nama    = items[0].Nama_Petugas || key;
-        const tipe    = items[0].Tipe_Petugas || "mitra";
-        const initial = (nama || "?")[0].toUpperCase();
-        const cardId  = `petcard-${idx}`;
-
-        const rowsHTML = items.map(m => {
-          const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
-          const sat = m.Satuan || "Dokumen";
-          const hrg = Number(m.Harga_Satuan || 0);
-          const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
-          const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
           return `
-          <div class="mapping-sub-row">
-            <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
-              ${(m.Peran||'ppl').toUpperCase()}
-            </span>
-            <div class="msr-title" style="flex:1;">
-              <strong style="color:var(--gray-900);">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || '—')}</strong>
-              <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">(Kepka: ${escapeHtml(m.Nomor_Kepka || '—')})</span>
-              <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
-                📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
-                ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
+            <div class="mapping-card ${idx === 0 ? 'open' : ''}" id="${cardId}">
+              <div class="mapping-header" onclick="toggleCard('${cardId}')">
+                <div class="mh-avatar keg">📋</div>
+                <div style="flex:1;">
+                  <div class="mh-name">${escapeHtml(kegNama)}</div>
+                  <div class="mh-meta">
+                    🏛️ Kepka: <strong>${escapeHtml(noKepka)}</strong> &nbsp;|&nbsp;
+                    📅 Periode: ${formatTgl(tglMulai)} – ${formatTgl(tglSls)}
+                  </div>
+                </div>
+                <span class="mh-count">${items.length} Petugas (${pplCount} PPL, ${pmlCount} PML)</span>
+                <span style="color:var(--gray-400); font-size:.85rem; margin-left:8px;">▼</span>
               </div>
-            </div>
-            <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
-            ${batasT ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(batasT)}</span>` : ""}
-            <button type="button" class="btn btn-outline btn-sm"
-                    style="color:var(--danger); border-color:var(--gray-200); padding:2px 8px; font-size:.75rem;"
-                    onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(nama)}', '${escapeHtml(m.Uraian_Kegiatan || '')}')">
-              🗑️
-            </button>
-          </div>`;
+              <div class="mapping-body">
+                ${rowsHTML}
+              </div>
+            </div>`;
         }).join("");
 
-        return `
-          <div class="mapping-card ${idx === 0 ? 'open' : ''}" id="${cardId}">
-            <div class="mapping-header" onclick="toggleCard('${cardId}')">
-              <div class="mh-avatar ${tipe}">${initial}</div>
-              <div style="flex:1;">
-                <div class="mh-name">${escapeHtml(nama)}</div>
-                <div class="mh-meta">${tipe === 'mitra' ? '👥 Mitra Lapangan' : '🏛️ Pegawai BPS'} · ID/NIP: ${escapeHtml(key)}</div>
+      } else {
+        // ── Group by Petugas (ID_Mitra_atau_NIP / Nama_Petugas) ──
+        const grouped = {};
+        filtered.forEach(m => {
+          if (!m) return;
+          const key = m.ID_Mitra_atau_NIP || m.Nama_Petugas || "pet-other";
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(m);
+        });
+
+        container.innerHTML = Object.entries(grouped).map(([key, items], idx) => {
+          if (!items || items.length === 0) return "";
+          const first = items[0] || {};
+          const nama    = first.Nama_Petugas || key;
+          const tipe    = first.Tipe_Petugas || "mitra";
+          const initial = (nama || "?")[0].toUpperCase();
+          const cardId  = `petcard-${idx}`;
+
+          const rowsHTML = items.map(m => {
+            if (!m) return "";
+            const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
+            const sat = m.Satuan || "Dokumen";
+            const hrg = Number(m.Harga_Satuan || 0);
+            const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+            const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
+            return `
+            <div class="mapping-sub-row">
+              <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
+                ${(m.Peran||'ppl').toUpperCase()}
+              </span>
+              <div class="msr-title" style="flex:1;">
+                <strong style="color:var(--gray-900);">${escapeHtml(m.Uraian_Kegiatan || m.Uraian_Tugas || m.ID_Kegiatan || '—')}</strong>
+                <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">(Kepka: ${escapeHtml(m.Nomor_Kepka || '—')})</span>
+                <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
+                  📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
+                  ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
+                </div>
               </div>
-              <span class="mh-count">${items.length} Kegiatan</span>
-              <span style="color:var(--gray-400); font-size:.85rem; margin-left:8px;">▼</span>
-            </div>
-            <div class="mapping-body">
-              ${rowsHTML}
-            </div>
-          </div>`;
-      }).join("");
+              <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+              ${batasT ? `<span class="msr-dates" style="color:#dc2626;">⏰ ${formatTgl(batasT)}</span>` : ""}
+              <button type="button" class="btn btn-outline btn-sm"
+                      style="color:var(--danger); border-color:var(--gray-200); padding:2px 8px; font-size:.75rem;"
+                      onclick="hapusMapping('${escapeHtml(m.ID_Mapping || '')}', '${escapeHtml(nama)}', '${escapeHtml(m.Uraian_Kegiatan || '')}')">
+                🗑️
+              </button>
+            </div>`;
+          }).join("");
+
+          return `
+            <div class="mapping-card ${idx === 0 ? 'open' : ''}" id="${cardId}">
+              <div class="mapping-header" onclick="toggleCard('${cardId}')">
+                <div class="mh-avatar ${tipe}">${initial}</div>
+                <div style="flex:1;">
+                  <div class="mh-name">${escapeHtml(nama)}</div>
+                  <div class="mh-meta">${tipe === 'mitra' ? '👥 Mitra Lapangan' : '🏛️ Pegawai BPS'} · ID/NIP: ${escapeHtml(key)}</div>
+                </div>
+                <span class="mh-count">${items.length} Kegiatan</span>
+                <span style="color:var(--gray-400); font-size:.85rem; margin-left:8px;">▼</span>
+              </div>
+              <div class="mapping-body">
+                ${rowsHTML}
+              </div>
+            </div>`;
+        }).join("");
+      }
+    } catch (err) {
+      console.error("[katim.html] renderMappingList error:", err);
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:#dc2626;">
+        ⚠️ Terjadi kendala saat merender data: ${escapeHtml(err.message)}.<br>
+        <button class="btn btn-outline btn-sm mt-8" onclick="refreshData()">🔄 Muat Ulang Data</button>
+      </div>`;
     }
   }
 
@@ -2140,17 +2157,22 @@
 
   // ─── Stats Calculator ─────────────────────────────────────────
   function updateStats() {
-    const uniqueKegiatan = new Set(_allMapping.map(m => m.ID_Kegiatan || m.Uraian_Kegiatan)).size;
-    const uniquePetugas  = new Set(_allMapping.map(m => m.ID_Mitra_atau_NIP || m.Nama_Petugas)).size;
-    const totalRecord    = _allMapping.length;
+    try {
+      const mapping = _allMapping || [];
+      const uniqueKegiatan = new Set(mapping.map(m => m ? (m.ID_Kegiatan || m.Uraian_Kegiatan || m.Uraian_Tugas) : null).filter(Boolean)).size;
+      const uniquePetugas  = new Set(mapping.map(m => m ? (m.ID_Mitra_atau_NIP || m.Nama_Petugas || m.Nama) : null).filter(Boolean)).size;
+      const totalRecord    = mapping.length;
 
-    const statKegEl = document.getElementById("stat-kegiatan");
-    const statPetEl = document.getElementById("stat-petugas");
-    const statRecEl = document.getElementById("stat-record");
+      const statKegEl = document.getElementById("stat-kegiatan");
+      const statPetEl = document.getElementById("stat-petugas");
+      const statRecEl = document.getElementById("stat-record");
 
-    if (statKegEl) statKegEl.textContent = uniqueKegiatan;
-    if (statPetEl) statPetEl.textContent = uniquePetugas;
-    if (statRecEl) statRecEl.textContent = totalRecord;
+      if (statKegEl) statKegEl.textContent = uniqueKegiatan;
+      if (statPetEl) statPetEl.textContent = uniquePetugas;
+      if (statRecEl) statRecEl.textContent = totalRecord;
+    } catch (err) {
+      console.warn("updateStats error:", err);
+    }
   }
 </script>
 </body>
