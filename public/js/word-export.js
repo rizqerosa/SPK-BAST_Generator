@@ -98,7 +98,23 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
  * @param {object} [options]   - Opsi tambahan: noSurat, tglSurat, pegawaiArr, details, isPmlMitra
  */
 async function generateAndDownloadWord(tabKey, dataCtx, docRecord, options = {}) {
-  const details = options.details || dataCtx.details || [];
+  let details = options.details || dataCtx.details || [];
+  if ((!details || details.length === 0) && (docRecord.Judul_Pekerjaan_Dokumen || docRecord.Total_Honor)) {
+    const jw = (docRecord.Tanggal_Mulai && docRecord.Tanggal_Selesai)
+      ? `${typeof formatTanggal === "function" ? formatTanggal(docRecord.Tanggal_Mulai) : docRecord.Tanggal_Mulai} s.d. ${typeof formatTanggal === "function" ? formatTanggal(docRecord.Tanggal_Selesai) : docRecord.Tanggal_Selesai}`
+      : (docRecord.Tanggal_Mulai || docRecord.Tanggal_Selesai || "-");
+    details = [{
+      No_Urut: 1,
+      Uraian_Tugas: docRecord.Judul_Pekerjaan_Dokumen || "Pendataan Lapangan",
+      Jangka_Waktu: jw,
+      Volume: 1,
+      Satuan: "Dokumen",
+      Harga_Satuan: Number(docRecord.Total_Honor) || 0,
+      Nilai_Perjanjian: Number(docRecord.Total_Honor) || 0,
+      Beban_Anggaran: docRecord.Beban_Anggaran || "BPS Kota Subulussalam"
+    }];
+  }
+
   let templatePath = "";
   let dataDict = {};
   let filename = "";
