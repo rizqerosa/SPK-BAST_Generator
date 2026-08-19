@@ -1945,7 +1945,10 @@
     const batasTerlambat = batasList.length ? new Date(Math.max(...batasList)).toISOString().split("T")[0] : "";
 
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    const meta = getPeriodMeta(tglSpk, bulan, tahun);
+    const dSpk   = tglSpk ? new Date(tglSpk) : new Date();
+    const bulan  = !isNaN(dSpk) ? months[dSpk.getMonth()] : "";
+    const tahun  = !isNaN(dSpk) ? dSpk.getFullYear() : new Date().getFullYear();
+    const meta   = getPeriodMeta(tglSpk, bulan, tahun);
 
     let totalHonor = 0;
     _spkMappingRows.forEach(m => {
@@ -1993,10 +1996,9 @@
       Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
     };
 
-    setLoading(true);
+    setLoading(true, "Menyimpan SPK ke database...");
     try {
-      await appendToSheet("spkBast", record);
-
+      const detailsToSave = [];
       for (let i = 0; i < _spkMappingRows.length; i++) {
         const m   = _spkMappingRows[i];
         const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
@@ -2026,13 +2028,18 @@
           Nilai_Perjanjian: subtotal,
           Beban_Anggaran:   keg?.Beban_Anggaran || "",
         };
-        await appendToSheet("detailPekerjaan", detail);
+        detailsToSave.push(detail);
+      }
+
+      await appendToSheet("spkBast", record);
+      if (detailsToSave.length > 0) {
+        await Promise.all(detailsToSave.map(d => appendToSheet("detailPekerjaan", d)));
       }
 
       clearCache("spkBast");
       clearCache("detailPekerjaan");
       showToast(`✅ SPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
-      setTimeout(() => window.location.href = "dokumen.html", 1800);
+      setTimeout(() => window.location.href = "dokumen.html", 1500);
     } catch (err) {
       showToast("Gagal simpan SPK: " + err.message, "danger");
       console.error(err);
