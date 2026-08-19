@@ -837,10 +837,9 @@
   let _approvedSpkList = []; // SPK yang sudah disetujui PPK
   let _bastMappingRows = [];
 
-  // ─── Init ────────────────────────────────────────────────────
-  // ─── Init (Instan dengan Cache-First) ────────────────────────
-  document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Render data dari cache secara instan (0 ms) jika ada
+  // ─── Init (Instan 0 ms, Tanpa Spinner Memblokir Layar) ───────
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. Render data dari cache secara instan (0 ms)
     const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
     const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
     const cachedKegiatan= (typeof lsGet === "function" ? lsGet("kegiatan")?.data : null) || _DB.kegiatan;
@@ -855,70 +854,26 @@
     if (cachedBastSm)   _allBastSmPpk = cachedBastSm;
     if (cachedMapping)  _allMapping   = cachedMapping;
 
-    if (cachedMitra && cachedPegawai && cachedKegiatan) {
-      _approvedSpkList = _allSpkBast.filter(r => {
-        if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
-        const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
-        return s === "disetujui" || s === "approved" || s === "sudah";
-      });
+    _approvedSpkList = _allSpkBast.filter(r => {
+      if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
+      const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
+      return s === "disetujui" || s === "approved" || s === "sudah";
+    });
 
-      populatePegawaiDropdowns();
-      renderMappedOfficerChips();
-      setupSearchListeners();
-      setupDateListeners();
-      setupDocNumberListeners();
-      populateSmBulanDropdown();
-      setupFormSubmit();
-      applyAutoDocNumber("spk", false);
-    } else {
-      setLoading(true);
-    }
-
-    // 2. Background Revalidation (update data terbaru secara tenang)
-    try {
-      const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
-        getMitra().catch(() => []),
-        getPegawai().catch(() => []),
-        getKegiatan().catch(() => []),
-        getSpkBast().catch(() => []),
-        getBastSmPpk().catch(() => []),
-        getMappingPetugas().catch(() => []),
-      ]);
-      _allMitra     = mitra     || [];
-      _allPegawai   = pegawai   || [];
-      _allKegiatan  = kegiatan  || [];
-      _allSpkBast   = spkBast   || [];
-      _allBastSmPpk = smPpk     || [];
-      _allMapping   = mapping   || [];
-
-      _approvedSpkList = _allSpkBast.filter(r => {
-        if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
-        const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
-        return s === "disetujui" || s === "approved" || s === "sudah";
-      });
-
-      populatePegawaiDropdowns();
-      renderMappedOfficerChips();
-      setupSearchListeners();
-      setupDateListeners();
-      setupDocNumberListeners();
-      populateSmBulanDropdown();
-      setupFormSubmit();
-      applyAutoDocNumber("spk", false);
-    } catch (err) {
-      console.warn("[form.html] loadAll:", err.message);
-    } finally {
-      setLoading(false);
-    }
+    populatePegawaiDropdowns();
+    renderMappedOfficerChips();
+    setupSearchListeners();
+    setupDateListeners();
+    setupDocNumberListeners();
+    populateSmBulanDropdown();
+    setupFormSubmit();
+    applyAutoDocNumber("spk", false);
 
     // Cek URL param ?mode=
     const urlParams = new URLSearchParams(window.location.search);
     const m = urlParams.get("mode");
-    if (m) {
-      selectMode(m);
-    } else {
-      selectMode("spk");
-    }
+    if (m) selectMode(m);
+    else selectMode("spk");
 
     // Edit mode
     const editId = urlParams.get("id");
@@ -926,6 +881,36 @@
       _editDocId = editId;
       _isEditMode = true;
     }
+
+    // 2. Background Revalidation (update data di latar belakang tanpa spinner)
+    Promise.all([
+      getMitra().catch(() => []),
+      getPegawai().catch(() => []),
+      getKegiatan().catch(() => []),
+      getSpkBast().catch(() => []),
+      getBastSmPpk().catch(() => []),
+      getMappingPetugas().catch(() => []),
+    ]).then(([mitra, pegawai, kegiatan, spkBast, smPpk, mapping]) => {
+      if (Array.isArray(mitra) && mitra.length) _allMitra = mitra;
+      if (Array.isArray(pegawai) && pegawai.length) _allPegawai = pegawai;
+      if (Array.isArray(kegiatan) && kegiatan.length) _allKegiatan = kegiatan;
+      if (Array.isArray(spkBast) && spkBast.length) _allSpkBast = spkBast;
+      if (Array.isArray(smPpk) && smPpk.length) _allBastSmPpk = smPpk;
+      if (Array.isArray(mapping) && mapping.length) _allMapping = mapping;
+
+      _approvedSpkList = _allSpkBast.filter(r => {
+        if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
+        const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
+        return s === "disetujui" || s === "approved" || s === "sudah";
+      });
+
+      populatePegawaiDropdowns();
+      renderMappedOfficerChips();
+      populateSmBulanDropdown();
+      applyAutoDocNumber("spk", false);
+    }).catch(err => {
+      console.warn("[form.html] silent bg sync error:", err);
+    });
   });
 
   // ─── Mode selector ───────────────────────────────────────────

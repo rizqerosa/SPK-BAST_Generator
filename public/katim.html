@@ -917,22 +917,14 @@
     if (cachedMapping)  _allMapping  = cachedMapping;
     if (cachedSpkBast)  _allSpkBast  = cachedSpkBast;
 
-    if (cachedMapping && cachedMapping.length > 0) {
-      populateKegiatanDropdown();
-      renderMappingList();
-      updateStats();
-    } else {
-      setLoading(true, "Memuat data penugasan...");
-    }
+    populateKegiatanDropdown();
+    renderMappingList();
+    updateStats();
 
-    // 2. Fetch fresh data di background
-    try {
-      await loadAll();
-    } catch (err) {
+    // 2. Fetch fresh data di background secara senyap
+    loadAll().catch(err => {
       console.warn("[katim.html] Init loadAll error:", err);
-    } finally {
-      setLoading(false);
-    }
+    });
 
     // 3. Listen background refresh
     window.addEventListener("sheet-refreshed", (e) => {

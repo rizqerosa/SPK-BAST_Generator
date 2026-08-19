@@ -712,19 +712,14 @@
 
   // ─── Init (Instan dengan Cache-First) ────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Tampilkan data dari cache secara instan (0 ms) jika ada
-    const cachedDocs = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
-    const cachedMitra = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
+    // 1. Tampilkan data dari cache secara instan (0 ms)
+    const cachedDocs    = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
+    const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
     const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
 
     if (cachedMitra)   _allMitra   = cachedMitra;
     if (cachedPegawai) _allPegawai = cachedPegawai;
-
-    if (cachedDocs && cachedDocs.length > 0) {
-      updateStatsAndRender(cachedDocs);
-    } else {
-      setLoading(true);
-    }
+    updateStatsAndRender(cachedDocs || []);
 
     // 2. Event listeners
     document.getElementById("search-input")?.addEventListener("input", applyFilters);
@@ -744,26 +739,19 @@
       }
     });
 
-    // 4. Fetch / Revalidate data terbaru
-    try {
-      const [spkBastData, mitraData, pegawaiData] = await Promise.all([
-        getSpkBast(),
-        getMitra(),
-        getPegawai(),
-      ]);
-
-      _allDocs    = spkBastData || [];
-      _allMitra   = mitraData   || [];
-      _allPegawai = pegawaiData || [];
-
+    // 4. Fetch / Revalidate data terbaru secara senyap di background
+    Promise.all([
+      getSpkBast().catch(() => []),
+      getMitra().catch(() => []),
+      getPegawai().catch(() => []),
+    ]).then(([spkBastData, mitraData, pegawaiData]) => {
+      if (Array.isArray(spkBastData) && spkBastData.length) _allDocs = spkBastData;
+      if (Array.isArray(mitraData) && mitraData.length) _allMitra = mitraData;
+      if (Array.isArray(pegawaiData) && pegawaiData.length) _allPegawai = pegawaiData;
       updateStatsAndRender(_allDocs);
-    } catch (err) {
-      if (!cachedDocs || cachedDocs.length === 0) {
-        showToast("Gagal memuat dokumen: " + err.message, "danger");
-      }
-    } finally {
-      setLoading(false);
-    }
+    }).catch(err => {
+      console.warn("[dokumen.html] silent bg sync error:", err);
+    });
 
     // 5. Confirm delete
     document.getElementById("btn-confirm-delete")?.addEventListener("click", async () => {
