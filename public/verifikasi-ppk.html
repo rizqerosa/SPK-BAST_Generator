@@ -481,6 +481,7 @@
     document.getElementById("vm-periode").textContent = `${_selectedSmDoc.Bulan || "—"} ${_selectedSmDoc.Tahun || ""}`;
     document.getElementById("vm-honor").textContent   = `Rp ${formatRupiah(_selectedSmDoc.Total_Honor || 0)},-`;
     document.getElementById("vm-catatan").value = _selectedSmDoc.Catatan_Verifikasi_PPK || "";
+    document.getElementById("vm-preview-link").href = `preview.html?id=${encodeURIComponent(_selectedSmDoc.ID_BAST_SM_PPK || "")}&tab=sm-ppk`;
     document.getElementById("vm-detail-tbody").innerHTML = `<tr><td colspan="5" style="padding:16px; font-size:.84rem; color:var(--gray-500);">${_selectedSmDoc.Judul_Pekerjaan_Dokumen || _selectedSmDoc.Uraian_Tugas || "—"}</td></tr>`;
     // Override prosesVerifikasi to handle SM
     window._verifyingSmMode = true;

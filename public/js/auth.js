@@ -197,11 +197,8 @@ const Auth = {
     }
 
     const sessionData = JSON.stringify({ ...userFound, loginAt: new Date().toISOString() });
-    if (rememberMe) {
-      localStorage.setItem(AUTH_SESSION_KEY, sessionData);
-    } else {
-      sessionStorage.setItem(AUTH_SESSION_KEY, sessionData);
-    }
+    localStorage.setItem(AUTH_SESSION_KEY, sessionData);
+    sessionStorage.setItem(AUTH_SESSION_KEY, sessionData);
     return userFound;
   },
 
