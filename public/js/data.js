@@ -291,7 +291,8 @@ async function deleteFromSheet(sheetKey, keyField, keyValue) {
     }
   } catch (_) {}
 
-  const result = await postToSheet(sheetKey, "delete", {}, { keyField, keyValue });
+  const deleteData = { [keyField]: keyValue, id: keyValue };
+  const result = await postToSheet(sheetKey, "delete", deleteData, { keyField, keyValue, id: keyValue });
   return result;
 }
 

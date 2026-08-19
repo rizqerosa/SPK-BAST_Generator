@@ -508,10 +508,14 @@
       const key = (noSpk && idMitra) ? `${noSpk}__${idMitra}` : (idDoc || Math.random().toString());
 
       if (!map.has(key)) {
-        map.set(key, { ...d });
+        const rawIds = idDoc ? [idDoc] : [];
+        map.set(key, { ...d, _rawDocIds: rawIds });
       } else {
         const existing = map.get(key);
         const merged = { ...existing };
+        const rawIds = [...(existing._rawDocIds || [])];
+        if (idDoc && !rawIds.includes(idDoc)) rawIds.push(idDoc);
+        merged._rawDocIds = rawIds;
 
         Object.keys(d).forEach(k => {
           if (d[k] !== undefined && d[k] !== null && d[k] !== "" && (!merged[k] || merged[k] === "Belum" || merged[k] === "—")) {
@@ -1044,7 +1048,7 @@
       console.warn("[dokumen.html] silent bg sync error:", err);
     });
 
-    document.getElementById("btn-confirm-delete")?.addEventListener("click", () => {
+    document.getElementById("btn-confirm-delete")?.addEventListener("click", async () => {
       if (!_deleteDocId) return;
       const targetId = _deleteDocId;
       const targetTab = _deleteTargetTab;
@@ -1055,17 +1059,50 @@
         updateStats();
         applyFilters();
         showToast("✅ Dokumen BAST SM→PPK berhasil dihapus", "success", 3500);
-        deleteFromSheet("bastSmPpk", "ID_BAST_SM_PPK", targetId).catch(err => {
+
+        try {
+          await deleteFromSheet("bastSmPpk", "ID_BAST_SM_PPK", targetId);
+          clearCache("bastSmPpk");
+        } catch (err) {
           console.warn("Sync delete error:", err);
-        });
+        }
       } else {
-        _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(targetId));
+        // Cari dokumen terpadu untuk menemukan seluruh ID baris yang menyatu
+        const unified = getUnifiedDocs(_allDocs);
+        const targetUnified = unified.find(u =>
+          String(u.ID_Dokumen) === String(targetId) ||
+          (u._rawDocIds && u._rawDocIds.includes(String(targetId)))
+        );
+
+        const idsToDelete = targetUnified && Array.isArray(targetUnified._rawDocIds) && targetUnified._rawDocIds.length > 0
+          ? targetUnified._rawDocIds
+          : [targetId];
+
+        // Hapus seluruh baris yang cocok dari state lokal & cache instan
+        _allDocs = _allDocs.filter(d => {
+          const docId = String(d.ID_Dokumen || "");
+          if (idsToDelete.includes(docId)) return false;
+          if (targetUnified && targetUnified.Nomor_SPK && targetUnified.ID_Mitra) {
+            const noSpk = String(d.Nomor_SPK || d.No_SPK || "").trim();
+            const idMitra = String(d.ID_Mitra || "").trim();
+            if (noSpk === String(targetUnified.Nomor_SPK).trim() && idMitra === String(targetUnified.ID_Mitra).trim()) {
+              return false;
+            }
+          }
+          return true;
+        });
+
         updateStats();
         applyFilters();
         showToast("✅ Dokumen berhasil dihapus", "success", 3500);
-        deleteFromSheet("spkBast", "ID_Dokumen", targetId).catch(err => {
+
+        // Hapus dari Google Sheets untuk seluruh baris terkait
+        try {
+          await Promise.all(idsToDelete.map(id => deleteFromSheet("spkBast", "ID_Dokumen", id)));
+          clearCache("spkBast");
+        } catch (err) {
           console.warn("Sync delete error:", err);
-        });
+        }
       }
     });
   });
