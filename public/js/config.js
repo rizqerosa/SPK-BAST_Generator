@@ -12,18 +12,18 @@ const CONFIG = {
 
   // Nama sheet/tab di Google Sheets — sesuai nama tab asli di spreadsheet
   SHEETS: {
-    PEGAWAI: "pegawai",          // Data pegawai BPS
-    MITRA: "mitra",            // Data mitra/PPL
-    KEGIATAN: "kegiatan",         // Daftar kegiatan yang butuh mitra
-    SURAT_TUGAS: "surat_tugas",      // Data surat tugas (untuk template dokumen)
-    SPK_BAST: "spk_bast",         // Dokumen SPK & BAST per mitra
-    DETAIL_PEKERJAAN: "detail_pekerjaan", // Detail pekerjaan per dokumen
-    BAST_SM_PPK: "bast_sm_ppk",      // BAST kumpulan kegiatan besar (SM-PPK)
-    PARAMETER: "parameter",        // Konfigurasi sistem
-    PENGGUNA: "user",              // Akun pengguna & role (mendukung tab 'user' dan 'pengguna')
-    USER: "user",
-    USERS: "user",
-    MAPPING: "mapping",            // Mapping KATIM: petugas → kegiatan
-    MAPPING_PETUGAS: "mapping",    // Mapping alias
+    PEGAWAI: "Pegawai",                  // Data pegawai BPS
+    MITRA: "Mitra",                      // Data mitra/PPL
+    KEGIATAN: "Kegiatan",                // Daftar kegiatan yang butuh mitra
+    SURAT_TUGAS: "Surat_Tugas",          // Data surat tugas
+    SPK_BAST: "SPK_BAST",                // Dokumen SPK & BAST per mitra
+    DETAIL_PEKERJAAN: "Detail_Pekerjaan",// Detail pekerjaan per dokumen
+    BAST_SM_PPK: "BAST_SM_PPK",          // BAST kumpulan kegiatan besar (SM-PPK)
+    PARAMETER: "Parameter",              // Konfigurasi sistem
+    PENGGUNA: "User",                    // Akun pengguna & role
+    USER: "User",
+    USERS: "User",
+    MAPPING_PETUGAS: "Mapping_Petugas",  // Mapping KATIM
+    MAPPING: "Mapping_Petugas",          // Alias
   },
 };

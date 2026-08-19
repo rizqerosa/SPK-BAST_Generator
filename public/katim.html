@@ -869,17 +869,50 @@
   let _wizAssignedOfficers = [];   // [ { id, nama, tipe, peran, tglMulai, tglSelesai, batasTerlambat } ]
   let _viewMode = "kegiatan";      // "kegiatan" | "petugas"
 
-  // ─── Init ────────────────────────────────────────────────────
+  // ─── Init (Instan dengan Cache-First) ────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    setLoading(true, "Memuat data penugasan...");
+    // 1. Tampilkan data dari cache secara instan (0 ms) jika ada
+    const cachedMitra = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
+    const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
+    const cachedKegiatan = (typeof lsGet === "function" ? lsGet("kegiatan")?.data : null) || _DB.kegiatan;
+    const cachedMapping = (typeof lsGet === "function" ? lsGet("mappingPetugas")?.data : null) || _DB.mappingPetugas;
+    const cachedSpkBast = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
+
+    if (cachedMitra)    _allMitra    = cachedMitra;
+    if (cachedPegawai)  _allPegawai  = cachedPegawai;
+    if (cachedKegiatan) _allKegiatan = cachedKegiatan;
+    if (cachedMapping)  _allMapping  = cachedMapping;
+    if (cachedSpkBast)  _allSpkBast  = cachedSpkBast;
+
+    if (cachedMapping && cachedMapping.length > 0) {
+      populateKegiatanDropdown();
+      renderMappingList();
+      updateStats();
+    } else {
+      setLoading(true, "Memuat data penugasan...");
+    }
+
+    // 2. Fetch fresh data di background
     try {
       await loadAll();
     } catch (err) {
-      console.error("[katim.html] Init loadAll error:", err);
-      showToast("Sebagian data gagal dimuat: " + err.message, "danger");
+      console.warn("[katim.html] Init loadAll error:", err);
     } finally {
       setLoading(false);
     }
+
+    // 3. Listen background refresh
+    window.addEventListener("sheet-refreshed", (e) => {
+      if (e.detail) {
+        if (e.detail.sheet === "mappingPetugas") _allMapping = e.detail.data;
+        if (e.detail.sheet === "kegiatan") _allKegiatan = e.detail.data;
+        if (e.detail.sheet === "mitra") _allMitra = e.detail.data;
+        if (e.detail.sheet === "pegawai") _allPegawai = e.detail.data;
+        populateKegiatanDropdown();
+        renderMappingList();
+        updateStats();
+      }
+    });
 
     // Search filter listener (Daftar Penugasan)
     document.getElementById("search-mapping")?.addEventListener("input", renderMappingList);

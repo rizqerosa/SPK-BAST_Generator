@@ -76,37 +76,57 @@ function resolveSheetName(sheetKey) {
   return CONFIG.SHEETS[formattedKey] || CONFIG.SHEETS[sheetKey.toUpperCase()] || sheetKey;
 }
 
-// ─── Fetch dari Apps Script (dengan timeout 35s) ──────────────
+// ─── Fetch dari Apps Script (dengan timeout 35s & candidate retry) ───
 async function _fetchFromNetwork(sheetKey) {
   const url = CONFIG.APPS_SCRIPT_URL;
   if (!url || url.startsWith("GANTI")) {
     console.warn("[data.js] APPS_SCRIPT_URL belum diisi di config.js!");
     return [];
   }
-  const sheetName = resolveSheetName(sheetKey);
+  const primaryName = resolveSheetName(sheetKey);
+  const candidateNames = [primaryName];
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 35000);
+  // Candidates list for fallback
+  if (primaryName === "Mapping_Petugas") candidateNames.push("mapping_petugas", "mapping", "Mapping");
+  else if (primaryName === "SPK_BAST") candidateNames.push("spk_bast", "SPK_Bast");
+  else if (primaryName === "BAST_SM_PPK") candidateNames.push("bast_sm_ppk", "BAST_SM-PPK");
+  else if (primaryName === "Detail_Pekerjaan") candidateNames.push("detail_pekerjaan");
+  else if (primaryName === "User") candidateNames.push("user", "pengguna", "Pengguna");
+  else if (primaryName === "Pegawai") candidateNames.push("pegawai");
+  else if (primaryName === "Mitra") candidateNames.push("mitra");
+  else if (primaryName === "Kegiatan") candidateNames.push("kegiatan");
 
-  try {
-    const res = await fetch(`${url}?sheet=${encodeURIComponent(sheetName)}`, {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (json.status !== "ok") throw new Error(json.message || "Error dari Apps Script");
-    const normalized = (json.data || []).map(row => normalizeRow(row, sheetKey));
-    return normalized;
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === "AbortError") {
-      console.warn(`[data.js] Timeout fetch sheet '${sheetKey}' (>35s)`);
-    } else {
-      console.error(`[data.js] Network error '${sheetKey}':`, err.message);
+  for (const sheetName of candidateNames) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+    try {
+      const res = await fetch(`${url}?sheet=${encodeURIComponent(sheetName)}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        if (res.status === 404) continue;
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const json = await res.json();
+      if (json.status !== "ok") {
+        if (json.message && json.message.toLowerCase().includes("not found")) continue;
+        throw new Error(json.message || "Error dari Apps Script");
+      }
+      const normalized = (json.data || []).map(row => normalizeRow(row, sheetKey));
+      return normalized;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        console.warn(`[data.js] Timeout fetch sheet '${sheetName}' (>35s)`);
+      } else {
+        console.warn(`[data.js] Sheet '${sheetName}' error:`, err.message);
+      }
     }
-    throw err;
   }
+
+  return [];
 }
 
 // ─── Core: fetch satu sheet (Stale-While-Revalidate) ──────────
