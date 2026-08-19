@@ -16,6 +16,53 @@ function renderTemplate(templateHTML, dataObject) {
 }
 
 /**
+ * Format string jangka waktu ke format Indonesia yang baik.
+ * Input bisa berupa:
+ *  - "2026-04-24 s/d 2026-04-30"  → "24 s.d. 30 April 2026"
+ *  - "2026-04-10 s/d 2026-05-10"  → "10 April s.d. 10 Mei 2026"
+ *  - "2026-04-24T00:00:00 s/d 2026-04-30T00:00:00" (juga didukung)
+ *  - Sudah dalam format baik → dikembalikan apa adanya
+ */
+function formatJangkaWaktu(str) {
+  if (!str || !String(str).trim()) return "—";
+  const _BULAN = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+  const parseISO = s => {
+    if (!s) return null;
+    const clean = String(s).trim().includes("T") ? s.split("T")[0] : String(s).trim();
+    const p = clean.split("-").map(Number);
+    if (p.length === 3 && !isNaN(p[0]) && !isNaN(p[1]) && !isNaN(p[2])) {
+      return { y: p[0], m: p[1], d: p[2] };
+    }
+    return null;
+  };
+
+  // Coba split separator s/d atau s.d.
+  const sep = String(str).match(/\s*s[\/.]?d\.?\s*/i);
+  if (sep) {
+    const parts = String(str).split(/\s*s[\/.]?d\.?\s*/i);
+    const a = parseISO(parts[0]);
+    const b = parseISO(parts[1]);
+    if (a && b) {
+      if (a.m === b.m && a.y === b.y) {
+        return `${a.d} s.d. ${b.d} ${_BULAN[b.m] || b.m} ${b.y}`;
+      }
+      const aSuffix = a.y === b.y ? "" : ` ${a.y}`;
+      return `${a.d} ${_BULAN[a.m] || a.m}${aSuffix} s.d. ${b.d} ${_BULAN[b.m] || b.m} ${b.y}`;
+    }
+  }
+
+  // Coba parse single date
+  const single = parseISO(str);
+  if (single) {
+    return `${single.d} ${_BULAN[single.m] || single.m} ${single.y}`;
+  }
+
+  // Kembalikan apa adanya jika tidak bisa di-parse
+  return String(str);
+}
+
+/**
  * Render baris-baris tabel lampiran SPK dari array detailPekerjaan.
  * @returns {string} HTML <tr>...</tr> yang di-join
  */
@@ -32,8 +79,8 @@ function renderTabelLampiran(detailPekerjaanArray) {
     <tr>
       <td class="tc">${d.No_Urut || (i + 1)}</td>
       <td>${d.Uraian_Tugas || ""}</td>
-      <td>${d.Jangka_Waktu || ""}</td>
-      <td class="tc">${d.Volume || ""}</td>
+      <td>${formatJangkaWaktu(d.Jangka_Waktu)}</td>
+      <td class="tc">${d.Volume || 1}</td>
       <td class="tc">${d.Satuan || ""}</td>
       <td class="tr">Rp ${formatRupiah(d.Harga_Satuan)}</td>
       <td class="tr">Rp ${formatRupiah(d.Nilai_Perjanjian)}</td>

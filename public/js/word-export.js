@@ -230,8 +230,8 @@ function _buildWordSpkContent(ctx, details, D) {
         children: [
           new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(d.No_Urut || idx + 1), size: 18, font: "Times New Roman" })] })] }),
           new TableCell({ borders: thinBorder, children: [new Paragraph({ children: [new TextRun({ text: String(d.Uraian_Tugas || ""), size: 18, font: "Times New Roman" })] })] }),
-          new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(d.Jangka_Waktu || ""), size: 18, font: "Times New Roman" })] })] }),
-          new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(d.Volume || ""), size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: typeof formatJangkaWaktu === "function" ? formatJangkaWaktu(d.Jangka_Waktu) : String(d.Jangka_Waktu || ""), size: 18, font: "Times New Roman" })] })] }),
+          new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(d.Volume || 1), size: 18, font: "Times New Roman" })] })] }),
           new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(d.Satuan || ""), size: 18, font: "Times New Roman" })] })] }),
           new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: typeof formatRupiah === "function" ? formatRupiah(d.Harga_Satuan) : String(d.Harga_Satuan || 0), size: 18, font: "Times New Roman" })] })] }),
           new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: typeof formatRupiah === "function" ? formatRupiah(d.Nilai_Perjanjian) : String(d.Nilai_Perjanjian || 0), size: 18, font: "Times New Roman" })] })] }),
@@ -239,11 +239,11 @@ function _buildWordSpkContent(ctx, details, D) {
       }));
     });
 
-    // Total Row
+    // Total Row — hanya terbilang (konsisten dengan template HTML)
     tableRows.push(new TableRow({
       children: [
-        new TableCell({ borders: thinBorder, columnSpan: 6, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "TOTAL HONOR:", bold: true, size: 18, font: "Times New Roman" })] })] }),
-        new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Rp ${ctx.TOTAL_HONOR || "0"}`, bold: true, size: 18, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: thinBorder, columnSpan: 6, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "Terbilang:", bold: true, size: 18, font: "Times New Roman" })] })] }),
+        new TableCell({ borders: thinBorder, children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: ctx.TERBILANG_TOTAL_HONOR || ctx.TERBILANG || "—", size: 18, font: "Times New Roman" })] })] }),
       ]
     }));
 

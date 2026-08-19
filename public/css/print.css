@@ -136,10 +136,11 @@
   text-align: justify;
 }
 
-/* ─── Tabel Lampiran SPK ─────────────────────────────────────── */
+/* ─── Tabel Lampiran SPK ───────────────────────────── */
 .doc-table-wrapper {
   margin: 10px 0;
-  overflow-x: auto;
+  width: 100%;
+  overflow: visible;
 }
 
 table.doc-table {
@@ -162,10 +163,16 @@ table.doc-table td {
   border: 1px solid #000;
   padding: 5px 6px;
   vertical-align: top;
+  word-break: break-word;
 }
 
 table.doc-table td.tc { text-align: center; }
 table.doc-table td.tr { text-align: right; }
+
+/* Fix: Tabel tidak boleh meluber keluar box */
+table.doc-table {
+  table-layout: fixed;
+}
 
 /* ─── Tabel Tanda Tangan ─────────────────────────────────────── */
 .doc-ttd-table {

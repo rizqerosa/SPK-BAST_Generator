@@ -109,15 +109,39 @@
 </div>
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
-<script src="https://unpkg.com/docx@8/build/index.min.js"></script>
-<script src="js/config.js?v=4.3"></script>
-<script src="js/data.js?v=4.3"></script>
-<script src="js/auth.js?v=4.3"></script>
-<script src="js/utils.js?v=4.3"></script>
-<script src="js/render.js?v=4.3"></script>
-<script src="js/word-export.js?v=4.3"></script>
-<script src="js/sidebar.js?v=4.3"></script>
-<script src="js/app.js?v=4.3"></script>
+<script>
+  // Load library docx dengan fallback CDN
+  (function() {
+    function loadDocxScript(url, fallbackUrl) {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onerror = function() {
+        if (fallbackUrl) {
+          console.warn('[docx] Gagal load dari ' + url + ', mencoba fallback...');
+          const s2 = document.createElement('script');
+          s2.src = fallbackUrl;
+          s2.onerror = function() {
+            console.error('[docx] Gagal load dari kedua CDN. Export Word tidak akan berfungsi.');
+          };
+          document.head.appendChild(s2);
+        }
+      };
+      document.head.appendChild(s);
+    }
+    loadDocxScript(
+      'https://unpkg.com/docx@8/build/index.min.js',
+      'https://cdn.jsdelivr.net/npm/docx@8/build/index.min.js'
+    );
+  })();
+</script>
+<script src="js/config.js?v=4.4"></script>
+<script src="js/data.js?v=4.4"></script>
+<script src="js/auth.js?v=4.4"></script>
+<script src="js/utils.js?v=4.4"></script>
+<script src="js/render.js?v=4.4"></script>
+<script src="js/word-export.js?v=4.4"></script>
+<script src="js/sidebar.js?v=4.4"></script>
+<script src="js/app.js?v=4.4"></script>
 <script>
   let _previewRecord  = null;
   let _previewDetails = [];
@@ -347,8 +371,28 @@
   }
 
   async function exportCurrentWord() {
-    if (typeof docx === "undefined" || typeof generateAndDownloadWord === "undefined") {
-      showToast("Library Word belum termuat. Pastikan koneksi internet aktif.", "danger");
+    // Cek library docx, tunggu maksimal 5 detik jika sedang loading
+    if (typeof docx === "undefined") {
+      setLoading(true);
+      let waited = 0;
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          waited += 300;
+          if (typeof docx !== "undefined" || waited >= 5000) {
+            clearInterval(check);
+            resolve();
+          }
+        }, 300);
+      });
+      setLoading(false);
+    }
+
+    if (typeof docx === "undefined") {
+      showToast("❌ Library Word (docx.js) gagal dimuat. Periksa koneksi internet, lalu refresh halaman.", "danger", 6000);
+      return;
+    }
+    if (typeof generateAndDownloadWord === "undefined") {
+      showToast("❌ Fungsi export belum siap. Coba refresh halaman.", "danger");
       return;
     }
     if (!_previewRecord) {
@@ -367,9 +411,9 @@
           isPmlMitra: _isPmlMitra
         }
       );
-      showToast('File Word "' + filename + '" berhasil diunduh', "success");
+      showToast('✅ File Word "' + filename + '" berhasil diunduh', "success");
     } catch (err) {
-      showToast("Gagal export Word: " + err.message, "danger");
+      showToast("❌ Gagal export Word: " + err.message, "danger", 6000);
       console.error(err);
     } finally {
       setLoading(false);

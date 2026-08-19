@@ -1068,31 +1068,8 @@ function validateDocNumberInput(inputEl, triggerToast = false) {
     return { isDuplicate: true, hasGap: false };
   }
 
-  // 2. Cek nomor melompati urutan (Gap Warning - Kuning)
-  const gapInfo = checkGapDocNumber(val, inputId);
-  if (gapInfo) {
-    inputEl.classList.remove("is-duplicate");
-    inputEl.classList.add("is-gap-warning");
-
-    const missingStr = gapInfo.missingNums.join(", ");
-    const labelNomor = gapInfo.missingNums.length > 1 ? "Nomor-nomor" : "Nomor";
-    const textMsg = `⚠️ Peringatan: ${labelNomor} ${missingStr} belum ada untuk tahun ${gapInfo.year} (melompati urutan)`;
-
-    if (!warnEl) {
-      warnEl = document.createElement("div");
-      warnEl.className = "doc-num-warning-msg warning";
-      inputEl.parentNode.appendChild(warnEl);
-    } else {
-      warnEl.className = "doc-num-warning-msg warning";
-    }
-    warnEl.innerHTML = textMsg;
-
-    if (triggerToast) {
-      showToast(textMsg, "warning", 4000);
-    }
-    return { isDuplicate: false, hasGap: true };
-  }
-
+  // Gap warning dihapus — nomor SPK/BAST tidak selalu urut ketat
+  // (bisa ada nomor dari kegiatan lain di bulan berbeda)
   inputEl.classList.remove("is-duplicate", "is-gap-warning");
   if (warnEl) warnEl.remove();
   return { isDuplicate: false, hasGap: false };
@@ -1645,12 +1622,10 @@ async function handleFormSubmit(e) {
     }
   }
 
-  // Validasi duplikasi & lompatan nomor SPK & BAST
+  // Validasi duplikasi nomor SPK & BAST
   const validationStatus = validateAllDocNumberInputs();
   if (validationStatus.hasDuplicate) {
     showToast("⚠️ Peringatan: Ada nomor SPK / BAST yang sudah pernah digunakan pada database!", "warning", 5000);
-  } else if (validationStatus.hasGap) {
-    showToast("⚠️ Peringatan: Ada nomor SPK / BAST yang melompati urutan!", "warning", 4000);
   }
 
   // Kumpulkan detail pekerjaan dari tabel (hanya baris dengan data-keg-id)

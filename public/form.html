@@ -729,13 +729,13 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.3"></script>
-<script src="js/data.js?v=4.3"></script>
-<script src="js/auth.js?v=4.3"></script>
-<script src="js/utils.js?v=4.3"></script>
-<script src="js/render.js?v=4.3"></script>
-<script src="js/sidebar.js?v=4.3"></script>
-<script src="js/app.js?v=4.3"></script>
+<script src="js/config.js?v=4.4"></script>
+<script src="js/data.js?v=4.4"></script>
+<script src="js/auth.js?v=4.4"></script>
+<script src="js/utils.js?v=4.4"></script>
+<script src="js/render.js?v=4.4"></script>
+<script src="js/sidebar.js?v=4.4"></script>
+<script src="js/app.js?v=4.4"></script>
 
 <script>
   // ─── State ───────────────────────────────────────────────────
@@ -1011,10 +1011,15 @@
     _spkMappingRows = mappingItems;
     section.style.display = "block";
 
-    const formatTgl = str => {
+    const formatTglIndo = str => {
       if (!str) return "—";
-      const d = new Date(str);
-      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
+      // Coba parse tanggal
+      const raw = str.includes("T") ? str.split("T")[0] : str;
+      const parts = raw.split("-");
+      if (parts.length !== 3) return str;
+      const [y, mo, d] = parts.map(Number);
+      const bulanList = ["","Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+      return `${d} ${bulanList[mo] || mo}`;
     };
 
     let totalHonor = 0;
@@ -1025,22 +1030,44 @@
       const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
       const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
       totalHonor += subtotal;
+
+      // Cari PML yang di-mapping untuk kegiatan ini
+      const pmlItem = _allMapping.find(mx =>
+        mx.ID_Kegiatan === m.ID_Kegiatan &&
+        String(mx.Peran || "").toLowerCase() === "pml" &&
+        String(mx.ID_Mitra_atau_NIP) !== String(petugasId)
+      );
+      const pmlNama = pmlItem ? (pmlItem.Nama_Petugas || pmlItem.ID_Mitra_atau_NIP || "—") : "—";
+
+      const tglRange = (m.Tanggal_Mulai && m.Tanggal_Selesai)
+        ? `${formatTglIndo(m.Tanggal_Mulai)} – ${formatTglIndo(m.Tanggal_Selesai)}`
+        : (m.Tanggal_Mulai ? formatTglIndo(m.Tanggal_Mulai) : "—");
+
       return `<div class="mapping-keg-item">
         <span class="mki-badge mki-${m.Peran || 'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
         <span class="mki-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</span>
-        <span class="mki-meta">📦 ${vol} ${escapeHtml(sat)} &nbsp;·&nbsp; 💰 Rp ${formatRupiah(subtotal)} &nbsp;·&nbsp; 📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
+        <span class="mki-meta">
+          📦 ${vol} ${escapeHtml(sat)}
+          &nbsp;·&nbsp;
+          💰 Rp ${formatRupiah(subtotal)}
+          &nbsp;·&nbsp;
+          📅 ${tglRange}
+          ${pmlItem ? `&nbsp;·&nbsp; <strong>PML: ${escapeHtml(pmlNama)}</strong>` : ''}
+        </span>
       </div>`;
     }).join("");
 
     document.getElementById("spk-honor-amount").textContent = `Rp ${formatRupiah(totalHonor)},-`;
     document.getElementById("spk-honor-terbilang").textContent = terbilang(totalHonor) + " Rupiah";
 
-    // Auto-fill Kepka & Judul
+  // Auto-fill Kepka & Judul
     const firstMapping = mappingItems[0];
     if (firstMapping) {
       const kepkaEl = document.getElementById("spk-nomor-kepka");
       const tglKepEl = document.getElementById("spk-tgl-kepka");
       const judulEl = document.getElementById("spk-judul");
+      const ketuaEl = document.getElementById("spk-sel-ketua");
+
       if (kepkaEl && !kepkaEl.value) kepkaEl.value = firstMapping.Nomor_Kepka || "";
       if (tglKepEl && !tglKepEl.value && firstMapping.Tanggal_Kepka) {
         tglKepEl.value = firstMapping.Tanggal_Kepka.includes("T")
@@ -1051,19 +1078,47 @@
         const uraianList = mappingItems.map(m => m.Uraian_Kegiatan || "").filter(Boolean);
         judulEl.value = uraianList.join(", ").toUpperCase().substring(0, 200);
       }
+
+      // Auto-fill Ketua Tim dari mapping jika ada
+      if (ketuaEl && !ketuaEl.value) {
+        const nipKetua = firstMapping.NIP_Ketua_Tim || firstMapping.ID_Ketua_Tim || firstMapping.Ketua_Tim || "";
+        if (nipKetua) {
+          // Coba set value langsung
+          ketuaEl.value = nipKetua;
+          // Jika tidak ada di opsi, cari by nama
+          if (!ketuaEl.value) {
+            Array.from(ketuaEl.options).forEach(opt => {
+              if (opt.textContent.toLowerCase().includes(String(nipKetua).toLowerCase())) {
+                ketuaEl.value = opt.value;
+              }
+            });
+          }
+        }
+      }
     }
 
-    // Auto-suggest PML from mapping if available
-    const kegIds = mappingItems.map(m => m.ID_Kegiatan);
-    const pmlMapping = _allMapping.find(m =>
-      kegIds.includes(m.ID_Kegiatan) &&
-      String(m.Peran || "").toLowerCase() === "pml" &&
-      String(m.ID_Mitra_atau_NIP) !== String(petugasId)
+    // Auto-suggest PML from mapping jika ada
+    const pmlFromMapping = mappingItems.find(m =>
+      String(m.Peran || "").toLowerCase() === "pml"
     );
-    if (pmlMapping) {
+    if (pmlFromMapping) {
       const pmlEl = document.getElementById("spk-sel-pml");
       if (pmlEl && !pmlEl.value) {
-        pmlEl.value = pmlMapping.ID_Mitra_atau_NIP;
+        pmlEl.value = pmlFromMapping.ID_Mitra_atau_NIP;
+      }
+    } else {
+      // Cari PML dari mapping kegiatan yang sama tapi ID berbeda
+      const kegIds = mappingItems.map(m => m.ID_Kegiatan);
+      const pmlMapping = _allMapping.find(m =>
+        kegIds.includes(m.ID_Kegiatan) &&
+        String(m.Peran || "").toLowerCase() === "pml" &&
+        String(m.ID_Mitra_atau_NIP) !== String(petugasId)
+      );
+      if (pmlMapping) {
+        const pmlEl = document.getElementById("spk-sel-pml");
+        if (pmlEl && !pmlEl.value) {
+          pmlEl.value = pmlMapping.ID_Mitra_atau_NIP;
+        }
       }
     }
   }
@@ -1534,7 +1589,7 @@
           ID_Kegiatan:    m.ID_Kegiatan,
           Uraian_Tugas:   m.Uraian_Kegiatan || "",
           Buku_Pedoman:   keg?.Buku_Pedoman || "",
-          Jangka_Waktu:   `${m.Tanggal_Mulai || ""} s/d ${m.Tanggal_Selesai || ""}`,
+          Jangka_Waktu:   formatJangkaWaktuDetail(m.Tanggal_Mulai, m.Tanggal_Selesai),
           Volume:         vol,
           Satuan:         sat,
           Harga_Satuan:   hrg,
@@ -1710,6 +1765,28 @@
 
   function generateId(prefix) {
     return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2,4).toUpperCase()}`;
+  }
+
+  // ─── Helper: Format jangka waktu ISO ke range Indonesia ──────
+  function formatJangkaWaktuDetail(tglMulai, tglSelesai) {
+    const bulanList = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const parseDate = str => {
+      if (!str) return null;
+      const s = String(str).includes("T") ? str.split("T")[0] : str;
+      const p = s.split("-").map(Number);
+      return p.length === 3 ? { y: p[0], m: p[1], d: p[2] } : null;
+    };
+    const a = parseDate(tglMulai);
+    const b = parseDate(tglSelesai);
+    if (!a) return tglSelesai ? String(tglSelesai).split("T")[0] : "—";
+    if (!b) return `${a.d} ${bulanList[a.m] || a.m} ${a.y}`;
+    if (a.m === b.m && a.y === b.y) {
+      // Bulan sama: "24 s.d. 30 April 2026"
+      return `${a.d} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
+    }
+    // Bulan beda: "10 April s.d. 10 Mei 2026"
+    const aSuffix = a.y === b.y ? `` : ` ${a.y}`;
+    return `${a.d} ${bulanList[a.m] || a.m}${aSuffix} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
   }
 
   // ─── Edit mode (dari dokumen.html) ───────────────────────────
