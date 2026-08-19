@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — Sistem SPK &amp; BAST Generator BPS Kota Subulussalam</title>
   <meta name="description" content="Halaman Masuk Sistem Generator SPK dan BAST BPS Kota Subulussalam">
+  <script>
+    (function(){
+      try {
+        var s = localStorage.getItem("spkbast_user_session") || sessionStorage.getItem("spkbast_user_session");
+        if (s) {
+          var u = JSON.parse(s);
+          if (u && u.username) {
+            var r = (u.role || "").toUpperCase();
+            if (r === "ADMIN") window.location.replace("admin.html");
+            else if (r === "PPK") window.location.replace("verifikasi-ppk.html");
+            else if (r === "KATIM") window.location.replace("katim.html");
+            else window.location.replace("index.html");
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
