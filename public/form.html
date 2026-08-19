@@ -637,6 +637,27 @@
                 </div>
               </div>
 
+              <!-- Pejabat Terkait BAST (Ketua Tim / SM & PPK) -->
+              <hr style="border:none; border-top:1px dashed #bbf7d0; margin:18px 0;">
+              <div style="font-weight:700; color:#166534; font-size:.88rem; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                <span>🏛️ Pejabat Terkait BAST</span>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="bast-sel-ketua">Ketua Tim / SM (Supervisor Madya) <span class="required">*</span></label>
+                  <select class="form-control" id="bast-sel-ketua" name="ketua_tim" required>
+                    <option value="">-- Pilih Ketua Tim / SM --</option>
+                  </select>
+                  <div class="format-hint">Otomatis terisi dari Tim Teknis kegiatan, tetap dapat diubah jika perlu.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="bast-sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
+                  <select class="form-control" id="bast-sel-ppk" name="ppk" required>
+                    <option value="">-- Pilih PPK --</option>
+                  </select>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -961,7 +982,7 @@
     }).join("");
     const opts = buildOpts(_allPegawai);
 
-    ["spk-sel-ppk","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
+    ["spk-sel-ppk","bast-sel-ppk","bast-sel-ketua","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = `<option value="">-- Pilih Pegawai --</option>` + opts;
     });
@@ -1327,6 +1348,58 @@
         }
       }
     }
+
+    // Auto-select Ketua Tim / SM dari master kegiatan
+    const keg = _allKegiatan.find(k => getKegiatanId(k) === (m.ID_Kegiatan || ""));
+    const ketuaEl = document.getElementById("bast-sel-ketua");
+    const ppkEl   = document.getElementById("bast-sel-ppk");
+
+    if (ketuaEl) {
+      const targetTim = (keg?.Nama_Tim_Teknis || keg?.Tim_Teknis || keg?.Nama_Ketua_Tim || m.Nama_Tim_Teknis || "").toLowerCase().trim();
+      let matched = false;
+      for (let i = 0; i < ketuaEl.options.length; i++) {
+        const optText = ketuaEl.options[i].text.toLowerCase();
+        if (targetTim && (optText.includes(targetTim) || targetTim.includes(optText.split(" ")[0]))) {
+          ketuaEl.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched && targetTim) {
+        const katimMap = {
+          "distribusi": "tri wahyudi",
+          "neraca":     "raden daffa",
+          "produksi":   "thariq alfatih",
+          "pengolahan": "mutia soraya",
+          "sosial":     "putri nurhilwa",
+          "diseminasi": "suciarti"
+        };
+        for (const [tKey, pName] of Object.entries(katimMap)) {
+          if (targetTim.includes(tKey)) {
+            for (let i = 0; i < ketuaEl.options.length; i++) {
+              if (ketuaEl.options[i].text.toLowerCase().includes(pName)) {
+                ketuaEl.selectedIndex = i;
+                matched = true;
+                break;
+              }
+            }
+            if (matched) break;
+          }
+        }
+      }
+    }
+
+    // Auto-select PPK dari SPK yang disetujui jika ada
+    const spkId = document.getElementById("bast-spk-id")?.value;
+    const spkRecord = _allSpkBast.find(r => r.ID_Dokumen === spkId);
+    if (ppkEl && spkRecord && spkRecord.PPK) {
+      for (let i = 0; i < ppkEl.options.length; i++) {
+        if (ppkEl.options[i].value === spkRecord.PPK || ppkEl.options[i].text.includes(spkRecord.PPK)) {
+          ppkEl.selectedIndex = i;
+          break;
+        }
+      }
+    }
   }
 
   // ─── Number Generator & Database Duplicate Validator ─────────
@@ -1573,11 +1646,27 @@
 
     const dup = checkDocNumberDuplicate(docType, val);
     if (dup) {
-      statusEl.innerHTML = `<span style="color:#dc2626; font-weight:600;">⚠️ Nomor sudah digunakan (${escapeHtml(dup.label)})</span>`;
+      statusEl.innerHTML = `<span style="color:#dc2626; font-weight:600;">❌ Nomor sudah digunakan di database (${escapeHtml(dup.label)})</span>`;
       return;
     }
 
-    statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor tersedia</span>`;
+    // Pengecekan Lompat Nomor / Sequence Gap
+    const yr = getDocYear(docType);
+    const maxSeq = getMaxDocSeq(docType, yr);
+    const expectedSeq = maxSeq + 1;
+    const currentSeq = extractDocSeq(val, yr);
+
+    if (currentSeq !== null) {
+      if (currentSeq > expectedSeq) {
+        statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Nomor melompati urutan! Terakhir di database adalah no. ${maxSeq || 0} (seharusnya Nomor ${expectedSeq} Tahun ${yr})</span>`;
+        return;
+      } else if (currentSeq < expectedSeq) {
+        statusEl.innerHTML = `<span style="color:#0284c7; font-weight:600;">ℹ️ Nomor urut lampau (${currentSeq} dari max ${maxSeq}) — Tersedia</span>`;
+        return;
+      }
+    }
+
+    statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor berurutan &amp; tersedia (Nomor urut ${expectedSeq})</span>`;
   }
 
   function applyAutoDocNumber(docType, force = false) {
@@ -2010,10 +2099,14 @@
       pmlNama = pmlItem ? (pmlItem.Nama_Petugas || pmlItem.ID_Mitra_atau_NIP || "") : "";
     }
 
-    // Cari Ketua Tim dari master kegiatan
-    let targetKetua = keg?.Nama_Tim_Teknis || keg?.Nama_Ketua_Tim || keg?.Ketua_Tim || mappingItem.Nama_Tim_Teknis || "";
+    // Ambil Ketua Tim & PPK dari input form (fallback ke master kegiatan/SPK)
+    const ketuaInput = document.getElementById("bast-sel-ketua")?.value;
+    const ppkInput   = document.getElementById("bast-sel-ppk")?.value;
+    const targetKetua = ketuaInput || keg?.Nama_Tim_Teknis || keg?.Nama_Ketua_Tim || keg?.Ketua_Tim || mappingItem.Nama_Tim_Teknis || "";
 
     const spkRecord = _allSpkBast.find(r => r.ID_Dokumen === spkId) || {};
+    const finalKetua = targetKetua || spkRecord.Ketua_Tim || "";
+    const finalPpk   = ppkInput || spkRecord.PPK || "";
 
     const docId = generateId("BAST");
     const record = {
@@ -2024,8 +2117,8 @@
       Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
       ID_Mitra:                petugasId,
       PML:                     pmlNama || spkRecord.PML || "",
-      Ketua_Tim:               targetKetua || spkRecord.Ketua_Tim || "",
-      PPK:                     spkRecord.PPK || "",
+      Ketua_Tim:               finalKetua,
+      PPK:                     finalPpk,
       Nomor_Kepka:             mappingItem.Nomor_Kepka || spkRecord.Nomor_Kepka || "",
       Tanggal_Kepka:           mappingItem.Tanggal_Kepka || spkRecord.Tanggal_Kepka || "",
       No_BAST_PPL_PML:         noBastPplPml,
