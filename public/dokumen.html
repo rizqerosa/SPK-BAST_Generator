@@ -134,6 +134,44 @@
       gap: 10px;
       align-items: center;
     }
+
+    /* Sheet Tabs */
+    .sheet-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--gray-200);
+      padding-bottom: 0;
+    }
+    .btn-tab {
+      padding: 12px 22px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background: transparent;
+      color: var(--gray-600);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: all .2s ease;
+    }
+    .btn-tab:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+    .btn-tab.active {
+      background: #fff;
+      color: var(--brand-primary);
+      border-color: var(--gray-200);
+      border-bottom: 2px solid #fff;
+      margin-bottom: -2px;
+      box-shadow: 0 -3px 12px rgba(0,0,0,.04);
+    }
+    .btn-tab.active#tab-btn-bast-sm {
+      color: #7c3aed;
+    }
   </style>
 </head>
 <body>
@@ -203,12 +241,22 @@
         </div>
       </div>
 
+      <!-- Sheet Tabs Switcher -->
+      <div class="sheet-tabs">
+        <button type="button" class="btn-tab active" id="tab-btn-spk-bast" onclick="switchDocTab('spk_bast')">
+          📜 SPK &amp; BAST Petugas <span class="badge" id="badge-count-spk-bast" style="margin-left:8px; background:#e0f2fe; color:#0369a1; font-size:.75rem;">0</span>
+        </button>
+        <button type="button" class="btn-tab" id="tab-btn-bast-sm" onclick="switchDocTab('bast_sm')">
+          🏛️ BAST SM → PPK <span class="badge" id="badge-count-bast-sm" style="margin-left:8px; background:#f5f3ff; color:#6d28d9; font-size:.75rem;">0</span>
+        </button>
+      </div>
+
       <!-- Document Table Card -->
       <div class="card">
         <div class="card-header">
-          <h2>📋 Daftar Semua Dokumen</h2>
+          <h2 id="card-table-title">📋 Daftar SPK &amp; BAST Petugas</h2>
           <div class="list-controls">
-            <!-- Filter Jenis Dokumen -->
+            <!-- Filter Jenis Dokumen (Hanya untuk SPK & BAST Petugas) -->
             <div class="filter-bar" id="jenis-filter-bar">
               <button class="btn btn-outline btn-sm active" data-jenis="all">Semua</button>
               <button class="btn btn-outline btn-sm" data-jenis="SPK">📜 SPK</button>
@@ -234,7 +282,7 @@
 
         <div class="table-wrapper">
           <table class="data-table">
-            <thead>
+            <thead id="doc-thead">
               <tr>
                 <th style="width:40px;">No</th>
                 <th>Nama Petugas / PPL</th>
@@ -342,27 +390,28 @@
 
 
 <script>
-  let _allDocs     = [];
-  let _allMitra    = [];
-  let _allPegawai  = [];
-  let _allKegiatan = [];
-  let _allDetail   = [];
-  let _activeFilter = "all";
+  let _allDocs        = [];
+  let _allBastSmDocs  = [];
+  let _allMitra       = [];
+  let _allPegawai     = [];
+  let _allKegiatan    = [];
+  let _allDetail      = [];
+  let _currentTab     = "spk_bast"; // "spk_bast" | "bast_sm"
+  let _activeFilter   = "all";
   let _activeJenisFilter = "all";
-  let _selectedDocId = null;
-  let _deleteDocId   = null;
+  let _selectedDocId  = null;
+  let _deleteDocId    = null;
+  let _deleteTargetTab = "spk_bast";
 
   // ─── Deteksi Role ────────────────────────────────────────────
   const _role = (typeof Auth !== "undefined" && Auth.getRole) ? Auth.getRole() : "PENGGUNA";
   const _isAdmin = (typeof Auth !== "undefined" && Auth.isAdmin) ? Auth.isAdmin() : (_role === "ADMIN");
-  // PENGGUNA hanya bisa preview
   const _canEdit   = _isAdmin;
   const _canExport = (_role !== "PENGGUNA");
   const _canDelete = _isAdmin;
 
   // ─── Setup UI berdasarkan role ───────────────────────────────
   document.addEventListener("DOMContentLoaded", () => {
-    // Tombol topbar: Hanya tampil untuk ADMIN
     const topbarActions = document.getElementById("topbar-actions");
     if (topbarActions) {
       if (_isAdmin) {
@@ -375,13 +424,11 @@
       }
     }
 
-    // Notice readonly
     const notice = document.getElementById("readonly-notice");
     if (notice && !_canEdit) {
       notice.style.display = "flex";
     }
 
-    // Hero desc
     const heroDesc = document.getElementById("hero-desc");
     if (heroDesc && !_canEdit) {
       heroDesc.textContent = "Lihat dan preview dokumen SPK & BAST yang telah dibuat.";
@@ -398,6 +445,57 @@
     });
   });
 
+  // ─── Tab Switcher (SPK & BAST vs BAST SM→PPK) ────────────────
+  function switchDocTab(tabName) {
+    _currentTab = tabName;
+    const btnSpk = document.getElementById("tab-btn-spk-bast");
+    const btnSm  = document.getElementById("tab-btn-bast-sm");
+    const cardTitle = document.getElementById("card-table-title");
+    const jenisFilterBar = document.getElementById("jenis-filter-bar");
+    const thead = document.getElementById("doc-thead");
+
+    if (tabName === "bast_sm") {
+      btnSpk?.classList.remove("active");
+      btnSm?.classList.add("active");
+      if (cardTitle) cardTitle.innerHTML = "🏛️ Daftar Dokumen BAST SM → PPK";
+      if (jenisFilterBar) jenisFilterBar.style.display = "none";
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th style="width:40px;">No</th>
+            <th style="width:160px;">Nomor BAST SM→PPK</th>
+            <th>Nama Kegiatan / Uraian Tugas</th>
+            <th style="width:110px;">Bulan / Tahun</th>
+            <th>Ketua Tim / SM</th>
+            <th style="width:115px;" class="tr">Total Honor</th>
+            <th style="width:145px;">Status Verif PPK</th>
+            <th style="width:190px;" class="tc">Aksi</th>
+          </tr>`;
+      }
+    } else {
+      btnSm?.classList.remove("active");
+      btnSpk?.classList.add("active");
+      if (cardTitle) cardTitle.innerHTML = "📋 Daftar SPK &amp; BAST Petugas";
+      if (jenisFilterBar) jenisFilterBar.style.display = "flex";
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th style="width:40px;">No</th>
+            <th>Nama Petugas / PPL</th>
+            <th style="width:80px;">Jenis</th>
+            <th>Judul Pekerjaan</th>
+            <th style="width:110px;">Bulan / Tahun</th>
+            <th style="width:115px;" class="tr">Total Honor</th>
+            <th style="width:145px;">Status Verif PPK</th>
+            <th style="width:200px;" class="tc">Aksi</th>
+          </tr>`;
+      }
+    }
+
+    updateStats();
+    applyFilters();
+  }
+
   // ─── Penyatuan Baris SPK & BAST Jadi 1 Baris Tunggal ─────────
   function getUnifiedDocs(rawDocs) {
     const map = new Map();
@@ -407,7 +505,6 @@
       const idMitra = String(d.ID_Mitra || "").trim();
       const idDoc = String(d.ID_Dokumen || "").trim();
 
-      // Kunci penyatuan: jika ada Nomor_SPK + ID_Mitra yang sama, gabungkan ke 1 kartu dokumen!
       const key = (noSpk && idMitra) ? `${noSpk}__${idMitra}` : (idDoc || Math.random().toString());
 
       if (!map.has(key)) {
@@ -416,17 +513,15 @@
         const existing = map.get(key);
         const merged = { ...existing };
 
-        // Gabungkan field non-kosong
         Object.keys(d).forEach(k => {
           if (d[k] !== undefined && d[k] !== null && d[k] !== "" && (!merged[k] || merged[k] === "Belum" || merged[k] === "—")) {
             merged[k] = d[k];
           }
         });
 
-        // Cek apakah ada nomor BAST
         const hasBast = Boolean(
-          d.No_BAST_PPL_PML || d.No_BAST_PPL_SM || d.No_BAST_PML_SM || d.No_BAST_SM_PPK ||
-          existing.No_BAST_PPL_PML || existing.No_BAST_PPL_SM || existing.No_BAST_PML_SM || existing.No_BAST_SM_PPK ||
+          d.No_BAST_PPL_PML || d.No_BAST_PPL_SM || d.No_BAST_PML_SM ||
+          existing.No_BAST_PPL_PML || existing.No_BAST_PPL_SM || existing.No_BAST_PML_SM ||
           d.Jenis_Dokumen === "BAST" || existing.Jenis_Dokumen === "BAST"
         );
 
@@ -443,7 +538,6 @@
           merged.Jenis_Dokumen = "SPK";
         }
 
-        // Ambil status persetujuan terbaik
         const s1 = String(existing.Status_Generate_SPK || existing.Status_Verifikasi_PPK || "").toLowerCase();
         const s2 = String(d.Status_Generate_SPK || d.Status_Verifikasi_PPK || "").toLowerCase();
         if (s1 === "disetujui" || s1 === "approved" || s1 === "sudah" || s2 === "disetujui" || s2 === "approved" || s2 === "sudah") {
@@ -456,7 +550,7 @@
     });
 
     return Array.from(map.values()).map(doc => {
-      const hasBast = Boolean(doc.No_BAST_PPL_PML || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.No_BAST_SM_PPK || doc.Jenis_Dokumen === "BAST");
+      const hasBast = Boolean(doc.No_BAST_PPL_PML || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.Jenis_Dokumen === "BAST");
       const hasSpk  = Boolean(doc.Nomor_SPK || doc.No_SPK || doc.Jenis_Dokumen === "SPK");
       if (hasBast && hasSpk) {
         doc.Jenis_Dokumen = "SPK_BAST";
@@ -465,19 +559,19 @@
     });
   }
 
-  // ─── Render tabel ───────────────────────────────────────────
-  function renderTable(data) {
+  // ─── Render Tabel SPK & BAST Petugas ─────────────────────────
+  function renderSpkBastTable(data) {
     const tbody = document.getElementById("doc-tbody");
+    if (!tbody) return;
     if (!data || data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:48px;">
         <div style="font-size:1.6rem; margin-bottom:6px;">📭</div>
-        Tidak ada dokumen yang sesuai filter
+        Tidak ada dokumen SPK / BAST yang sesuai filter
       </td></tr>`;
       return;
     }
 
     tbody.innerHTML = data.map((doc, i) => {
-      // Cari nama petugas dari mitra atau pegawai
       let namaPetugas = doc.Nama_Petugas || doc.Nama_Mitra || doc.Nama || "—";
       if (doc.ID_Mitra) {
         const m = _allMitra.find(item => String(getMitraId(item)) === String(doc.ID_Mitra));
@@ -491,12 +585,11 @@
         namaPetugas = p ? getPegawaiName(p) : doc.Ketua_Tim;
       }
 
-      const isBast = (doc.Jenis_Dokumen === 'BAST' || doc.Jenis_Dokumen === 'SPK_BAST');
       let isApproved = false;
       let isRejected = false;
       let statusBadge = "";
 
-      const rawStatus = doc.Status_Generate_SPK || doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK || "Belum";
+      const rawStatus = doc.Status_Generate_SPK || doc.Status_Verifikasi_PPK || "Belum";
       const vStatus = String(rawStatus).toLowerCase().trim();
       isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
       isRejected = (vStatus === "ditolak" || vStatus === "rejected");
@@ -510,16 +603,12 @@
         statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
       }
 
-      // Kolom Aksi — disesuaikan per role
       let aksiHTML = `<div class="action-btns">`;
-
-      // Preview: semua role bisa
       aksiHTML += `
         <a href="preview.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Preview Isian Dokumen">
           👁️ Preview
         </a>`;
 
-      // Edit: hanya non-PENGGUNA
       if (_canEdit) {
         aksiHTML += `
           <a href="form.html?id=${encodeURIComponent(doc.ID_Dokumen)}" class="btn btn-outline btn-sm" title="Edit Isian Dokumen">
@@ -527,7 +616,6 @@
           </a>`;
       }
 
-      // Ekspor Word: hanya non-PENGGUNA & sudah disetujui/siap
       if (_canExport && isApproved) {
         aksiHTML += `
           <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')" title="Ekspor Dokumen Word (.docx)">
@@ -535,14 +623,12 @@
           </button>`;
       }
 
-      // Hapus: hanya non-PENGGUNA
       if (_canDelete) {
         aksiHTML += `
-          <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}')" title="Hapus Dokumen">
+          <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_Dokumen}', 'spk_bast')" title="Hapus Dokumen">
             🗑️
           </button>`;
       }
-
       aksiHTML += `</div>`;
 
       let jenisLabelHTML = "";
@@ -557,10 +643,10 @@
       return `
         <tr>
           <td class="tc text-muted">${i + 1}</td>
-          <td><div style="font-weight:600; font-size:.88rem;">${namaPetugas}</div></td>
+          <td><div style="font-weight:600; font-size:.88rem;">${escapeHtml(namaPetugas)}</div></td>
           <td>${jenisLabelHTML}</td>
-          <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
-          <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
+          <td style="font-size:.85rem;">${escapeHtml(doc.Judul_Pekerjaan_Dokumen || "—")}</td>
+          <td style="font-size:.82rem;">${escapeHtml(doc.Bulan || "—")} ${escapeHtml(doc.Tahun || "")}</td>
           <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
           <td>${statusBadge}</td>
           <td>${aksiHTML}</td>
@@ -568,45 +654,134 @@
     }).join("");
   }
 
-  function applyFilters() {
-    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
-    const unified = getUnifiedDocs(_allDocs);
+  // ─── Render Tabel BAST SM→PPK ────────────────────────────────
+  function renderBastSmTable(data) {
+    const tbody = document.getElementById("doc-tbody");
+    if (!tbody) return;
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:48px;">
+        <div style="font-size:1.6rem; margin-bottom:6px;">📭</div>
+        Tidak ada dokumen BAST SM→PPK yang sesuai filter
+      </td></tr>`;
+      return;
+    }
 
-    const data = unified.filter(d => {
-      // Jenis filter
-      if (_activeJenisFilter !== "all") {
-        if (_activeJenisFilter === "SPK" && d.Jenis_Dokumen !== "SPK" && d.Jenis_Dokumen !== "SPK_BAST") return false;
-        if (_activeJenisFilter === "BAST" && d.Jenis_Dokumen !== "BAST" && d.Jenis_Dokumen !== "SPK_BAST") return false;
-      }
-      // Status filter
-      const rawStatus = d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
+    tbody.innerHTML = data.map((doc, i) => {
+      let namaKetua = doc.Ketua_Tim || "—";
+      const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(doc.Ketua_Tim) || item.Nama_Pegawai === doc.Ketua_Tim);
+      if (p) namaKetua = getPegawaiName(p);
+
+      let isApproved = false;
+      let isRejected = false;
+      let statusBadge = "";
+
+      const rawStatus = doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK || "Belum";
       const vStatus = String(rawStatus).toLowerCase().trim();
-      const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah" || d.Jenis_Dokumen === "BAST" || d.Jenis_Dokumen === "SPK_BAST");
-      const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
-      const isPending = !isApproved && !isRejected;
+      isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+      isRejected = (vStatus === "ditolak" || vStatus === "rejected");
 
-      let matchStatus = false;
-      if (_activeFilter === "all") matchStatus = true;
-      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = isPending;
-      else if (_activeFilter === "Disetujui") matchStatus = isApproved;
-      else if (_activeFilter === "Ditolak") matchStatus = isRejected;
+      if (isApproved) {
+        statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
+      } else if (isRejected) {
+        const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
+        statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
+      } else {
+        statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
+      }
 
-      const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
-        .some(v => String(v || "").toLowerCase().includes(q));
-      return matchStatus && matchQ;
-    });
-    renderTable(data);
+      let aksiHTML = `<div class="action-btns">`;
+      aksiHTML += `
+        <a href="preview.html?id=${encodeURIComponent(doc.ID_BAST_SM_PPK || '')}&tab=sm-ppk" class="btn btn-outline btn-sm" title="Preview Dokumen BAST SM→PPK">
+          👁️ Preview
+        </a>`;
+
+      if (_canExport && isApproved) {
+        aksiHTML += `
+          <button type="button" class="btn btn-primary btn-sm" onclick="exportBastSmDirect('${doc.ID_BAST_SM_PPK}')" style="background:#7c3aed; border-color:#7c3aed;" title="Ekspor BAST SM→PPK Word (.docx)">
+            📝 Ekspor
+          </button>`;
+      }
+
+      if (_canDelete) {
+        aksiHTML += `
+          <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--gray-300);" onclick="confirmDelete('${doc.ID_BAST_SM_PPK}', 'bast_sm')" title="Hapus Dokumen">
+            🗑️
+          </button>`;
+      }
+      aksiHTML += `</div>`;
+
+      return `
+        <tr>
+          <td class="tc text-muted">${i + 1}</td>
+          <td><strong style="color:#6d28d9; font-size:.85rem;">${escapeHtml(doc.No_BAST_SM_PPK || "—")}</strong></td>
+          <td style="font-size:.85rem;">${escapeHtml(doc.Judul_Pekerjaan_Dokumen || doc.Uraian_Tugas || "—")}</td>
+          <td style="font-size:.82rem;">${escapeHtml(doc.Bulan || "—")} ${escapeHtml(doc.Tahun || "")}</td>
+          <td style="font-size:.85rem; font-weight:600;">${escapeHtml(namaKetua)}</td>
+          <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
+          <td>${statusBadge}</td>
+          <td>${aksiHTML}</td>
+        </tr>`;
+    }).join("");
   }
 
+  // ─── Filter & Render Dispatcher ──────────────────────────────
+  function applyFilters() {
+    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
 
-  // ─── Export Modal ────────────────────────────────────────────
+    if (_currentTab === "bast_sm") {
+      const data = (_allBastSmDocs || []).filter(d => {
+        const rawStatus = d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
+        const vStatus = String(rawStatus).toLowerCase().trim();
+        const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+        const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+        const isPending = !isApproved && !isRejected;
+
+        let matchStatus = false;
+        if (_activeFilter === "all") matchStatus = true;
+        else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = isPending;
+        else if (_activeFilter === "Disetujui") matchStatus = isApproved;
+        else if (_activeFilter === "Ditolak") matchStatus = isRejected;
+
+        const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Uraian_Tugas, d.No_BAST_SM_PPK, d.ID_BAST_SM_PPK, d.Ketua_Tim, d.Bulan]
+          .some(v => String(v || "").toLowerCase().includes(q));
+        return matchStatus && matchQ;
+      });
+      renderBastSmTable(data);
+    } else {
+      const unified = getUnifiedDocs(_allDocs);
+      const data = unified.filter(d => {
+        if (_activeJenisFilter !== "all") {
+          if (_activeJenisFilter === "SPK" && d.Jenis_Dokumen !== "SPK" && d.Jenis_Dokumen !== "SPK_BAST") return false;
+          if (_activeJenisFilter === "BAST" && d.Jenis_Dokumen !== "BAST" && d.Jenis_Dokumen !== "SPK_BAST") return false;
+        }
+        const rawStatus = d.Status_Generate_SPK || d.Status_Verifikasi_PPK || "Belum";
+        const vStatus = String(rawStatus).toLowerCase().trim();
+        const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+        const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+        const isPending = !isApproved && !isRejected;
+
+        let matchStatus = false;
+        if (_activeFilter === "all") matchStatus = true;
+        else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = isPending;
+        else if (_activeFilter === "Disetujui") matchStatus = isApproved;
+        else if (_activeFilter === "Ditolak") matchStatus = isRejected;
+
+        const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
+          .some(v => String(v || "").toLowerCase().includes(q));
+        return matchStatus && matchQ;
+      });
+      renderSpkBastTable(data);
+    }
+  }
+
+  // ─── Export Modal (SPK & BAST Petugas) ────────────────────────
   function openExportModal(docId) {
     _selectedDocId = docId;
     const unified = getUnifiedDocs(_allDocs);
     const doc = unified.find(d => String(d.ID_Dokumen) === String(docId)) || _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
     if (!doc) return;
 
-    const noSurat = doc.Nomor_SPK || doc.No_SPK || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.No_BAST_PPL_PML || doc.No_BAST_SM_PPK || "";
+    const noSurat = doc.Nomor_SPK || doc.No_SPK || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.No_BAST_PPL_PML || "";
     let tglSurat = doc["Tanggal SPK"] || doc.Tanggal_SPK || doc.Tanggal_BAST_PPL_SM || doc.Tanggal_BAST_PML_SM || doc.Tanggal_BAST_PPL_PML || doc.Tanggal_Mulai || "";
     if (tglSurat && tglSurat.includes("T")) {
       tglSurat = tglSurat.split("T")[0];
@@ -615,19 +790,16 @@
     document.getElementById("export-no-surat").value = noSurat;
     document.getElementById("export-tgl-surat").value = tglSurat;
 
-    // Tampilkan/sembunyikan tombol dokumen sesuai tipe
     const isBast = (doc.Jenis_Dokumen === "BAST");
-    const isSmPpk = (doc.No_BAST_SM_PPK || doc.ID_BAST_SM_PPK) && !doc.ID_Mitra;
     const hasPplPml = !!(doc.No_BAST_PPL_PML || doc.Nomor_BAST_PPL_PML);
     const hasPplSm  = !!(doc.No_BAST_PPL_SM || doc.Nomor_BAST_PPL_SM);
     const hasPmlSm  = !!(doc.No_BAST_PML_SM || doc.Nomor_BAST_PML_SM);
-    const hasSmPpk  = !!(doc.No_BAST_SM_PPK || doc.Nomor_BAST_SM_PPK);
 
-    document.getElementById("btn-export-spk").style.display = (!isBast && !isSmPpk) ? "" : "none";
+    document.getElementById("btn-export-spk").style.display = !isBast ? "" : "none";
     document.getElementById("btn-export-ppl-pml").style.display = hasPplPml ? "" : "none";
     document.getElementById("btn-export-ppl-sm").style.display = hasPplSm ? "" : "none";
     document.getElementById("btn-export-pml-sm").style.display = hasPmlSm ? "" : "none";
-    document.getElementById("btn-export-sm-ppk").style.display = hasSmPpk ? "" : "none";
+    document.getElementById("btn-export-sm-ppk").style.display = "none";
 
     document.getElementById("export-modal").classList.add("visible");
   }
@@ -637,7 +809,39 @@
     _selectedDocId = null;
   }
 
-  // ─── Word Export ─────────────────────────────────────────────
+  // ─── Word Export Langsung untuk BAST SM→PPK ──────────────────
+  async function exportBastSmDirect(smDocId) {
+    const smDoc = _allBastSmDocs.find(d => String(d.ID_BAST_SM_PPK) === String(smDocId));
+    if (!smDoc) {
+      showToast("Dokumen BAST SM→PPK tidak ditemukan!", "danger");
+      return;
+    }
+
+    if (typeof JSZip === "undefined" || typeof generateAndDownloadWord === "undefined") {
+      showToast("Library Word belum siap. Refresh halaman.", "warning");
+      return;
+    }
+
+    setLoading(true, "Mengekspor BAST SM→PPK ke Word...");
+    try {
+      const dataCtx = {
+        bastSmPpkCtx: (typeof buildBastSmPpkContext === "function") ? buildBastSmPpkContext(smDoc, _allPegawai) : smDoc
+      };
+      const filename = await generateAndDownloadWord("sm-ppk", dataCtx, smDoc, {
+        noSurat: smDoc.No_BAST_SM_PPK || "",
+        tglSurat: smDoc.Tanggal_BAST_SM_PPK || smDoc.Tanggal || "",
+        pegawaiArr: _allPegawai,
+        details: []
+      });
+      showToast(`✅ BAST SM→PPK (${filename}) berhasil diunduh!`, "success", 4000);
+    } catch (err) {
+      showToast("Gagal ekspor BAST SM→PPK: " + err.message, "danger", 5000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ─── Word Export SPK / BAST Petugas ──────────────────────────
   async function triggerWordExport(tabKey) {
     if (!_selectedDocId) return;
 
@@ -647,7 +851,6 @@
 
     closeExportModal();
 
-    // Tunggu JSZip siap jika belum
     if (typeof JSZip === "undefined") {
       setLoading(true);
       let waited = 0;
@@ -708,7 +911,6 @@
       });
 
       showToast("✅ File Word (" + filename + ") berhasil diunduh!", "success", 4000);
-
     } catch (err) {
       showToast("Gagal ekspor Word: " + err.message, "danger", 5000);
       console.error(err);
@@ -718,8 +920,9 @@
   }
 
   // ─── Delete ──────────────────────────────────────────────────
-  function confirmDelete(docId) {
+  function confirmDelete(docId, targetTab = "spk_bast") {
     _deleteDocId = docId;
+    _deleteTargetTab = targetTab;
     document.getElementById("delete-modal").classList.add("visible");
   }
 
@@ -733,17 +936,21 @@
     setLoading(true);
     try {
       clearCache("spkBast");
+      clearCache("bastSmPpk");
       clearCache("mitra");
       clearCache("pegawai");
-      const [spkBastData, mitraData, pegawaiData] = await Promise.all([
+      const [spkBastData, bastSmData, mitraData, pegawaiData] = await Promise.all([
         getSpkBast(),
+        getBastSmPpk(),
         getMitra(),
         getPegawai(),
       ]);
       _allDocs = spkBastData || [];
+      _allBastSmDocs = bastSmData || [];
       _allMitra = mitraData || [];
       _allPegawai = pegawaiData || [];
-      updateStatsAndRender(_allDocs);
+      updateStats();
+      applyFilters();
       showToast("✅ Data dokumen berhasil diperbarui", "success");
     } catch (err) {
       showToast("Gagal memperbarui data: " + err.message, "danger");
@@ -752,14 +959,29 @@
     }
   }
 
-  // ─── Update Stats & Render ──────────────────────────────────
-  function updateStatsAndRender(docs) {
-    _allDocs = docs || [];
+  // ─── Update Stats & Badges ───────────────────────────────────
+  function updateStats() {
     const unified = getUnifiedDocs(_allDocs);
-    const total = unified.length;
-    const sudah = unified.filter(d => (d.Status_Generate_SPK || "").toLowerCase() === "sudah" || (d.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui" || d.Jenis_Dokumen === "BAST" || d.Jenis_Dokumen === "SPK_BAST").length;
+    const badgeSpk = document.getElementById("badge-count-spk-bast");
+    const badgeSm  = document.getElementById("badge-count-bast-sm");
+
+    if (badgeSpk) badgeSpk.textContent = unified.length;
+    if (badgeSm)  badgeSm.textContent  = (_allBastSmDocs || []).length;
+
+    let currentList = [];
+    if (_currentTab === "bast_sm") {
+      currentList = _allBastSmDocs || [];
+    } else {
+      currentList = unified;
+    }
+
+    const total = currentList.length;
+    const sudah = currentList.filter(d => {
+      const s = String(d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "").toLowerCase();
+      return s === "sudah" || s === "disetujui" || s === "approved" || d.Jenis_Dokumen === "BAST" || d.Jenis_Dokumen === "SPK_BAST";
+    }).length;
     const belum = total - sudah;
-    const honor = unified.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
+    const honor = currentList.reduce((s, d) => s + (Number(d.Total_Honor) || 0), 0);
 
     const elTotal = document.getElementById("stat-total");
     const elSudah = document.getElementById("stat-sudah");
@@ -770,34 +992,23 @@
     if (elSudah) elSudah.textContent = sudah;
     if (elBelum) elBelum.textContent = belum;
     if (elHonor) elHonor.textContent = "Rp " + formatRupiah(honor);
-
-    applyFilters();
   }
 
   // ─── Init (Instan dengan Cache-First) ────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Tampilkan data dari cache secara instan (0 ms)
     const cachedDocs    = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
+    const cachedSmDocs  = (typeof lsGet === "function" ? lsGet("bastSmPpk")?.data : null) || _DB.bastSmPpk;
     const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
     const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
 
     if (cachedMitra)   _allMitra   = cachedMitra;
     if (cachedPegawai) _allPegawai = cachedPegawai;
+    if (Array.isArray(cachedDocs) && cachedDocs.length > 0) _allDocs = cachedDocs;
+    if (Array.isArray(cachedSmDocs) && cachedSmDocs.length > 0) _allBastSmDocs = cachedSmDocs;
 
-    if (Array.isArray(cachedDocs) && cachedDocs.length > 0) {
-      _allDocs = cachedDocs;
-      updateStatsAndRender(_allDocs);
-    } else {
-      const tbody = document.getElementById("table-body");
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:36px 16px; color:var(--gray-500);">
-          <div class="spinner" style="width:24px; height:24px; margin:0 auto 10px; border:3px solid var(--gray-200); border-top-color:var(--brand-primary); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-          Memuat data dokumen dari server...
-        </td></tr>`;
-      }
-    }
+    updateStats();
+    applyFilters();
 
-    // 2. Event listeners
     document.getElementById("search-input")?.addEventListener("input", applyFilters);
     document.querySelectorAll("[data-filter]").forEach(btn => {
       btn.addEventListener("click", function() {
@@ -808,43 +1019,54 @@
       });
     });
 
-    // 3. Listen background refresh event
     window.addEventListener("sheet-refreshed", (e) => {
-      if (e.detail && e.detail.sheet === "spkBast") {
-        _allDocs = e.detail.data || [];
-        updateStatsAndRender(_allDocs);
+      if (e.detail) {
+        if (e.detail.sheet === "spkBast") _allDocs = e.detail.data || [];
+        if (e.detail.sheet === "bastSmPpk") _allBastSmDocs = e.detail.data || [];
+        updateStats();
+        applyFilters();
       }
     });
 
-    // 4. Fetch / Revalidate data terbaru secara senyap di background
     Promise.all([
       getSpkBast().catch(() => []),
+      getBastSmPpk().catch(() => []),
       getMitra().catch(() => []),
       getPegawai().catch(() => []),
-    ]).then(([spkBastData, mitraData, pegawaiData]) => {
+    ]).then(([spkBastData, bastSmData, mitraData, pegawaiData]) => {
       if (Array.isArray(spkBastData)) _allDocs = spkBastData;
+      if (Array.isArray(bastSmData)) _allBastSmDocs = bastSmData;
       if (Array.isArray(mitraData) && mitraData.length) _allMitra = mitraData;
       if (Array.isArray(pegawaiData) && pegawaiData.length) _allPegawai = pegawaiData;
-      updateStatsAndRender(_allDocs);
+      updateStats();
+      applyFilters();
     }).catch(err => {
       console.warn("[dokumen.html] silent bg sync error:", err);
     });
 
-    // 5. Confirm delete (Instan & Optimistic 0 ms)
     document.getElementById("btn-confirm-delete")?.addEventListener("click", () => {
       if (!_deleteDocId) return;
       const targetId = _deleteDocId;
+      const targetTab = _deleteTargetTab;
       closeDeleteModal();
 
-      // Hapus dari UI dan cache lokal secara instan (0 ms)
-      _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(targetId));
-      updateStatsAndRender(_allDocs);
-      showToast("✅ Dokumen berhasil dihapus", "success", 3500);
-
-      // Kirim perintah hapus ke Google Sheets di latar belakang
-      deleteFromSheet("spkBast", "ID_Dokumen", targetId).catch(err => {
-        console.warn("Sync delete error:", err);
-      });
+      if (targetTab === "bast_sm") {
+        _allBastSmDocs = _allBastSmDocs.filter(d => String(d.ID_BAST_SM_PPK) !== String(targetId));
+        updateStats();
+        applyFilters();
+        showToast("✅ Dokumen BAST SM→PPK berhasil dihapus", "success", 3500);
+        deleteFromSheet("bastSmPpk", "ID_BAST_SM_PPK", targetId).catch(err => {
+          console.warn("Sync delete error:", err);
+        });
+      } else {
+        _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(targetId));
+        updateStats();
+        applyFilters();
+        showToast("✅ Dokumen berhasil dihapus", "success", 3500);
+        deleteFromSheet("spkBast", "ID_Dokumen", targetId).catch(err => {
+          console.warn("Sync delete error:", err);
+        });
+      }
     });
   });
 </script>
