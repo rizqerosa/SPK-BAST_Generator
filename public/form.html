@@ -908,8 +908,30 @@
       renderMappedOfficerChips();
       populateSmBulanDropdown();
       applyAutoDocNumber("spk", false);
+      validateDocNumberInput("spk");
+      validateDocNumberInput("bast_ppl_pml");
+      validateDocNumberInput("bast_ppl_sm");
+      validateDocNumberInput("bast_pml_sm");
+      validateDocNumberInput("bast_sm");
     }).catch(err => {
       console.warn("[form.html] silent bg sync error:", err);
+    });
+
+    // 3. Listen live sheet-refreshed event
+    window.addEventListener("sheet-refreshed", (e) => {
+      if (e.detail) {
+        if (e.detail.sheet === "spkBast") {
+          _allSpkBast = e.detail.data || [];
+          validateDocNumberInput("spk");
+          validateDocNumberInput("bast_ppl_pml");
+          validateDocNumberInput("bast_ppl_sm");
+          validateDocNumberInput("bast_pml_sm");
+        }
+        if (e.detail.sheet === "bastSmPpk") {
+          _allBastSmPpk = e.detail.data || [];
+          validateDocNumberInput("bast_sm");
+        }
+      }
     });
   });
 
