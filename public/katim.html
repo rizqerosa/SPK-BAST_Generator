@@ -1041,42 +1041,19 @@
   }
 
   function validateKepkaInput() {
-    const inputEl = document.getElementById("wiz-no-kepka");
+    // Nomor Kepka bebas (boleh dobel, boleh tidak urut, boleh kosong)
     const statusEl = document.getElementById("wiz-kepka-status");
-    if (!inputEl || !statusEl) return;
-
-    const val = inputEl.value.trim();
-    if (!val) {
-      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Isi manual sesuai SK BPS)`;
-      return;
+    if (statusEl) {
+      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx`;
     }
-
-    const dup = checkKepkaDuplicate(val);
-    if (dup) {
-      statusEl.innerHTML = `<span style="color:#d97706; font-size:.74rem; font-weight:600;">ℹ️ Nomor Kepka ini sudah dipakai untuk kegiatan "${escapeHtml(dup.label)}"</span>`;
-      return;
-    }
-
-    const yr = getKepkaYear();
-    const maxSeq = getMaxKepkaSeq(yr);
-    const inputSeq = extractKepkaSeq(val, yr);
-    if (inputSeq !== null && maxSeq > 0 && inputSeq > maxSeq + 1) {
-      statusEl.innerHTML = `<span style="color:#d97706; font-size:.74rem; font-weight:600;">⚠️ Perhatian: Nomor Kepka melompati urutan! Urutan terakhir di database adalah ${maxSeq} (seharusnya Nomor ${maxSeq + 1}).</span>`;
-      return;
-    }
-
-    statusEl.innerHTML = `<span style="color:#16a34a; font-size:.74rem; font-weight:600;">✅ Nomor Kepka baru (tersedia)</span>`;
   }
 
   function applyAutoKepkaNumber(force = false) {
     const inputEl = document.getElementById("wiz-no-kepka");
     if (!inputEl) return;
-
-    // Hanya isi jika tombol Auto ditekan secara sengaja oleh pengguna
     if (force) {
       const yr = getKepkaYear();
       inputEl.value = generateSuggestedKepkaNumber(yr);
-      validateKepkaInput();
     }
   }
 
@@ -1237,13 +1214,6 @@
   function onTglMulaiChange() {
     const val = document.getElementById("wiz-tgl-mulai").value;
     if (_wizSelectedKegiatan) _wizSelectedKegiatan.tglMulai = val;
-
-    // Auto-set tanggal Kepka jika kosong
-    const tglKepkaEl = document.getElementById("wiz-tgl-kepka");
-    if (val && !tglKepkaEl.value) {
-      tglKepkaEl.value = val;
-      updateTglKepkaDisplay();
-    }
   }
 
   function onTglSelesaiChange() {
