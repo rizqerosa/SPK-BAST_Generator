@@ -117,7 +117,7 @@ function _buildWordSpkContent(ctx, details, D) {
     alignment: AlignmentType.CENTER,
     spacing: { after: 40 },
     children: [
-      new TextRun({ text: "SURAT PERJANJIAN KERJA", bold: true, size: 26, font: "Times New Roman" }),
+      new TextRun({ text: "PERJANJIAN KERJA", bold: true, size: 26, font: "Times New Roman" }),
     ]
   });
 
@@ -141,7 +141,29 @@ function _buildWordSpkContent(ctx, details, D) {
     alignment: AlignmentType.CENTER,
     spacing: { after: 180 },
     children: [
-      new TextRun({ text: `NOMOR: ${ctx.NO_SPK || ""}`, size: 22, font: "Times New Roman" }),
+      new TextRun({ text: `NOMOR ${ctx.NO_SPK || ""}`, size: 22, font: "Times New Roman" }),
+    ]
+  });
+
+  const pihakTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ borders: noBorder, width: { size: 4, type: WidthType.PERCENTAGE }, children: [P("1.", { spaceAfter: 60 })] }),
+          new TableCell({ borders: noBorder, width: { size: 28, type: WidthType.PERCENTAGE }, children: [P(ctx.NAMA_PPK || "", { bold: true, spaceAfter: 60 })] }),
+          new TableCell({ borders: noBorder, width: { size: 3, type: WidthType.PERCENTAGE }, children: [P(":", { spaceAfter: 60 })] }),
+          new TableCell({ borders: noBorder, width: { size: 65, type: WidthType.PERCENTAGE }, children: [P("Pejabat Pembuat Komitmen Badan Pusat Statistik BPS Kota Subulussalam alamat Jl. Raja Tua Lae Oram Komplek Perkantoran Walikota Subulussalam bertindak untuk dan atas nama Badan Pusat Statistik BPS Kota Subulussalam selanjutnya disebut PIHAK PERTAMA.", { align: AlignmentType.JUSTIFY, spaceAfter: 60 })] }),
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ borders: noBorder, width: { size: 4, type: WidthType.PERCENTAGE }, children: [P("2.", { spaceAfter: 60 })] }),
+          new TableCell({ borders: noBorder, width: { size: 28, type: WidthType.PERCENTAGE }, children: [P(ctx.NAMA_PETUGAS || ctx.NAMA_PIHAK_KEDUA || "", { bold: true, spaceAfter: 60 })] }),
+          new TableCell({ borders: noBorder, width: { size: 3, type: WidthType.PERCENTAGE }, children: [P(":", { spaceAfter: 60 })] }),
+          new TableCell({ borders: noBorder, width: { size: 65, type: WidthType.PERCENTAGE }, children: [P(`${ctx.JABATAN_PETUGAS || ""} ${ctx.URAIAN_PEKERJAAN || ""}; beralamat ${ctx.ASAL || ""}. Bertindak untuk dan atas nama diri sendiri. selanjutnya disebut PIHAK KEDUA.`, { align: AlignmentType.JUSTIFY, spaceAfter: 60 })] }),
+        ]
+      })
     ]
   });
 
@@ -150,28 +172,42 @@ function _buildWordSpkContent(ctx, details, D) {
     subHeaderPar,
     instansiPar,
     nomorPar,
-    P(`Pada Hari ini, ${ctx.HARI_TERBILANG || ""} tanggal ${ctx.TANGGAL_TERBILANG || ""} bulan ${ctx.BULAN_TERBILANG || ""} tahun ${ctx.TAHUN_TERBILANG || ""} (${ctx.TANGGAL_BAST || ctx.TANGGAL || ""}), bertempat di Kantor BPS Kota Subulussalam yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
-    P("1. PIHAK PERTAMA:", { bold: true, spaceAfter: 40 }),
-    P(`Nama\t\t: ${ctx.NAMA_PPK || ""}`, { spaceAfter: 30 }),
-    P(`NIP\t\t: ${ctx.NIP_PPK || ""}`, { spaceAfter: 30 }),
-    P(`Jabatan\t\t: Pejabat Pembuat Komitmen BPS Kota Subulussalam`, { spaceAfter: 30 }),
-    P(`Alamat\t\t: Jl. Raja Tua Lae Oram Komplek Perkantoran Walikota Subulussalam`, { spaceAfter: 100 }),
-    P("2. PIHAK KEDUA:", { bold: true, spaceAfter: 40 }),
-    P(`Nama\t\t: ${ctx.NAMA_PETUGAS || ctx.NAMA_PIHAK_KEDUA || ""}`, { spaceAfter: 30 }),
-    P(`NIK\t\t: ${ctx.NIK_PIHAK_PERTAMA || ""}`, { spaceAfter: 30 }),
-    P(`Jabatan\t\t: ${ctx.JABATAN_PETUGAS || ctx.JABATAN_PIHAK_KEDUA || ""}`, { spaceAfter: 30 }),
-    P(`Alamat\t\t: ${ctx.ASAL || "Kota Subulussalam"}`, { spaceAfter: 100 }),
-    P(`Kedua belah pihak telah sepakat untuk mengadakan Perjanjian Kerja ${ctx.JABATAN_PIHAK_KEDUA || ""} Kegiatan ${ctx.URAIAN_PEKERJAAN || ""} di BPS Kota Subulussalam dengan ketentuan sebagai berikut:`, { spaceAfter: 120 }),
-    P("Pasal 1 — Ruang Lingkup", { bold: true, spaceAfter: 40 }),
+    P(`Pada Hari ini. ${ctx.HARI_TERBILANG || ""} tanggal ${ctx.TANGGAL_TERBILANG || ""} bulan ${ctx.BULAN_TERBILANG || ""} tahun ${ctx.TAHUN_TERBILANG || ""} (${ctx.TANGGAL_BAST || ctx.TANGGAL || ""}). bertempat di Kantor BPS Kota Subulussalam yang bertanda tangan di bawah ini:`, { spaceAfter: 120 }),
+    pihakTable,
+    P(`bahwa PIHAK PERTAMA dan PIHAK KEDUA yang secara bersama-sama disebut PARA PIHAK. sepakat untuk mengikatkan diri dalam Perjanjian Kerja ${ctx.JABATAN_PIHAK_KEDUA || ""} Kegiatan ${ctx.URAIAN_PEKERJAAN || ""} di Badan Pusat Statistik Kota Subulussalam yang selanjutnya disebut Perjanjian. dengan ketentuan-ketentuan sebagai berikut:`, { spaceAfter: 120 }),
+    P("Pasal 1", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
     P(`PIHAK PERTAMA memberikan pekerjaan kepada PIHAK KEDUA dan PIHAK KEDUA menerima pekerjaan dari PIHAK PERTAMA sebagai Petugas ${ctx.URAIAN_PEKERJAAN || ""} dengan lingkup pekerjaan yang ditetapkan oleh PIHAK PERTAMA.`, { spaceAfter: 100 }),
-    P("Pasal 2 — Jangka Waktu", { bold: true, spaceAfter: 40 }),
+    P("Pasal 2", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P(`Ruang lingkup pekerjaan dalam Perjanjian ini mengacu pada wilayah kerja. ${ctx.BUKU_PEDOMAN || ""} dan ketentuan-ketentuan yang ditetapkan oleh PIHAK PERTAMA.`, { spaceAfter: 100 }),
+    P("Pasal 3", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
     P(`Jangka Waktu Perjanjian terhitung sejak ditandatangani sampai dengan tanggal ${ctx.TANGGAL_SELESAI || "-"}.`, { spaceAfter: 100 }),
-    P("Pasal 3 — Hak dan Kewajiban", { bold: true, spaceAfter: 40 }),
-    P(`PIHAK KEDUA berhak untuk mendapatkan honorarium petugas dari PIHAK PERTAMA sebesar Rp ${ctx.TOTAL_HONOR || "0"} (${ctx.TERBILANG_TOTAL_HONOR || ""}) yang dibayarkan setelah seluruh hasil pekerjaan diserahkan dan dinyatakan lengkap.`, { spaceAfter: 100 }),
-    P("Pasal 4 — Penyerahan Hasil Pekerjaan", { bold: true, spaceAfter: 40 }),
-    P(`Penyerahan seluruh hasil pekerjaan lapangan dilaksanakan oleh PIHAK KEDUA kepada PIHAK PERTAMA yang dinyatakan dalam Berita Acara Serah Terima Hasil Pekerjaan paling lambat pada tanggal ${ctx.TANGGAL_SELESAI || "-"}.`, { spaceAfter: 140 }),
-    P("Demikian Perjanjian ini dibuat dan ditandatangani oleh PARA PIHAK dalam rangkap asli bermeterai cukup untuk dilaksanakan sebagaimana mestinya.", { spaceAfter: 180 }),
+    P("Pasal 4", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("PIHAK KEDUA berkewajiban melaksanakan seluruh pekerjaan yang diberikan oleh PIHAK PERTAMA sampai selesai. sesuai ruang lingkup pekerjaan sebagaimana dimaksud dalam Pasal 2.", { spaceAfter: 100 }),
+    P("Pasal 5", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P(`PIHAK KEDUA berhak untuk mendapatkan honorarium petugas dari PIHAK PERTAMA sebesar Rp. ${ctx.TOTAL_HONOR || "0"},- (${ctx.TERBILANG_TOTAL_HONOR || ""}). yang dibayarkan PIHAK PERTAMA kepada PIHAK KEDUA sesuai pencapaian target pekerjaan PIHAK KEDUA. sudah termasuk biaya pajak. bea materai. pulsa dan kuota internet untuk komunikasi. dan jasa pelayanan keuangan.`, { spaceAfter: 80 }),
+    P("PIHAK KEDUA tidak diberikan honorarium tambahan apabila melakukan kunjungan di luar jadwal pelaksanaan pekerjaan lapangan.", { spaceAfter: 100 }),
+    P("Pasal 6", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("Pembayaran honorarium sebagaimana dimaksud dalam Pasal 5 dilakukan setelah PIHAK KEDUA menyelesaikan dan menyerahkan seluruh hasil pekerjaan sebagaimana dimaksud dalam Pasal 2 kepada PIHAK PERTAMA.", { spaceAfter: 100 }),
+    P("Pasal 7", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P(`Penyerahan seluruh hasil pekerjaan lapangan sebagaimana dimaksud dalam Pasal 2 dilaksanakan oleh PIHAK KEDUA kepada PIHAK PERTAMA yang dinyatakan dalam Berita Acara Serah Terima Hasil Pekerjaan dan ditandatangani oleh PARA PIHAK. paling lambat pada tanggal ${ctx.TANGGAL_SELESAI || "-"}.`, { spaceAfter: 80 }),
+    P(`Apabila terdapat hambatan dalam penyerahan hasil pekerjaan sebagaimana dimaksud pada ayat (1). PIHAK PERTAMA dapat memberikan tambahan waktu penyerahan seluruh hasil pekerjaan lapangan paling lambat pada tanggal ${ctx.BATAS_PENYERAHAN || "-"}.`, { spaceAfter: 100 }),
+    P("Pasal 8", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("PIHAK PERTAMA dapat memutuskan Perjanjian ini secara sepihak sewaktu-waktu dalam hal PIHAK KEDUA tidak dapat melaksanakan kewajibannya sebagaimana dimaksud dalam Pasal 4. dengan menerbitkan Surat Pemutusan Perjanjian Kerja.", { spaceAfter: 100 }),
+    P("Pasal 9", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("Apabila PIHAK KEDUA mengundurkan diri pada saat/setelah pelaksanaan pelatihan atau saat pendataan dengan tidak menyelesaikan pekerjaan yang menjadi tanggung jawabnya. maka wajib membayar ganti rugi kepada PIHAK PERTAMA.", { spaceAfter: 80 }),
+    P("Dikecualikan tidak membayar ganti rugi sebagaimana dimaksud pada ayat (1) kepada PIHAK PERTAMA. apabila PIHAK KEDUA meninggal dunia. mengundurkan diri karena sakit dengan keterangan rawat inap. kecelakaan dengan keterangan kepolisian. dan/atau telah diberikan Surat Pemutusan Perjanjian Kerja dari PIHAK PERTAMA.", { spaceAfter: 80 }),
+    P("Dalam hal terjadi peristiwa sebagaimana dimaksud pada ayat (2). PIHAK PERTAMA membayarkan honorarium kepada PIHAK KEDUA secara proporsional sesuai pekerjaan yang telah dilaksanakan.", { spaceAfter: 100 }),
+    P("Pasal 10", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("Apabila terjadi Keadaan Kahar. yang meliputi bencana alam dan bencana sosial. PIHAK KEDUA memberitahukan kepada PIHAK PERTAMA dalam waktu paling lambat 7 (tujuh) hari sejak mengetahui atas kejadian Keadaan Kahar dengan menyertakan bukti.", { spaceAfter: 80 }),
+    P("Pada saat terjadi Keadaan Kahar. pelaksanaan pekerjaan oleh PIHAK KEDUA dihentikan sementara dan dilanjutkan kembali setelah Keadaan Kahar berakhir. namun apabila akibat Keadaan Kahar tidak memungkinkan dilanjutkan/diselesaikannya pelaksanaan pekerjaan. PIHAK KEDUA berhak menerima honorarium secara proporsional sesuai pekerjaan yang telah dilaksanakan.", { spaceAfter: 100 }),
+    P("Pasal 11", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("Segala sesuatu yang belum atau tidak cukup diatur dalam Perjanjian ini. dituangkan dalam perjanjian tambahan/addendum dan merupakan bagian tidak terpisahkan dari Perjanjian ini.", { spaceAfter: 100 }),
+    P("Pasal 12", { bold: true, align: AlignmentType.CENTER, spaceAfter: 40 }),
+    P("Segala perselisihan atau perbedaan pendapat yang timbul sebagai akibat adanya Perjanjian ini akan diselesaikan secara musyawarah untuk mufakat.", { spaceAfter: 80 }),
+    P("Apabila perselisihan tidak dapat diselesaikan sebagaimana dimaksud pada ayat (1). PARA PIHAK sepakat menyelesaikan perselisihan dengan memilih kedudukan/domisili hukum di Panitera Pengadilan Negeri Kota Subulussalam.", { spaceAfter: 120 }),
+    P("Demikian Perjanjian ini dibuat dan ditandatangani oleh PARA PIHAK dalam 2 (dua) rangkap asli bermeterai cukup. tanpa paksaan dari PIHAK manapun dan untuk dilaksanakan oleh PARA PIHAK.", { spaceAfter: 180 }),
   ];
+
 
   // Tabel Tanda Tangan SPK
   const ttdTable = new Table({
