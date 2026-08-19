@@ -186,7 +186,23 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const pml = pmlObj || {};
   const ketuaTim = cariPegawai(record.Ketua_Tim,  pegawaiArr) || {};
   const kepala   = cariPegawai(record["Kepala/PLH"], pegawaiArr) || {};
-  const details  = getDetailByDokumen(detailArr, record.ID_Dokumen);
+  let details  = getDetailByDokumen(detailArr, record.ID_Dokumen);
+
+  if ((!details || details.length === 0) && (record.Judul_Pekerjaan_Dokumen || record.Total_Honor)) {
+    const jw = (record.Tanggal_Mulai && record.Tanggal_Selesai)
+      ? `${formatTanggal(record.Tanggal_Mulai)} s.d. ${formatTanggal(record.Tanggal_Selesai)}`
+      : (record.Tanggal_Mulai || record.Tanggal_Selesai || "-");
+    details = [{
+      No_Urut: 1,
+      Uraian_Tugas: record.Judul_Pekerjaan_Dokumen || "Pendataan Lapangan",
+      Jangka_Waktu: jw,
+      Volume: 1,
+      Satuan: "Dokumen",
+      Harga_Satuan: Number(record.Total_Honor) || 0,
+      Nilai_Perjanjian: Number(record.Total_Honor) || 0,
+      Beban_Anggaran: record.Beban_Anggaran || "BPS Kota Subulussalam"
+    }];
+  }
 
   // Hitung / validasi total honor
   const totalHonor = hitungTotalHonor(detailArr, record.ID_Dokumen) || record.Total_Honor || 0;
