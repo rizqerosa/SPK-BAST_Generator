@@ -282,7 +282,8 @@
         Buat Dokumen
         <small id="page-subtitle">Pilih jenis dokumen yang ingin dibuat</small>
       </div>
-      <div class="topbar-actions">
+      <div class="topbar-actions" style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="forceSyncAllData()" title="Ambil data terbaru langsung dari Google Sheets">🔄 Sinkronkan Database</button>
         <a href="dokumen.html" class="btn btn-outline btn-sm">← Daftar Dokumen</a>
       </div>
     </header>
@@ -837,13 +838,37 @@
   let _approvedSpkList = []; // SPK yang sudah disetujui PPK
   let _bastMappingRows = [];
 
-  // ─── Init (Langsung Live dari Database, Tanpa Cache Lokal) ──
-  document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Setup UI listeners
+  // ─── Init (Instan 0 ms, Search Langsung Aktif) ───────────────
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. Tampilkan data dari cache secara instan (0 ms) agar search dan dropdown langsung aktif!
+    const cMitra   = lsGet("mitra")?.data || _DB.mitra || [];
+    const cPegawai = lsGet("pegawai")?.data || _DB.pegawai || [];
+    const cKegiatan= lsGet("kegiatan")?.data || _DB.kegiatan || [];
+    const cSpkBast = lsGet("spkBast")?.data || _DB.spkBast || [];
+    const cBastSm  = lsGet("bastSmPpk")?.data || _DB.bastSmPpk || [];
+    const cMapping = lsGet("mappingPetugas")?.data || _DB.mappingPetugas || [];
+
+    _allMitra     = cMitra;
+    _allPegawai   = cPegawai;
+    _allKegiatan  = cKegiatan;
+    _allSpkBast   = cSpkBast;
+    _allBastSmPpk = cBastSm;
+    _allMapping   = cMapping;
+
+    _approvedSpkList = _allSpkBast.filter(r => {
+      if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
+      const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
+      return s === "disetujui" || s === "approved" || s === "sudah";
+    });
+
+    populatePegawaiDropdowns();
+    renderMappedOfficerChips();
     setupSearchListeners();
     setupDateListeners();
     setupDocNumberListeners();
+    populateSmBulanDropdown();
     setupFormSubmit();
+    applyAutoDocNumber("spk", false);
 
     // Cek URL param ?mode=
     const urlParams = new URLSearchParams(window.location.search);
@@ -858,23 +883,21 @@
       _isEditMode = true;
     }
 
-    // 2. Fetch live data dari database Google Sheets
-    try {
-      const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
-        getMitra().catch(() => []),
-        getPegawai().catch(() => []),
-        getKegiatan().catch(() => []),
-        getSpkBast().catch(() => []),
-        getBastSmPpk().catch(() => []),
-        getMappingPetugas().catch(() => []),
-      ]);
-
-      _allMitra     = Array.isArray(mitra) ? mitra : [];
-      _allPegawai   = Array.isArray(pegawai) ? pegawai : [];
-      _allKegiatan  = Array.isArray(kegiatan) ? kegiatan : [];
-      _allSpkBast   = Array.isArray(spkBast) ? spkBast : [];
-      _allBastSmPpk = Array.isArray(smPpk) ? smPpk : [];
-      _allMapping   = Array.isArray(mapping) ? mapping : [];
+    // 2. Fetch data terbaru di latar belakang
+    Promise.all([
+      getMitra(),
+      getPegawai(),
+      getKegiatan(),
+      getSpkBast(),
+      getBastSmPpk(),
+      getMappingPetugas(),
+    ]).then(([mitra, pegawai, kegiatan, spkBast, smPpk, mapping]) => {
+      if (Array.isArray(mitra) && mitra.length) _allMitra = mitra;
+      if (Array.isArray(pegawai) && pegawai.length) _allPegawai = pegawai;
+      if (Array.isArray(kegiatan) && kegiatan.length) _allKegiatan = kegiatan;
+      if (Array.isArray(spkBast)) _allSpkBast = spkBast;
+      if (Array.isArray(smPpk)) _allBastSmPpk = smPpk;
+      if (Array.isArray(mapping)) _allMapping = mapping;
 
       _approvedSpkList = _allSpkBast.filter(r => {
         if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
@@ -885,11 +908,11 @@
       populatePegawaiDropdowns();
       renderMappedOfficerChips();
       populateSmBulanDropdown();
-      applyAutoDocNumber("spk", true);
+      applyAutoDocNumber("spk", false);
       validateDocNumberInput("spk");
-    } catch (err) {
-      console.warn("[form.html] live init error:", err);
-    }
+    }).catch(err => {
+      console.warn("[form.html] bg sync error:", err);
+    });
   });
 
   // ─── Mode selector ───────────────────────────────────────────
