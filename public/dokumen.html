@@ -222,10 +222,13 @@
               <button class="btn btn-outline btn-sm" data-filter="Ditolak">🔴 Ditolak</button>
             </div>
             <!-- Search -->
-            <div class="search-box" style="max-width:220px;">
+            <div class="search-box" style="max-width:200px;">
               <span class="search-icon">🔍</span>
               <input type="text" id="search-input" class="form-control" placeholder="Cari nama / judul...">
             </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="refreshDokumenManual()" title="Muat ulang data terbaru dari Google Sheets" style="white-space:nowrap;">
+              🔄 Refresh
+            </button>
           </div>
         </div>
 
@@ -245,7 +248,7 @@
             </thead>
             <tbody id="doc-tbody">
               <tr>
-                <td colspan="7" class="text-center text-muted" style="padding:48px;">
+                <td colspan="8" class="text-center text-muted" style="padding:48px;">
                   <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
                   Memuat data dari Google Sheets...
                 </td>
@@ -399,13 +402,16 @@
   function renderTable(data) {
     const tbody = document.getElementById("doc-tbody");
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada dokumen</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:48px;">
+        <div style="font-size:1.6rem; margin-bottom:6px;">📭</div>
+        Tidak ada dokumen yang sesuai filter
+      </td></tr>`;
       return;
     }
 
     tbody.innerHTML = data.map((doc, i) => {
       // Cari nama petugas dari mitra atau pegawai
-      let namaPetugas = "—";
+      let namaPetugas = doc.Nama_Petugas || doc.Nama_Mitra || doc.Nama || "—";
       if (doc.ID_Mitra) {
         const m = _allMitra.find(item => String(getMitraId(item)) === String(doc.ID_Mitra));
         if (m) namaPetugas = getMitraName(m);
@@ -413,6 +419,9 @@
           const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(doc.ID_Mitra));
           if (p) namaPetugas = getPegawaiName(p);
         }
+      } else if (doc.Ketua_Tim) {
+        const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(doc.Ketua_Tim) || item.Nama_Pegawai === doc.Ketua_Tim);
+        namaPetugas = p ? getPegawaiName(p) : doc.Ketua_Tim;
       }
 
       const isBast = (doc.Jenis_Dokumen === 'BAST');
@@ -654,6 +663,30 @@
   function closeDeleteModal() {
     document.getElementById("delete-modal").classList.remove("visible");
     _deleteDocId = null;
+  }
+
+  // ─── Manual Refresh dari Google Sheets ───────────────────────
+  async function refreshDokumenManual() {
+    setLoading(true);
+    try {
+      clearCache("spkBast");
+      clearCache("mitra");
+      clearCache("pegawai");
+      const [spkBastData, mitraData, pegawaiData] = await Promise.all([
+        getSpkBast(),
+        getMitra(),
+        getPegawai(),
+      ]);
+      _allDocs = spkBastData || [];
+      _allMitra = mitraData || [];
+      _allPegawai = pegawaiData || [];
+      updateStatsAndRender(_allDocs);
+      showToast("✅ Data dokumen berhasil diperbarui", "success");
+    } catch (err) {
+      showToast("Gagal memperbarui data: " + err.message, "danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ─── Update Stats & Render ──────────────────────────────────
