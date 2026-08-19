@@ -52,6 +52,27 @@
     .zoom-btn:hover { background:var(--gray-200); }
     #zoom-level { font-size:.78rem; font-weight:600; color:var(--gray-600); min-width:36px; text-align:center; }
     @media (max-width:900px) { .preview-layout { grid-template-columns:1fr; } .control-panel { position:static; } }
+
+    @media print {
+      .sidebar, .topbar, .control-panel, #ppk-status-banner, #toast-container, .loading-overlay {
+        display: none !important;
+      }
+      .app-layout, .main-content, .page-body {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      .doc-preview-wrapper {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+      }
+      body {
+        background: #fff !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -69,6 +90,9 @@
           <span id="zoom-level">100%</span>
           <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
         </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="window.print()" title="Cetak halaman langsung">
+          🖨️ Cetak / Print
+        </button>
         <a href="form.html" id="topbar-btn-edit" class="btn btn-outline btn-sm">&#9999;&#65039; Edit Isian</a>
         <a href="dokumen.html" class="btn btn-outline btn-sm">&#128193; Daftar Dokumen</a>
       </div>
@@ -89,9 +113,10 @@
             </div>
           </div>
           <div class="export-section">
-            <h3>📥 Export Dokumen</h3>
-            <button class="btn btn-primary w-full" onclick="exportCurrentWord()">⬇ Download Word (.docx)</button>
-            <p class="text-xs text-muted mt-8">Format Microsoft Word (.docx) resmi BPS.</p>
+            <h3>📥 Export &amp; Cetak</h3>
+            <button class="btn btn-primary w-full" onclick="exportCurrentWord()" style="margin-bottom:8px;">⬇ Download Word (.docx)</button>
+            <button class="btn btn-outline w-full" onclick="window.print()" style="background:#fff;">🖨️ Cetak Dokumen (Print)</button>
+            <p class="text-xs text-muted mt-8">Format resmi Microsoft Word (.docx) &amp; standar cetak BPS.</p>
           </div>
         </div>
         <div>
@@ -128,7 +153,7 @@
 
   function detectPeran(record) {
     if (!record) return "ppl";
-    if (record.No_BAST_SM_PPK && !record.ID_Mitra) return "sm_ppk";
+    if ((record.No_BAST_SM_PPK || record.ID_BAST_SM_PPK) && !record.ID_Mitra) return "sm_ppk";
     if (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) return "pml";
     if (record.No_BAST_PPL_PML || record.No_BAST_PPL_SM) return "ppl";
     const stored = sessionStorage.getItem("preview_target_tab") || "";
@@ -141,17 +166,22 @@
     const peran      = detectPeran(record);
     const jenisLabel = isPmlMitra ? "Mitra" : "Organik";
     const jenisClass = isPmlMitra ? "badge-mitra" : "badge-organik";
+    const isStandaloneBast = (record.Jenis_Dokumen === "BAST");
     const tabs = [];
+
     if (peran === "sm_ppk") {
-      tabs.push({ key:"spk",    icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
-      tabs.push({ key:"sm-ppk", icon:"🏛️", title:"BAST SM → PPK",          desc:"Closing administratif",       badge:null });
+      tabs.push({ key:"sm-ppk", icon:"🏛️", title:"BAST SM → PPK", desc:"Penyerahan SM ke PPK", badge:null });
     } else if (peran === "pml") {
-      tabs.push({ key:"spk",    icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      if (!isStandaloneBast) {
+        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      }
       tabs.push({ key:"pml-sm", icon:"📋", title:"BAST PML → SM",
         desc: isPmlMitra ? "PML Mitra serahkan ke Ketua Tim" : "PML Organik serahkan ke Ketua Tim",
         badge:jenisLabel, badgeClass:jenisClass });
     } else {
-      tabs.push({ key:"spk",     icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      if (!isStandaloneBast) {
+        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+      }
       tabs.push({ key:"ppl-pml", icon:"📋", title:"BAST PPL → PML",
         desc: isPmlMitra ? "Mitra PPL serahkan ke PML Mitra" : "Mitra PPL serahkan ke PML Organik",
         badge:jenisLabel, badgeClass:jenisClass });
@@ -217,11 +247,15 @@
       let mitraArr, pegawaiArr;
 
       if (docId) {
-        const [spkBastData, detailData, mitraData, pegawaiData] = await Promise.all([
-          getSpkBast(), getDetailPekerjaan(), getMitra(), getPegawai(),
+        const [spkBastData, detailData, mitraData, pegawaiData, smPpkData] = await Promise.all([
+          getSpkBast(), getDetailPekerjaan(), getMitra(), getPegawai(), getBastSmPpk().catch(() => [])
         ]);
-        _previewRecord  = spkBastData.find(r => r.ID_Dokumen === docId) || null;
-        _previewDetails = detailData.filter(d => d.ID_Dokumen === docId);
+        _previewRecord  = spkBastData.find(r => String(r.ID_Dokumen) === String(docId)) || null;
+        if (!_previewRecord && smPpkData) {
+          _previewRecord = smPpkData.find(r => String(r.ID_BAST_SM_PPK) === String(docId) || String(r.ID_Dokumen) === String(docId)) || null;
+          if (_previewRecord && !_previewRecord.ID_Dokumen) _previewRecord.ID_Dokumen = _previewRecord.ID_BAST_SM_PPK;
+        }
+        _previewDetails = detailData.filter(d => String(d.ID_Dokumen) === String(docId));
         mitraArr  = mitraData;
         pegawaiArr = pegawaiData;
       } else {
@@ -260,7 +294,7 @@
       const m = cariMitra(_previewRecord.ID_Mitra, mitraArr);
       const petugasName = m ? getMitraName(m) : (() => {
         const p = cariPegawai(_previewRecord.ID_Mitra, pegawaiArr);
-        return p ? getPegawaiName(p) : "—";
+        return p ? getPegawaiName(p) : (_previewRecord.Ketua_Tim || "—");
       })();
 
       document.getElementById("preview-doc-title").textContent   = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen;
@@ -270,8 +304,8 @@
       document.getElementById("preview-mitra-name-2").textContent= petugasName;
 
       const elStatus = document.getElementById("preview-status");
-      elStatus.textContent = _previewRecord.Status_Generate_SPK || "Belum";
-      elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" ? "badge-success" : "badge-warning"}`;
+      elStatus.textContent = _previewRecord.Status_Generate_SPK || _previewRecord.Status_Verifikasi_PPK || "Belum";
+      elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" || _previewRecord.Status_Verifikasi_PPK === "Tidak_Perlu" ? "badge-success" : "badge-warning"}`;
 
       const btnEdit = document.getElementById("topbar-btn-edit");
       if (btnEdit && _previewRecord.ID_Dokumen) btnEdit.href = `form.html?id=${encodeURIComponent(_previewRecord.ID_Dokumen)}`;
@@ -280,7 +314,18 @@
       buildTypeChips(_previewRecord, _isPmlMitra);
       getBastSmPpk().then(data => { AppState.bastSmPpk = data; });
 
-      const defaultTab = urlParams.get("tab") || sessionStorage.getItem("preview_target_tab") || "spk";
+      const peran = detectPeran(_previewRecord);
+      let defaultTab = urlParams.get("tab") || sessionStorage.getItem("preview_target_tab");
+      if (!defaultTab) {
+        if (_previewRecord.Jenis_Dokumen === "BAST") {
+          defaultTab = (peran === "pml" ? "pml-sm" : "ppl-pml");
+        } else if (peran === "sm_ppk") {
+          defaultTab = "sm-ppk";
+        } else {
+          defaultTab = "spk";
+        }
+      }
+
       buildTabList(_previewRecord, _isPmlMitra, defaultTab);
       await switchTab(defaultTab, document.querySelector(`.tab-item[data-tab="${defaultTab}"]`));
 

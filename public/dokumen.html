@@ -412,17 +412,27 @@
         }
       }
 
-      const rawStatus = doc.Status_Generate_SPK || doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK || "Belum";
-      const vStatus = String(rawStatus).toLowerCase().trim();
-      const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
-      const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+      const isBast = (doc.Jenis_Dokumen === 'BAST');
+      let isApproved = false;
+      let isRejected = false;
+      let statusBadge = "";
 
-      let statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
-      if (isApproved) {
-        statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
-      } else if (isRejected) {
-        const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
-        statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
+      if (isBast) {
+        isApproved = true;
+        statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Siap Ekspor</span>`;
+      } else {
+        const rawStatus = doc.Status_Generate_SPK || doc.Status_Verifikasi_PPK || "Belum";
+        const vStatus = String(rawStatus).toLowerCase().trim();
+        isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+        isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+
+        statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
+        if (isApproved) {
+          statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Disetujui PPK</span>`;
+        } else if (isRejected) {
+          const catatan = doc.Catatan_Verifikasi_PPK ? ` title="Catatan: ${doc.Catatan_Verifikasi_PPK.replace(/"/g, '&quot;')}"` : '';
+          statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;"${catatan}>🔴 Ditolak</span>`;
+        }
       }
 
       // Kolom Aksi — disesuaikan per role
@@ -442,7 +452,7 @@
           </a>`;
       }
 
-      // Ekspor Word: hanya non-PENGGUNA & sudah disetujui
+      // Ekspor Word: hanya non-PENGGUNA & sudah disetujui/siap
       if (_canExport && isApproved) {
         aksiHTML += `
           <button type="button" class="btn btn-primary btn-sm" onclick="openExportModal('${doc.ID_Dokumen}')" title="Ekspor Dokumen Word (.docx)">
@@ -487,10 +497,18 @@
         if (jenis !== _activeJenisFilter) return false;
       }
       // Status filter
-      const rawStatus = d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
-      const vStatus = String(rawStatus).toLowerCase().trim();
-      const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
-      const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+      const isBast = (d.Jenis_Dokumen === 'BAST');
+      let isApproved = false;
+      let isRejected = false;
+
+      if (isBast) {
+        isApproved = true;
+      } else {
+        const rawStatus = d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
+        const vStatus = String(rawStatus).toLowerCase().trim();
+        isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+        isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+      }
       const isPending = !isApproved && !isRejected;
 
       let matchStatus = false;
@@ -513,8 +531,8 @@
     const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(docId));
     if (!doc) return;
 
-    const noSurat = doc.Nomor_SPK || doc.No_SPK || "";
-    let tglSurat = doc["Tanggal SPK"] || doc.Tanggal_SPK || doc.Tanggal_Mulai || "";
+    const noSurat = doc.Nomor_SPK || doc.No_SPK || doc.No_BAST_PPL_SM || doc.No_BAST_PML_SM || doc.No_BAST_PPL_PML || doc.No_BAST_SM_PPK || "";
+    let tglSurat = doc["Tanggal SPK"] || doc.Tanggal_SPK || doc.Tanggal_BAST_PPL_SM || doc.Tanggal_BAST_PML_SM || doc.Tanggal_BAST_PPL_PML || doc.Tanggal_Mulai || "";
     if (tglSurat && tglSurat.includes("T")) {
       tglSurat = tglSurat.split("T")[0];
     }
@@ -523,14 +541,14 @@
     document.getElementById("export-tgl-surat").value = tglSurat;
 
     // Tampilkan/sembunyikan tombol dokumen sesuai tipe
-    const isSmPpk = doc.No_BAST_SM_PPK && !doc.ID_Mitra;
-    const hasPplPml = !!doc.No_BAST_PPL_PML;
-    const hasPplSm  = !!doc.No_BAST_PPL_SM;
-    const hasPmlSm  = !!doc.No_BAST_PML_SM;
-    const hasSmPpk  = !!doc.No_BAST_SM_PPK;
+    const isBast = (doc.Jenis_Dokumen === "BAST");
+    const isSmPpk = (doc.No_BAST_SM_PPK || doc.ID_BAST_SM_PPK) && !doc.ID_Mitra;
+    const hasPplPml = !!(doc.No_BAST_PPL_PML || doc.Nomor_BAST_PPL_PML);
+    const hasPplSm  = !!(doc.No_BAST_PPL_SM || doc.Nomor_BAST_PPL_SM);
+    const hasPmlSm  = !!(doc.No_BAST_PML_SM || doc.Nomor_BAST_PML_SM);
+    const hasSmPpk  = !!(doc.No_BAST_SM_PPK || doc.Nomor_BAST_SM_PPK);
 
-    // Tampilkan tombol sesuai yang ada
-    document.getElementById("btn-export-spk").style.display = (!isSmPpk) ? "" : "none";
+    document.getElementById("btn-export-spk").style.display = (!isBast && !isSmPpk) ? "" : "none";
     document.getElementById("btn-export-ppl-pml").style.display = hasPplPml ? "" : "none";
     document.getElementById("btn-export-ppl-sm").style.display = hasPplSm ? "" : "none";
     document.getElementById("btn-export-pml-sm").style.display = hasPmlSm ? "" : "none";

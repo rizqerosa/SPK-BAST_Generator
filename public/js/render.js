@@ -121,8 +121,9 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   let pmlObj     = null;
 
   // Opsi A: Jika record.PML diisi & beda dari ID_Mitra
-  if (record.PML && String(record.PML).trim() !== String(record.ID_Mitra).trim()) {
-    const p = cariPegawai(record.PML, pegawaiArr);
+  if (record.PML && String(record.PML).trim() !== "" && String(record.PML).trim() !== String(record.ID_Mitra).trim()) {
+    const rawPml = String(record.PML).trim();
+    const p = cariPegawai(rawPml, pegawaiArr);
     if (p) {
       isPmlMitra = false;
       pmlObj = {
@@ -132,7 +133,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
         Jabatan:      p.Jabatan || "Pegawai BPS",
       };
     } else {
-      const m = cariMitra(record.PML, mitraArr);
+      const m = cariMitra(rawPml, mitraArr);
       if (m) {
         isPmlMitra = true;
         pmlObj = {
@@ -140,6 +141,15 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
           NIP:          "",
           NIK:          m.NIK || getMitraId(m),
           Jabatan:      getMitraPosisi(m) || "Mitra Pemeriksa Lapangan",
+        };
+      } else {
+        // Jika PML berupa string nama langsung
+        isPmlMitra = false;
+        pmlObj = {
+          Nama_Pegawai: rawPml,
+          NIP:          "",
+          NIK:          "-",
+          Jabatan:      "Pemeriksa Lapangan",
         };
       }
     }
@@ -325,7 +335,9 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     IS_PML_MITRA:             isPmlMitra,
   };
 
-  return { spkCtx, bastPplPmlCtx, bastPplSmCtx, bastPmlSmCtx, details, totalHonor, terbilangHonor };
+  const smPpkCtx = buildBastSmPpkContext(record, pegawaiArr);
+
+  return { spkCtx, bastPplPmlCtx, bastPplSmCtx, bastPmlSmCtx, smPpkCtx, details, totalHonor, terbilangHonor };
 }
 
 /**

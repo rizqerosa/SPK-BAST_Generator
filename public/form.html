@@ -412,7 +412,7 @@
                       ⚡ Auto
                     </button>
                   </div>
-                  <div id="spk-no-status" class="format-hint">Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
+                  <div id="spk-no-status" class="format-hint">Format: Nomor xx Tahun xxxx</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="spk-tgl-spk">Tanggal SPK <span class="required">*</span></label>
@@ -433,7 +433,7 @@
             <div class="form-card-body">
               <div class="info-box">
                 <span class="info-box-icon">💡</span>
-                <div>Nomor Kepka & Tanggal Kepka <strong>otomatis dari mapping KATIM</strong>. Kamu masih bisa mengubahnya jika perlu.</div>
+                <div>Nomor Kepka &amp; Tanggal Kepka <strong>otomatis dari mapping KATIM</strong>. Kamu masih bisa mengubahnya jika perlu.</div>
               </div>
 
               <div class="form-row">
@@ -457,28 +457,11 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="spk-sel-ketua">Ketua Tim / Supervisor Madya (SM) <span class="required">*</span></label>
-                  <select class="form-control" id="spk-sel-ketua" name="ketua_tim" required>
-                    <option value="">-- Pilih Ketua Tim/SM --</option>
-                  </select>
+                  <label class="form-label" for="spk-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="spk-judul" name="judul_pekerjaan"
+                         placeholder="Tergenerate Otomatis"
+                         style="font-weight:600;" required>
                 </div>
-              </div>
-
-              <div class="form-group" id="spk-grp-pml" style="margin-top:12px;">
-                <label class="form-label" for="spk-sel-pml">PML (Pengawas Lapangan — Pegawai / Mitra)</label>
-                <select class="form-control" id="spk-sel-pml" name="pml">
-                  <option value="">-- Pilih PML (Pegawai / Mitra) --</option>
-                </select>
-                <div style="font-size:.74rem; color:var(--gray-500); margin-top:4px;">
-                  💡 PML bisa dari Pegawai BPS atau Mitra Lapangan. Otomatis terisi jika ada mapping PML dari KATIM.
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top:12px;">
-                <label class="form-label" for="spk-judul">Judul Pekerjaan / Dokumen <span class="required">*</span></label>
-                <input type="text" class="form-control" id="spk-judul" name="judul_pekerjaan"
-                       placeholder="Tergenerate Otomatis"
-                       style="font-weight:600;" required>
               </div>
             </div>
           </div>
@@ -543,7 +526,7 @@
           <!-- 2. Pilih Kegiatan yang Mau Dibuatkan BAST -->
           <div class="form-card">
             <div class="form-card-header fc-green">
-              <span>📋 2. Pilih Kegiatan & Peran</span>
+              <span>📋 2. Pilih Kegiatan &amp; Peran</span>
               <span class="step-badge">Langkah 2 / 3</span>
             </div>
             <div class="form-card-body">
@@ -559,44 +542,105 @@
 
               <input type="hidden" id="bast-selected-keg-id">
               <input type="hidden" id="bast-selected-keg-nama">
-              <input type="hidden" id="bast-selected-peran">
+              <input type="hidden" id="bast-selected-peran" value="ppl">
             </div>
           </div>
 
           <!-- 3. Nomor & Tanggal BAST -->
           <div class="form-card">
             <div class="form-card-header fc-green">
-              <span>📅 3. Nomor & Tanggal BAST</span>
+              <span>📅 3. Nomor &amp; Tanggal BAST</span>
               <span class="step-badge">Langkah 3 / 3</span>
             </div>
             <div class="form-card-body">
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="bast-no">Nomor BAST <span class="required">*</span></label>
-                  <div style="display:flex; gap:8px;">
-                    <input type="text" class="form-control" id="bast-no"
-                           name="no_bast" placeholder="Nomor xxx Tahun xxxx" required>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('bast', true)"
-                            style="white-space:nowrap; padding:0 14px; font-weight:600; color:#059669; border-color:#a7f3d0;" title="Generate nomor urut berikutnya dari database">
-                      ⚡ Auto
-                    </button>
-                  </div>
-                  <div id="bast-no-status" class="format-hint">Format: Nomor xxx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
+
+              <!-- Input Group untuk PPL: 2 BAST (PPL->PML dan PPL->SM) -->
+              <div id="bast-ppl-inputs" style="display:block;">
+                <div style="font-weight:700; color:#166534; font-size:.88rem; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                  <span>1️⃣ BAST PPL → PML (Pemeriksaan Lapangan)</span>
                 </div>
-                <div class="form-group">
-                  <label class="form-label" for="bast-tgl">Tanggal BAST <span class="required">*</span></label>
-                  <input type="date" class="form-control" id="bast-tgl"
-                         name="tanggal_bast" required>
-                  <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="bast-tgl-display">Pilih tanggal → terbilang otomatis</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="bast-no-ppl-pml">Nomor BAST PPL → PML <span class="required">*</span></label>
+                    <div style="display:flex; gap:8px;">
+                      <input type="text" class="form-control" id="bast-no-ppl-pml"
+                             name="no_bast_ppl_pml" placeholder="Nomor xxx Tahun xxxx">
+                      <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('bast_ppl_pml', true)"
+                              style="white-space:nowrap; padding:0 14px; font-weight:600; color:#059669; border-color:#a7f3d0;" title="Generate nomor urut berikutnya dari database">
+                        ⚡ Auto
+                      </button>
+                    </div>
+                    <div id="bast-no-ppl-pml-status" class="format-hint">Format: Nomor xxx Tahun xxxx</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="bast-tgl-ppl-pml">Tanggal BAST PPL → PML <span class="required">*</span></label>
+                    <input type="date" class="form-control" id="bast-tgl-ppl-pml"
+                           name="tanggal_bast_ppl_pml">
+                    <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="bast-tgl-ppl-pml-display">Pilih tanggal → terbilang otomatis</div>
+                  </div>
+                </div>
+
+                <hr style="border:none; border-top:1px dashed var(--gray-200); margin:18px 0;">
+
+                <div style="font-weight:700; color:#166534; font-size:.88rem; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                  <span>2️⃣ BAST PPL → SM (Ketua Tim / Supervisor Madya)</span>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="bast-no-ppl-sm">Nomor BAST PPL → SM <span class="required">*</span></label>
+                    <div style="display:flex; gap:8px;">
+                      <input type="text" class="form-control" id="bast-no-ppl-sm"
+                             name="no_bast_ppl_sm" placeholder="Nomor xxx Tahun xxxx">
+                      <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('bast_ppl_sm', true)"
+                              style="white-space:nowrap; padding:0 14px; font-weight:600; color:#059669; border-color:#a7f3d0;" title="Generate nomor urut berikutnya dari database">
+                        ⚡ Auto
+                      </button>
+                    </div>
+                    <div id="bast-no-ppl-sm-status" class="format-hint">Format: Nomor xxx Tahun xxxx</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="bast-tgl-ppl-sm">Tanggal BAST PPL → SM <span class="required">*</span></label>
+                    <input type="date" class="form-control" id="bast-tgl-ppl-sm"
+                           name="tanggal_bast_ppl_sm">
+                    <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="bast-tgl-ppl-sm-display">Pilih tanggal → terbilang otomatis</div>
+                  </div>
                 </div>
               </div>
+
+              <!-- Input Group untuk PML: 1 BAST (PML->SM) -->
+              <div id="bast-pml-inputs" style="display:none;">
+                <div style="font-weight:700; color:#166534; font-size:.88rem; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                  <span>📋 BAST PML → SM (Ketua Tim / Supervisor Madya)</span>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="bast-no-pml-sm">Nomor BAST PML → SM <span class="required">*</span></label>
+                    <div style="display:flex; gap:8px;">
+                      <input type="text" class="form-control" id="bast-no-pml-sm"
+                             name="no_bast_pml_sm" placeholder="Nomor xxx Tahun xxxx">
+                      <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('bast_pml_sm', true)"
+                              style="white-space:nowrap; padding:0 14px; font-weight:600; color:#059669; border-color:#a7f3d0;" title="Generate nomor urut berikutnya dari database">
+                        ⚡ Auto
+                      </button>
+                    </div>
+                    <div id="bast-no-pml-sm-status" class="format-hint">Format: Nomor xxx Tahun xxxx</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="bast-tgl-pml-sm">Tanggal BAST PML → SM <span class="required">*</span></label>
+                    <input type="date" class="form-control" id="bast-tgl-pml-sm"
+                           name="tanggal_bast_pml_sm">
+                    <div style="font-size:.75rem; color:var(--gray-400); margin-top:4px;" id="bast-tgl-pml-sm-display">Pilih tanggal → terbilang otomatis</div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
           <div class="submit-bar" style="--brand-primary:#059669;">
             <div>
               <div style="font-weight:600; color:var(--gray-700); margin-bottom:3px;">Simpan BAST?</div>
-              <div class="note">BAST ini tidak perlu persetujuan PPK dan langsung bisa diekspor ke Word.</div>
+              <div class="note">BAST ini langsung siap diekspor dan dicetak.</div>
             </div>
             <button type="submit" class="btn btn-success btn-xl" id="btn-simpan-bast"
                     style="background:#059669; border-color:#059669;">
@@ -615,50 +659,55 @@
           <!-- 1. Pilih Bulan & Tahun -->
           <div class="form-card">
             <div class="form-card-header fc-purple">
-              <span>📅 1. Periode: Bulan & Tahun</span>
+              <span>📅 1. Periode: Bulan &amp; Tahun</span>
               <span class="step-badge">Langkah 1 / 3</span>
             </div>
             <div class="form-card-body">
               <div class="info-box" style="background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6;">
                 <span class="info-box-icon">🏛️</span>
-                <div>BAST SM→PPK dibuat <strong>per bulan</strong>. Semua kegiatan yang sudah selesai di bulan tersebut akan dibundel menjadi satu dokumen BAST SM→PPK.</div>
+                <div>Pilih bulan dan tahun pelaksanaan kegiatan dari mapping KATIM untuk membuat BAST SM→PPK.</div>
               </div>
 
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="sm-sel-bulan">Bulan Pelaksanaan <span class="required">*</span></label>
                   <select class="form-control" id="sm-sel-bulan" required onchange="loadSmKegiatanPerBulan()">
-                    <option value="">-- Pilih Bulan --</option>
-                    <option>Januari</option><option>Februari</option><option>Maret</option>
-                    <option>April</option><option>Mei</option><option>Juni</option>
-                    <option>Juli</option><option>Agustus</option><option>September</option>
-                    <option>Oktober</option><option>November</option><option>Desember</option>
+                    <option value="">-- Pilih Bulan dari Mapping --</option>
                   </select>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="sm-input-tahun">Tahun <span class="required">*</span></label>
                   <input type="number" class="form-control" id="sm-input-tahun"
-                         value="2026" min="2024" max="2030" required onchange="loadSmKegiatanPerBulan()">
+                         value="2026" min="2024" max="2030" required onchange="onSmTahunChange()">
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 2. Kegiatan yang Masuk Bulan Ini -->
+          <!-- 2. Kegiatan yang Dipilih (1 Kegiatan) -->
           <div class="form-card">
             <div class="form-card-header fc-purple">
-              <span>📋 2. Daftar Kegiatan Bulan Ini</span>
+              <span>📋 2. Pilih 1 Kegiatan yang Akan Diserahkan ke PPK</span>
               <span class="step-badge">Langkah 2 / 3</span>
             </div>
             <div class="form-card-body">
-              <div id="sm-keg-list" class="mapping-kegiatan-list">
+              <div class="info-box" style="background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6;">
+                <span class="info-box-icon">💡</span>
+                <div>Pilih <strong>satu kegiatan</strong>. BAST SM→PPK dibuat per satu kegiatan spesifik. Nama Ketua Tim/SM akan terisi otomatis sesuai Tim Teknis kegiatan tersebut.</div>
+              </div>
+              <div id="sm-keg-list" class="bast-keg-selector">
                 <div class="empty-mapping-notice">
                   Pilih bulan dan tahun untuk melihat kegiatan yang tersedia.
                 </div>
               </div>
+              <input type="hidden" id="sm-selected-keg-id">
+              <input type="hidden" id="sm-selected-keg-nama">
+              <input type="hidden" id="sm-selected-keg-tim">
+              <input type="hidden" id="sm-selected-keg-honor">
+
               <div id="sm-honor-box" class="honor-box" style="display:none;">
                 <div>
-                  <div class="hb-label">Total Honor BAST SM→PPK</div>
+                  <div class="hb-label">Total Honor Kegiatan Terpilih</div>
                   <div class="hb-amount" id="sm-honor-amount">Rp 0,-</div>
                 </div>
                 <div class="hb-terb" id="sm-honor-terbilang">Nol Rupiah</div>
@@ -669,7 +718,7 @@
           <!-- 3. Nomor & Tanggal -->
           <div class="form-card">
             <div class="form-card-header fc-purple">
-              <span>📅 3. Nomor, Tanggal & Pejabat</span>
+              <span>📅 3. Nomor, Tanggal &amp; Pejabat</span>
               <span class="step-badge">Langkah 3 / 3</span>
             </div>
             <div class="form-card-body">
@@ -684,7 +733,7 @@
                       ⚡ Auto
                     </button>
                   </div>
-                  <div id="sm-no-status" class="format-hint">Format: Nomor xx Tahun xxxx (Otomatis dari DB, bisa diedit)</div>
+                  <div id="sm-no-status" class="format-hint">Format: Nomor xx Tahun xxxx</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="sm-tgl-bast">Tanggal BAST <span class="required">*</span></label>
@@ -701,7 +750,7 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="sm-sel-ketua">Ketua Tim / SM <span class="required">*</span></label>
+                  <label class="form-label" for="sm-sel-ketua">Ketua Tim / SM (Otomatis dari Tim Teknis) <span class="required">*</span></label>
                   <select class="form-control" id="sm-sel-ketua" required>
                     <option value="">-- Pilih Ketua Tim/SM --</option>
                   </select>
@@ -798,6 +847,7 @@
       setupSearchListeners();
       setupDateListeners();
       setupDocNumberListeners();
+      populateSmBulanDropdown();
       setupFormSubmit();
 
       // Initial auto-fill nomor SPK if empty
@@ -844,7 +894,7 @@
     const titles = {
       spk:     ["Buat SPK",           "Surat Perjanjian Kerja — perlu persetujuan PPK"],
       bast:    ["Buat BAST Petugas",  "Berita Acara Serah Terima untuk petugas ber-SPK disetujui"],
-      bast_sm: ["Buat BAST SM→PPK",   "Penyerahan hasil pekerjaan SM ke PPK — per bulan"],
+      bast_sm: ["Buat BAST SM→PPK",   "Penyerahan hasil pekerjaan SM ke PPK — per 1 kegiatan"],
     };
     const t = titles[mode] || ["Buat Dokumen", ""];
     const bannerTitle = document.getElementById("banner-title");
@@ -852,13 +902,26 @@
     if (bannerTitle) bannerTitle.textContent = t[0];
     if (bannerDesc)  bannerDesc.textContent  = t[1];
 
+    if (mode === "bast_sm") {
+      populateSmBulanDropdown();
+    }
+
     // Auto-fill suggested number if currently empty
     if (!_isEditMode) {
-      applyAutoDocNumber(mode, false);
+      if (mode === "spk") applyAutoDocNumber("spk", false);
+      else if (mode === "bast_sm") applyAutoDocNumber("bast_sm", false);
+      else if (mode === "bast") {
+        const peran = document.getElementById("bast-selected-peran")?.value || "ppl";
+        if (peran === "pml") applyAutoDocNumber("bast_pml_sm", false);
+        else {
+          applyAutoDocNumber("bast_ppl_pml", false);
+          applyAutoDocNumber("bast_ppl_sm", false);
+        }
+      }
     }
   }
 
-  // ─── Populate pegawai & PML dropdowns ────────────────────────
+  // ─── Populate pegawai dropdowns ─────────────────────────────
   function populatePegawaiDropdowns() {
     const buildOpts = (arr) => arr.map(p => {
       const nip  = p.NIP || p.nip || "";
@@ -867,29 +930,10 @@
     }).join("");
     const opts = buildOpts(_allPegawai);
 
-    ["spk-sel-ppk","spk-sel-ketua","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
+    ["spk-sel-ppk","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = `<option value="">-- Pilih --</option>` + opts;
+      if (el) el.innerHTML = `<option value="">-- Pilih Pegawai --</option>` + opts;
     });
-
-    // PML Dropdown: Bisa dari Pegawai BPS maupun Mitra Lapangan
-    const pmlEl = document.getElementById("spk-sel-pml");
-    if (pmlEl) {
-      const pegPmlOpts = _allPegawai.map(p => {
-        const nip  = p.NIP || p.nip || "";
-        const nama = p.Nama_Pegawai || p.Nama || nip;
-        return `<option value="${escapeHtml(nip)}">${escapeHtml(nama)} (🏛️ Pegawai BPS)</option>`;
-      }).join("");
-      const mitraPmlOpts = _allMitra.map(m => {
-        const id   = getMitraId(m);
-        const nama = getMitraName(m);
-        return `<option value="${escapeHtml(id)}">${escapeHtml(nama)} (👥 Mitra Lapangan)</option>`;
-      }).join("");
-
-      pmlEl.innerHTML = `<option value="">-- Pilih PML (Pegawai / Mitra) --</option>` +
-        `<optgroup label="🏛️ Pegawai BPS">${pegPmlOpts}</optgroup>` +
-        `<optgroup label="👥 Mitra Lapangan">${mitraPmlOpts}</optgroup>`;
-    }
   }
 
   // ─── Search listeners ────────────────────────────────────────
@@ -962,7 +1006,7 @@
     const q = (document.getElementById(`${formPrefix}-search-petugas`)?.value || "").toLowerCase().trim();
     const sumber = formPrefix === "spk"
       ? (document.querySelector('input[name="spk-sumber"]:checked')?.value || "mitra")
-      : "mitra"; // BAST: semua sumber, kita cari dari approved list
+      : "mitra";
 
     let results = [];
     if (formPrefix === "bast") {
@@ -1111,7 +1155,6 @@
       const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
       totalHonor += subtotal;
 
-      // Cari PML yang di-mapping untuk kegiatan ini
       let pmlNama = m.PML || m.Nama_PML || "";
       if (!pmlNama) {
         const pmlItem = _allMapping.find(mx =>
@@ -1143,14 +1186,12 @@
     document.getElementById("spk-honor-amount").textContent = `Rp ${formatRupiah(totalHonor)},-`;
     document.getElementById("spk-honor-terbilang").textContent = terbilang(totalHonor) + " Rupiah";
 
-    // Auto-fill Kepka, Judul, PML & Ketua Tim (Nama_Tim_Teknis)
+    // Auto-fill Kepka & Judul
     const firstMapping = mappingItems[0];
     if (firstMapping) {
       const kepkaEl = document.getElementById("spk-nomor-kepka");
       const tglKepEl = document.getElementById("spk-tgl-kepka");
       const judulEl = document.getElementById("spk-judul");
-      const pmlEl = document.getElementById("spk-sel-pml");
-      const ketuaEl = document.getElementById("spk-sel-ketua");
 
       if (kepkaEl && !kepkaEl.value) kepkaEl.value = firstMapping.Nomor_Kepka || "";
       if (tglKepEl && !tglKepEl.value && firstMapping.Tanggal_Kepka) {
@@ -1162,77 +1203,11 @@
         const uraianList = mappingItems.map(m => m.Uraian_Kegiatan || "").filter(Boolean);
         judulEl.value = uraianList.join(", ").toUpperCase().substring(0, 200);
       }
-
-      // Auto-select PML dropdown jika ada PML di mapping
-      if (pmlEl && (firstMapping.PML || firstMapping.Nama_PML)) {
-        const targetPml = (firstMapping.PML || firstMapping.Nama_PML).toLowerCase().trim();
-        for (let i = 0; i < pmlEl.options.length; i++) {
-          const opt = pmlEl.options[i];
-          if (opt.text.toLowerCase().includes(targetPml) || opt.value.toLowerCase() === targetPml) {
-            pmlEl.selectedIndex = i;
-            break;
-          }
-        }
-      }
-
-      // Auto-fill Ketua Tim dari master kegiatan (Nama_Tim_Teknis / Nama_Ketua_Tim) atau dari mapping
-      if (ketuaEl && !ketuaEl.value) {
-        let targetKetuaNama = "";
-        for (const m of mappingItems) {
-          const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-          if (keg) {
-            targetKetuaNama = keg.Nama_Tim_Teknis || keg.Nama_Ketua_Tim || keg.Ketua_Tim || keg.Tim_Teknis || "";
-            if (targetKetuaNama) break;
-          }
-        }
-        if (!targetKetuaNama) {
-          targetKetuaNama = firstMapping.Nama_Tim_Teknis || firstMapping.NIP_Ketua_Tim || firstMapping.ID_Ketua_Tim || firstMapping.Ketua_Tim || "";
-        }
-
-        if (targetKetuaNama) {
-          const cleanTarget = targetKetuaNama.toLowerCase().trim();
-          for (let i = 0; i < ketuaEl.options.length; i++) {
-            const opt = ketuaEl.options[i];
-            const optText = opt.textContent.toLowerCase();
-            const optVal  = opt.value.toLowerCase();
-            if (optVal === cleanTarget || optText.includes(cleanTarget) || cleanTarget.includes(optText.split("(")[0].trim())) {
-              ketuaEl.selectedIndex = i;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    // Auto-suggest PML from mapping jika ada
-    const pmlFromMapping = mappingItems.find(m =>
-      String(m.Peran || "").toLowerCase() === "pml"
-    );
-    if (pmlFromMapping) {
-      const pmlEl = document.getElementById("spk-sel-pml");
-      if (pmlEl && !pmlEl.value) {
-        pmlEl.value = pmlFromMapping.ID_Mitra_atau_NIP;
-      }
-    } else {
-      // Cari PML dari mapping kegiatan yang sama tapi ID berbeda
-      const kegIds = mappingItems.map(m => m.ID_Kegiatan);
-      const pmlMapping = _allMapping.find(m =>
-        kegIds.includes(m.ID_Kegiatan) &&
-        String(m.Peran || "").toLowerCase() === "pml" &&
-        String(m.ID_Mitra_atau_NIP) !== String(petugasId)
-      );
-      if (pmlMapping) {
-        const pmlEl = document.getElementById("spk-sel-pml");
-        if (pmlEl && !pmlEl.value) {
-          pmlEl.value = pmlMapping.ID_Mitra_atau_NIP;
-        }
-      }
     }
   }
 
   // ─── Load kegiatan BAST (hanya yang SPK sudah disetujui) ──────
   function loadBastKegiatanFromMapping(petugasId) {
-    // Cari SPK yang sudah disetujui untuk petugas ini
     const approvedSpk = _approvedSpkList.find(r => String(r.ID_Mitra) === String(petugasId));
     if (approvedSpk) {
       document.getElementById("bast-spk-id").value = approvedSpk.ID_Dokumen || "";
@@ -1259,7 +1234,7 @@
     };
 
     container.innerHTML = mappingItems.map((m, i) => `
-      <div class="bast-keg-option" id="bko-${i}" onclick="selectBastKegiatan(${i})">
+      <div class="bast-keg-option ${i === 0 ? 'selected' : ''}" id="bko-${i}" onclick="selectBastKegiatan(${i})">
         <div class="bko-check" id="bkc-${i}">✓</div>
         <div class="bko-info">
           <div class="bko-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</div>
@@ -1270,18 +1245,57 @@
         </div>
       </div>
     `).join("");
+
+    if (mappingItems.length > 0) {
+      selectBastKegiatan(0);
+    }
   }
 
   function selectBastKegiatan(idx) {
-    // Deselect all
     document.querySelectorAll(".bast-keg-option").forEach(el => el.classList.remove("selected"));
     document.getElementById(`bko-${idx}`)?.classList.add("selected");
 
     const m = _bastMappingRows[idx];
     if (!m) return;
+    const peran = String(m.Peran || "ppl").toLowerCase();
+
     document.getElementById("bast-selected-keg-id").value   = m.ID_Kegiatan || "";
     document.getElementById("bast-selected-keg-nama").value = m.Uraian_Kegiatan || "";
-    document.getElementById("bast-selected-peran").value    = m.Peran || "ppl";
+    document.getElementById("bast-selected-peran").value    = peran;
+
+    const pplInputs = document.getElementById("bast-ppl-inputs");
+    const pmlInputs = document.getElementById("bast-pml-inputs");
+
+    if (peran === "pml") {
+      if (pplInputs) pplInputs.style.display = "none";
+      if (pmlInputs) pmlInputs.style.display = "block";
+      applyAutoDocNumber("bast_pml_sm", false);
+      if (m.Tanggal_Selesai) {
+        const tglInput = document.getElementById("bast-tgl-pml-sm");
+        if (tglInput && !tglInput.value) {
+          tglInput.value = m.Tanggal_Selesai.split("T")[0];
+          updateDateDisplay("bast-tgl-pml-sm", "bast-tgl-pml-sm-display");
+        }
+      }
+    } else {
+      if (pplInputs) pplInputs.style.display = "block";
+      if (pmlInputs) pmlInputs.style.display = "none";
+      applyAutoDocNumber("bast_ppl_pml", false);
+      applyAutoDocNumber("bast_ppl_sm", false);
+      if (m.Tanggal_Selesai) {
+        const tglPmlInput = document.getElementById("bast-tgl-ppl-pml");
+        const tglSmInput  = document.getElementById("bast-tgl-ppl-sm");
+        const cleanTgl = m.Tanggal_Selesai.split("T")[0];
+        if (tglPmlInput && !tglPmlInput.value) {
+          tglPmlInput.value = cleanTgl;
+          updateDateDisplay("bast-tgl-ppl-pml", "bast-tgl-ppl-pml-display");
+        }
+        if (tglSmInput && !tglSmInput.value) {
+          tglSmInput.value = cleanTgl;
+          updateDateDisplay("bast-tgl-ppl-sm", "bast-tgl-ppl-sm-display");
+        }
+      }
+    }
   }
 
   // ─── Number Generator & Database Duplicate Validator ─────────
@@ -1292,8 +1306,20 @@
         const d = new Date(val);
         if (!isNaN(d)) return d.getFullYear();
       }
-    } else if (docType === "bast") {
-      const val = document.getElementById("bast-tgl")?.value;
+    } else if (docType === "bast_ppl_pml") {
+      const val = document.getElementById("bast-tgl-ppl-pml")?.value;
+      if (val) {
+        const d = new Date(val);
+        if (!isNaN(d)) return d.getFullYear();
+      }
+    } else if (docType === "bast_ppl_sm") {
+      const val = document.getElementById("bast-tgl-ppl-sm")?.value;
+      if (val) {
+        const d = new Date(val);
+        if (!isNaN(d)) return d.getFullYear();
+      }
+    } else if (docType === "bast_pml_sm") {
+      const val = document.getElementById("bast-tgl-pml-sm")?.value;
       if (val) {
         const d = new Date(val);
         if (!isNaN(d)) return d.getFullYear();
@@ -1344,7 +1370,7 @@
           });
         }
       });
-    } else if (docType === "bast") {
+    } else if (docType === "bast_ppl_pml" || docType === "bast_ppl_sm" || docType === "bast_pml_sm" || docType === "bast") {
       const allDocs = [...(_allSpkBast || []), ...(_allBastSmPpk || [])];
       allDocs.forEach(r => {
         if (_editDocId && String(r.ID_Dokumen) === String(_editDocId)) return;
@@ -1389,8 +1415,17 @@
 
   function generateSuggestedDocNumber(docType, targetYear) {
     const yr = targetYear || getDocYear(docType);
-    const nextSeq = getMaxDocSeq(docType, yr) + 1;
-    if (docType === "bast") {
+    let maxSeq = getMaxDocSeq(docType, yr);
+
+    // Cek juga nomor yang sedang diketik di input lain agar tidak bentrok
+    if (docType === "bast_ppl_sm") {
+      const pplPmlVal = document.getElementById("bast-no-ppl-pml")?.value;
+      const seq1 = extractDocSeq(pplPmlVal, yr);
+      if (seq1 && seq1 >= maxSeq) maxSeq = seq1;
+    }
+
+    const nextSeq = maxSeq + 1;
+    if (docType.startsWith("bast_ppl") || docType.startsWith("bast_pml") || docType === "bast") {
       return `Nomor ${String(nextSeq).padStart(3, "0")} Tahun ${yr}`;
     }
     return `Nomor ${nextSeq} Tahun ${yr}`;
@@ -1410,7 +1445,7 @@
           }
         }
       }
-    } else if (docType === "bast") {
+    } else {
       const allDocs = [..._allSpkBast, ..._allBastSmPpk];
       for (const r of allDocs) {
         if (_editDocId && String(r.ID_Dokumen || r.ID_BAST_SM_PPK) === String(_editDocId)) continue;
@@ -1418,7 +1453,8 @@
           r.Nomor_BAST_PPL_PML, r.No_BAST_PPL_PML,
           r.Nomor_BAST_PPL_SM,  r.No_BAST_PPL_SM,
           r.Nomor_BAST_PML_SM,  r.No_BAST_PML_SM,
-          r.Nomor_BAST,         r.No_BAST
+          r.Nomor_BAST,         r.No_BAST,
+          r.No_BAST_SM_PPK,     r.Nomor_BAST_SM_PPK
         ];
         for (const v of vals) {
           if (v && String(v).trim().toLowerCase() === target) {
@@ -1426,31 +1462,30 @@
           }
         }
       }
-    } else if (docType === "bast_sm") {
-      const allDocs = [..._allBastSmPpk, ..._allSpkBast];
-      for (const r of allDocs) {
-        if (_editDocId && String(r.ID_Dokumen || r.ID_BAST_SM_PPK) === String(_editDocId)) continue;
-        const vals = [r.No_BAST_SM_PPK, r.Nomor_BAST_SM_PPK, r["No_BAST_SM_PPK"]];
-        for (const v of vals) {
-          if (v && String(v).trim().toLowerCase() === target) {
-            return { isDuplicate: true, label: r.Uraian_Tugas || r.ID_BAST_SM_PPK || "BAST SM di Database" };
-          }
-        }
-      }
     }
     return null;
   }
 
+  function getDocInputIds(docType) {
+    const map = {
+      spk:          { input: "spk-no-spk", status: "spk-no-status" },
+      bast_ppl_pml: { input: "bast-no-ppl-pml", status: "bast-no-ppl-pml-status" },
+      bast_ppl_sm:  { input: "bast-no-ppl-sm",  status: "bast-no-ppl-sm-status" },
+      bast_pml_sm:  { input: "bast-no-pml-sm",  status: "bast-no-pml-sm-status" },
+      bast_sm:      { input: "sm-no-bast",      status: "sm-no-status" }
+    };
+    return map[docType] || { input: "", status: "" };
+  }
+
   function validateDocNumberInput(docType) {
-    const inputId = docType === "spk" ? "spk-no-spk" : docType === "bast" ? "bast-no" : "sm-no-bast";
-    const statusId = docType === "spk" ? "spk-no-status" : docType === "bast" ? "bast-no-status" : "sm-no-status";
+    const { input: inputId, status: statusId } = getDocInputIds(docType);
     const inputEl = document.getElementById(inputId);
     const statusEl = document.getElementById(statusId);
     if (!inputEl || !statusEl) return;
 
     const val = inputEl.value.trim();
     if (!val) {
-      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx (Bisa diedit)`;
+      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx`;
       return;
     }
 
@@ -1460,24 +1495,11 @@
       return;
     }
 
-    // Peringatan jika nomor melompati urutan (gap)
-    const yr = getDocYear(docType);
-    const maxSeq = getMaxDocSeq(docType, yr);
-    const inputSeq = extractDocSeq(val, yr);
-
-    if (inputSeq !== null && maxSeq > 0 && inputSeq > maxSeq + 1) {
-      statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Perhatian: Nomor melompati urutan! Urutan terakhir di database adalah ${maxSeq} (seharusnya Nomor ${maxSeq + 1}).</span>`;
-      return;
-    } else if (inputSeq !== null && maxSeq === 0 && inputSeq > 1) {
-      statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Perhatian: Belum ada nomor di database tahun ${yr}. Disarankan mulai dari Nomor 1 (atau 001).</span>`;
-      return;
-    }
-
     statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor tersedia</span>`;
   }
 
   function applyAutoDocNumber(docType, force = false) {
-    const inputId = docType === "spk" ? "spk-no-spk" : docType === "bast" ? "bast-no" : "sm-no-bast";
+    const { input: inputId } = getDocInputIds(docType);
     const inputEl = document.getElementById(inputId);
     if (!inputEl) return;
 
@@ -1489,8 +1511,8 @@
   }
 
   function setupDocNumberListeners() {
-    ["spk", "bast", "bast_sm"].forEach(type => {
-      const inputId = type === "spk" ? "spk-no-spk" : type === "bast" ? "bast-no" : "sm-no-bast";
+    ["spk", "bast_ppl_pml", "bast_ppl_sm", "bast_pml_sm", "bast_sm"].forEach(type => {
+      const { input: inputId } = getDocInputIds(type);
       const inputEl = document.getElementById(inputId);
       if (inputEl) {
         inputEl.addEventListener("input", () => validateDocNumberInput(type));
@@ -1499,50 +1521,94 @@
     });
   }
 
+  function updateDateDisplay(inputId, displayId) {
+    const inputEl = document.getElementById(inputId);
+    const displayEl = document.getElementById(displayId);
+    if (inputEl && displayEl && inputEl.value) {
+      const t = tanggalTerbilang(inputEl.value);
+      displayEl.textContent = `${t.hari}, ${t.tanggalFormat}`;
+    }
+  }
+
   // ─── Date listeners ──────────────────────────────────────────
   function setupDateListeners() {
     // SPK Tanggal
     document.getElementById("spk-tgl-spk")?.addEventListener("change", function() {
-      const el = document.getElementById("spk-tgl-display");
-      if (el && this.value) {
-        const t = tanggalTerbilang(this.value);
-        el.textContent = `${t.hari}, ${t.tanggalFormat}`;
-      }
+      updateDateDisplay("spk-tgl-spk", "spk-tgl-display");
       applyAutoDocNumber("spk", false);
     });
-    // BAST Tanggal
-    document.getElementById("bast-tgl")?.addEventListener("change", function() {
-      const el = document.getElementById("bast-tgl-display");
-      if (el && this.value) {
-        const t = tanggalTerbilang(this.value);
-        el.textContent = `${t.hari}, ${t.tanggalFormat}`;
-      }
-      applyAutoDocNumber("bast", false);
+
+    // BAST PPL-PML
+    document.getElementById("bast-tgl-ppl-pml")?.addEventListener("change", function() {
+      updateDateDisplay("bast-tgl-ppl-pml", "bast-tgl-ppl-pml-display");
+      applyAutoDocNumber("bast_ppl_pml", false);
     });
+
+    // BAST PPL-SM
+    document.getElementById("bast-tgl-ppl-sm")?.addEventListener("change", function() {
+      updateDateDisplay("bast-tgl-ppl-sm", "bast-tgl-ppl-sm-display");
+      applyAutoDocNumber("bast_ppl_sm", false);
+    });
+
+    // BAST PML-SM
+    document.getElementById("bast-tgl-pml-sm")?.addEventListener("change", function() {
+      updateDateDisplay("bast-tgl-pml-sm", "bast-tgl-pml-sm-display");
+      applyAutoDocNumber("bast_pml_sm", false);
+    });
+
     // SM→PPK Tanggal
     document.getElementById("sm-tgl-bast")?.addEventListener("change", function() {
-      const el = document.getElementById("sm-tgl-display");
-      if (el && this.value) {
-        const t = tanggalTerbilang(this.value);
-        el.textContent = `${t.hari}, ${t.tanggalFormat}`;
-      }
+      updateDateDisplay("sm-tgl-bast", "sm-tgl-display");
       applyAutoDocNumber("bast_sm", false);
     });
   }
 
-  // ─── Load kegiatan SM per bulan ──────────────────────────────
+  // ─── BAST SM→PPK: Month populator from mapping ───────────────
+  function populateSmBulanDropdown() {
+    const bulanSel = document.getElementById("sm-sel-bulan");
+    if (!bulanSel) return;
+
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const currentYr = parseInt(document.getElementById("sm-input-tahun")?.value || "2026", 10);
+
+    // Hitung kegiatan per bulan dari mapping
+    const countPerMonth = new Array(12).fill(0);
+    (_allMapping || []).forEach(m => {
+      if (!m.Tanggal_Mulai) return;
+      const d = new Date(m.Tanggal_Mulai);
+      if (!isNaN(d) && d.getFullYear() === currentYr) {
+        countPerMonth[d.getMonth()] += 1;
+      }
+    });
+
+    const currentVal = bulanSel.value;
+    let html = `<option value="">-- Pilih Bulan dari Mapping --</option>`;
+
+    months.forEach((b, idx) => {
+      const cnt = countPerMonth[idx];
+      const badge = cnt > 0 ? ` ⭐ (${cnt} Penugasan)` : "";
+      const isSel = (currentVal === b) ? "selected" : "";
+      html += `<option value="${b}" ${isSel}>${b}${badge}</option>`;
+    });
+
+    bulanSel.innerHTML = html;
+  }
+
+  function onSmTahunChange() {
+    populateSmBulanDropdown();
+    loadSmKegiatanPerBulan();
+  }
+
+  // ─── Load kegiatan SM per bulan (Pilih 1 Kegiatan) ───────────
   function loadSmKegiatanPerBulan() {
     const bulan = document.getElementById("sm-sel-bulan")?.value;
     const tahun = document.getElementById("sm-input-tahun")?.value;
     if (!bulan || !tahun) return;
 
-    const listEl    = document.getElementById("sm-keg-list");
-    const honorBox  = document.getElementById("sm-honor-box");
-    const honorEl   = document.getElementById("sm-honor-amount");
-    const terbilEl  = document.getElementById("sm-honor-terbilang");
-    const judulEl   = document.getElementById("sm-judul");
+    const listEl   = document.getElementById("sm-keg-list");
+    const honorBox = document.getElementById("sm-honor-box");
+    if (!listEl) return;
 
-    // Filter mapping yang periode-nya masuk bulan ini
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
     const bulanIdx = months.indexOf(bulan);
 
@@ -1554,39 +1620,121 @@
 
     if (relevantMappings.length === 0) {
       listEl.innerHTML = `<div class="empty-mapping-notice">
-        Tidak ada kegiatan yang ter-mapping pada bulan ${bulan} ${tahun}.
+        Tidak ada kegiatan yang ter-mapping pada bulan ${bulan} ${tahun}. Hubungi KATIM.
       </div>`;
       if (honorBox) honorBox.style.display = "none";
       return;
     }
 
-    const formatTgl = str => {
-      if (!str) return "—";
-      const d = new Date(str);
-      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
-    };
+    // Kelompokkan per Kegiatan unik
+    const mapByKeg = new Map();
+    relevantMappings.forEach(m => {
+      const kegId = m.ID_Kegiatan || m.Uraian_Kegiatan;
+      if (!mapByKeg.has(kegId)) {
+        const kegMaster = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+        const tim = kegMaster?.Nama_Tim_Teknis || kegMaster?.Nama_Ketua_Tim || m.Nama_Tim_Teknis || "";
+        mapByKeg.set(kegId, {
+          id: m.ID_Kegiatan,
+          nama: m.Uraian_Kegiatan || kegMaster?.Uraian_Tugas || kegId,
+          timTeknis: tim,
+          mappings: [],
+          totalHonor: 0,
+          tglMulai: m.Tanggal_Mulai,
+          tglSelesai: m.Tanggal_Selesai
+        });
+      }
+      const entry = mapByKeg.get(kegId);
+      entry.mappings.push(m);
+      const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : 1));
+      const kegMaster = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
+      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (kegMaster?.Harga_Satuan || 0));
+      entry.totalHonor += (vol * hrg);
+    });
 
-    let totalHonor = 0;
-    listEl.innerHTML = relevantMappings.map(m => {
-      const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-      const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
-      totalHonor += harga;
-      return `<div class="mapping-keg-item">
-        <span class="mki-badge mki-${m.Peran||'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
-        <span class="mki-name">${escapeHtml(m.Nama_Petugas||"—")} — ${escapeHtml(m.Uraian_Kegiatan||"—")}</span>
-        <span class="mki-meta">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
-      </div>`;
-    }).join("");
+    const kegList = Array.from(mapByKeg.values());
+
+    listEl.innerHTML = kegList.map((keg, idx) => `
+      <div class="bast-keg-option ${idx === 0 ? 'selected' : ''}" id="sm-keg-opt-${idx}" onclick="selectSmKegiatan(${idx})">
+        <div class="bko-check" id="sm-keg-chk-${idx}">✓</div>
+        <div class="bko-info">
+          <div class="bko-name">${escapeHtml(keg.nama)}</div>
+          <div class="bko-meta">
+            ${keg.timTeknis ? `<span class="badge" style="background:#ede9fe; color:#5b21b6; font-size:.7rem; margin-right:6px;">Tim: ${escapeHtml(keg.timTeknis)}</span>` : ''}
+            👥 ${keg.mappings.length} Petugas &nbsp;·&nbsp; 💰 Total Rp ${formatRupiah(keg.totalHonor)}
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    window._smKegListCache = kegList;
+    if (kegList.length > 0) {
+      selectSmKegiatan(0);
+    }
+  }
+
+  function selectSmKegiatan(idx) {
+    const list = window._smKegListCache || [];
+    const keg = list[idx];
+    if (!keg) return;
+
+    document.querySelectorAll("#sm-keg-list .bast-keg-option").forEach(el => el.classList.remove("selected"));
+    document.getElementById(`sm-keg-opt-${idx}`)?.classList.add("selected");
+
+    document.getElementById("sm-selected-keg-id").value    = keg.id || "";
+    document.getElementById("sm-selected-keg-nama").value  = keg.nama || "";
+    document.getElementById("sm-selected-keg-tim").value   = keg.timTeknis || "";
+    document.getElementById("sm-selected-keg-honor").value = keg.totalHonor || 0;
+
+    const honorBox  = document.getElementById("sm-honor-box");
+    const honorEl   = document.getElementById("sm-honor-amount");
+    const terbilEl  = document.getElementById("sm-honor-terbilang");
+    const judulEl   = document.getElementById("sm-judul");
+    const ketuaEl   = document.getElementById("sm-sel-ketua");
 
     if (honorBox) honorBox.style.display = "flex";
-    if (honorEl)  honorEl.textContent  = `Rp ${formatRupiah(totalHonor)},-`;
-    if (terbilEl) terbilEl.textContent = terbilang(totalHonor) + " Rupiah";
+    if (honorEl)  honorEl.textContent  = `Rp ${formatRupiah(keg.totalHonor)},-`;
+    if (terbilEl) terbilEl.textContent = terbilang(keg.totalHonor) + " Rupiah";
+    if (judulEl)  judulEl.value        = keg.nama.toUpperCase();
 
-    // Auto-fill judul
-    const uraianList = [...new Set(relevantMappings.map(m => m.Uraian_Kegiatan||"").filter(Boolean))];
-    if (judulEl && !judulEl.value) {
-      judulEl.value = uraianList.slice(0,3).join(", ").toUpperCase();
+    // Auto-select Ketua Tim / SM dari Nama_Tim_Teknis
+    if (ketuaEl && keg.timTeknis) {
+      const cleanTim = keg.timTeknis.toLowerCase().trim();
+      let matched = false;
+      for (let i = 0; i < ketuaEl.options.length; i++) {
+        const optText = ketuaEl.options[i].text.toLowerCase();
+        const optVal  = ketuaEl.options[i].value.toLowerCase();
+        if (optText.includes(cleanTim) || cleanTim.includes(optText.split(" ")[0])) {
+          ketuaEl.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      // Fallback: match by known Katim names in auth / system
+      if (!matched) {
+        const katimMap = {
+          "distribusi": "tri wahyudi",
+          "neraca":     "raden daffa",
+          "produksi":   "thariq alfatih",
+          "pengolahan": "mutia soraya",
+          "sosial":     "putri nurhilwa",
+          "diseminasi": "suciarti"
+        };
+        for (const [tKey, pName] of Object.entries(katimMap)) {
+          if (cleanTim.includes(tKey)) {
+            for (let i = 0; i < ketuaEl.options.length; i++) {
+              if (ketuaEl.options[i].text.toLowerCase().includes(pName)) {
+                ketuaEl.selectedIndex = i;
+                matched = true;
+                break;
+              }
+            }
+            if (matched) break;
+          }
+        }
+      }
     }
+
+    applyAutoDocNumber("bast_sm", false);
   }
 
   // ─── Form submit handlers ────────────────────────────────────
@@ -1606,8 +1754,6 @@
     const noKepka     = document.getElementById("spk-nomor-kepka")?.value.trim();
     const tglKepka    = document.getElementById("spk-tgl-kepka")?.value;
     const ppk         = document.getElementById("spk-sel-ppk")?.value;
-    const ketua       = document.getElementById("spk-sel-ketua")?.value;
-    const pml         = document.getElementById("spk-sel-pml")?.value;
     const judul       = document.getElementById("spk-judul")?.value.trim();
 
     if (!petugasId)  { showToast("Pilih petugas terlebih dahulu!", "warning"); return; }
@@ -1617,7 +1763,6 @@
     if (!noKepka) { showToast("Isi Nomor Kepka!", "warning"); return; }
     if (!tglKepka){ showToast("Isi Tanggal Kepka!", "warning"); return; }
     if (!ppk)     { showToast("Pilih PPK!", "warning"); return; }
-    if (!ketua)   { showToast("Pilih Ketua Tim/SM!", "warning"); return; }
     if (!judul)   { showToast("Isi Judul Pekerjaan!", "warning"); return; }
 
     // Compute dates from mapping
@@ -1628,13 +1773,10 @@
     const tglSelesai = tglSList.length ? new Date(Math.max(...tglSList)).toISOString().split("T")[0] : "";
     const batasTerlambat = batasList.length ? new Date(Math.max(...batasList)).toISOString().split("T")[0] : "";
 
-    // Ambil info tgl SPK
-    const tglObj = tanggalTerbilang(tglSpk);
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
     const bulan  = months[new Date(tglSpk).getMonth()] || "";
     const tahun  = new Date(tglSpk).getFullYear();
 
-    // Hitung total honor
     let totalHonor = 0;
     _spkMappingRows.forEach(m => {
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
@@ -1652,9 +1794,9 @@
       Bulan:                   bulan,
       Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
       ID_Mitra:                petugasId,
-      PML:                     pml || "",
+      PML:                     "",
       PPK:                     ppk,
-      Ketua_Tim:               ketua,
+      Ketua_Tim:               "",
       "Kepala/PLH":            "",
       Nomor_Kepka:             noKepka,
       Tanggal_Kepka:           tglKepka,
@@ -1680,7 +1822,6 @@
     try {
       await appendToSheet("spkBast", record);
 
-      // Simpan detail kegiatan
       for (let i = 0; i < _spkMappingRows.length; i++) {
         const m   = _spkMappingRows[i];
         const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
@@ -1727,36 +1868,57 @@
     const kegId       = document.getElementById("bast-selected-keg-id")?.value;
     const kegNama     = document.getElementById("bast-selected-keg-nama")?.value;
     const peran       = document.getElementById("bast-selected-peran")?.value || "ppl";
-    const noBast      = document.getElementById("bast-no")?.value.trim();
-    const tglBast     = document.getElementById("bast-tgl")?.value;
 
     if (!petugasId) { showToast("Pilih petugas!", "warning"); return; }
     if (!kegId)     { showToast("Pilih kegiatan yang mau dibuatkan BAST!", "warning"); return; }
-    if (!noBast)    { showToast("Isi Nomor BAST!", "warning"); return; }
-    if (!tglBast)   { showToast("Isi Tanggal BAST!", "warning"); return; }
 
-    // Cari mapping untuk kegiatan ini
-    const mappingItem = _bastMappingRows.find(m => m.ID_Kegiatan === kegId && m.Peran === peran);
-
-    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    const bulan  = months[new Date(tglBast).getMonth()] || "";
-    const tahun  = new Date(tglBast).getFullYear();
-
-    const keg = _allKegiatan.find(k => getKegiatanId(k) === kegId);
-    const harga = keg ? Number(keg.Harga_Satuan || 0) : 0;
-
-    // Tentukan kolom No/Tanggal BAST berdasarkan peran
     let noBastPplPml = "", tglBastPplPml = "";
     let noBastPplSm  = "", tglBastPplSm  = "";
     let noBastPmlSm  = "", tglBastPmlSm  = "";
-    if (peran === "ppl") {
-      noBastPplPml = noBast; tglBastPplPml = tglBast;
-      noBastPplSm  = noBast; tglBastPplSm  = tglBast;
+    let primaryTgl   = "";
+
+    if (peran === "pml") {
+      noBastPmlSm  = document.getElementById("bast-no-pml-sm")?.value.trim();
+      tglBastPmlSm = document.getElementById("bast-tgl-pml-sm")?.value;
+      if (!noBastPmlSm)  { showToast("Isi Nomor BAST PML → SM!", "warning"); return; }
+      if (!tglBastPmlSm) { showToast("Isi Tanggal BAST PML → SM!", "warning"); return; }
+      primaryTgl = tglBastPmlSm;
     } else {
-      noBastPmlSm  = noBast; tglBastPmlSm  = tglBast;
+      noBastPplPml  = document.getElementById("bast-no-ppl-pml")?.value.trim();
+      tglBastPplPml = document.getElementById("bast-tgl-ppl-pml")?.value;
+      noBastPplSm   = document.getElementById("bast-no-ppl-sm")?.value.trim();
+      tglBastPplSm  = document.getElementById("bast-tgl-ppl-sm")?.value;
+      if (!noBastPplPml)  { showToast("Isi Nomor BAST PPL → PML!", "warning"); return; }
+      if (!tglBastPplPml) { showToast("Isi Tanggal BAST PPL → PML!", "warning"); return; }
+      if (!noBastPplSm)   { showToast("Isi Nomor BAST PPL → SM!", "warning"); return; }
+      if (!tglBastPplSm)  { showToast("Isi Tanggal BAST PPL → SM!", "warning"); return; }
+      primaryTgl = tglBastPplSm || tglBastPplPml;
     }
 
-    // Cari Kepka dari SPK induk
+    const mappingItem = _bastMappingRows.find(m => m.ID_Kegiatan === kegId && m.Peran === peran) || {};
+    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const bulan  = months[new Date(primaryTgl).getMonth()] || "";
+    const tahun  = new Date(primaryTgl).getFullYear();
+
+    const keg = _allKegiatan.find(k => getKegiatanId(k) === kegId);
+    const vol = Number(mappingItem.Volume !== undefined && mappingItem.Volume !== "" ? mappingItem.Volume : (mappingItem.volume || 1));
+    const hrg = Number(mappingItem.Harga_Satuan !== undefined && mappingItem.Harga_Satuan !== "" ? mappingItem.Harga_Satuan : (keg?.Harga_Satuan || 0));
+    const harga = Number(mappingItem.Total_Honor || (vol * hrg));
+
+    // Cari PML dari mapping
+    let pmlNama = mappingItem.PML || mappingItem.Nama_PML || "";
+    if (!pmlNama) {
+      const pmlItem = _allMapping.find(mx =>
+        mx.ID_Kegiatan === kegId &&
+        String(mx.Peran || "").toLowerCase() === "pml" &&
+        String(mx.ID_Mitra_atau_NIP) !== String(petugasId)
+      );
+      pmlNama = pmlItem ? (pmlItem.Nama_Petugas || pmlItem.ID_Mitra_atau_NIP || "") : "";
+    }
+
+    // Cari Ketua Tim dari master kegiatan
+    let targetKetua = keg?.Nama_Tim_Teknis || keg?.Nama_Ketua_Tim || keg?.Ketua_Tim || mappingItem.Nama_Tim_Teknis || "";
+
     const spkRecord = _allSpkBast.find(r => r.ID_Dokumen === spkId) || {};
 
     const docId = generateId("BAST");
@@ -1768,12 +1930,12 @@
       Bulan:                   bulan,
       Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
       ID_Mitra:                petugasId,
-      PML:                     spkRecord.PML || "",
+      PML:                     pmlNama || spkRecord.PML || "",
       PPK:                     spkRecord.PPK || "",
-      Ketua_Tim:               spkRecord.Ketua_Tim || "",
+      Ketua_Tim:               targetKetua || spkRecord.Ketua_Tim || "",
       "Kepala/PLH":            spkRecord["Kepala/PLH"] || "",
-      Nomor_Kepka:             spkRecord.Nomor_Kepka || "",
-      Tanggal_Kepka:           spkRecord.Tanggal_Kepka || "",
+      Nomor_Kepka:             mappingItem.Nomor_Kepka || spkRecord.Nomor_Kepka || "",
+      Tanggal_Kepka:           mappingItem.Tanggal_Kepka || spkRecord.Tanggal_Kepka || "",
       No_BAST_PPL_PML:         noBastPplPml,
       Tanggal_BAST_PPL_PML:    tglBastPplPml,
       No_BAST_PPL_SM:          noBastPplSm,
@@ -1786,7 +1948,7 @@
       Batas_Penyerahan:        mappingItem?.Batas_Terlambat || "",
       Total_Honor:             harga,
       Terbilang:               terbilang(harga) + " Rupiah",
-      Status_Generate_SPK:     "Belum",
+      Status_Generate_SPK:     "Sudah",
       Status_Verifikasi_PPK:   "Tidak_Perlu",
     };
 
@@ -1805,51 +1967,40 @@
 
   async function handleBastSmSubmit(e) {
     e.preventDefault();
-    const bulan  = document.getElementById("sm-sel-bulan")?.value;
-    const tahun  = document.getElementById("sm-input-tahun")?.value;
-    const noBast = document.getElementById("sm-no-bast")?.value.trim();
+    const bulan   = document.getElementById("sm-sel-bulan")?.value;
+    const tahun   = document.getElementById("sm-input-tahun")?.value;
+    const kegId   = document.getElementById("sm-selected-keg-id")?.value;
+    const noBast  = document.getElementById("sm-no-bast")?.value.trim();
     const tglBast = document.getElementById("sm-tgl-bast")?.value;
-    const ppk    = document.getElementById("sm-sel-ppk")?.value;
-    const ketua  = document.getElementById("sm-sel-ketua")?.value;
-    const judul  = document.getElementById("sm-judul")?.value.trim();
+    const ppk     = document.getElementById("sm-sel-ppk")?.value;
+    const ketua   = document.getElementById("sm-sel-ketua")?.value;
+    const judul   = document.getElementById("sm-judul")?.value.trim();
 
     if (!bulan)   { showToast("Pilih Bulan!", "warning"); return; }
     if (!tahun)   { showToast("Isi Tahun!", "warning"); return; }
+    if (!kegId)   { showToast("Pilih 1 kegiatan yang akan diserahkan!", "warning"); return; }
     if (!noBast)  { showToast("Isi Nomor BAST SM→PPK!", "warning"); return; }
     if (!tglBast) { showToast("Isi Tanggal BAST!", "warning"); return; }
     if (!ppk)     { showToast("Pilih PPK!", "warning"); return; }
     if (!ketua)   { showToast("Pilih Ketua Tim/SM!", "warning"); return; }
 
-    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    const bulanIdx = months.indexOf(bulan);
-    const relevantMappings = _allMapping.filter(m => {
-      if (!m.Tanggal_Mulai) return false;
-      const d = new Date(m.Tanggal_Mulai);
-      return !isNaN(d) && d.getMonth() === bulanIdx && d.getFullYear() === parseInt(tahun);
-    });
-
-    let totalHonor = 0;
-    relevantMappings.forEach(m => {
-      const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
-      const vol = Number(m.Volume) || 1;
-      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
-      const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
-      totalHonor += subtotal;
-    });
+    const honorVal = Number(document.getElementById("sm-selected-keg-honor")?.value) || 0;
 
     const docId = generateId("BSM");
     const record = {
       ID_BAST_SM_PPK:          docId,
       Tahun:                   parseInt(tahun),
       Bulan:                   bulan,
+      ID_Kegiatan:             kegId,
       Uraian_Tugas:            judul,
       PPK:                     ppk,
       Ketua_Tim:               ketua,
       "Kepala/Plh":            "",
       No_BAST_SM_PPK:          noBast,
       Judul_Pekerjaan_Dokumen: judul,
-      Total_Honor:             totalHonor,
-      Terbilang:               terbilang(totalHonor) + " Rupiah",
+      Tanggal_BAST_SM_PPK:     tglBast,
+      Total_Honor:             honorVal,
+      Terbilang:               terbilang(honorVal) + " Rupiah",
       Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
       Status_Generate_BAST_SM_PPK: "Belum",
       Tanggal_Verifikasi_PPK:  "",
@@ -1888,24 +2039,20 @@
     if (!a) return tglSelesai ? String(tglSelesai).split("T")[0] : "—";
     if (!b) return `${a.d} ${bulanList[a.m] || a.m} ${a.y}`;
     if (a.m === b.m && a.y === b.y) {
-      // Bulan sama: "24 s.d. 30 April 2026"
       return `${a.d} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
     }
-    // Bulan beda: "10 April s.d. 10 Mei 2026"
     const aSuffix = a.y === b.y ? `` : ` ${a.y}`;
     return `${a.d} ${bulanList[a.m] || a.m}${aSuffix} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
   }
 
   // ─── Edit mode (dari dokumen.html) ───────────────────────────
   async function loadEditMode(docId) {
-    // Cari di spkBast
     const allDocs = await getSpkBast().catch(() => []);
     const rec = allDocs.find(r => String(r.ID_Dokumen) === String(docId));
     if (!rec) return;
 
     const jenis = String(rec.Jenis_Dokumen || "SPK");
     selectMode(jenis === "BAST" ? "bast" : jenis === "BAST_SM" ? "bast_sm" : "spk");
-    // TODO: populate fields from rec — keep for minimal initial version
   }
 </script>
 </body>
