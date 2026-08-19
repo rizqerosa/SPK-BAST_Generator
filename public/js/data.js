@@ -244,8 +244,19 @@ async function postToSheet(sheetKey, action, data, options = {}) {
 // ─── Public: Tambah baris baru ────────────────────────────────
 async function appendToSheet(sheetKey, rowData) {
   const result = await postToSheet(sheetKey, "append", rowData);
-  _DB[sheetKey] = null;
-  lsDel(sheetKey); // Invalidate localStorage cache
+  // Optimistic Cache Insertion agar navigasi antar halaman instan
+  try {
+    const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
+    if (Array.isArray(cached)) {
+      const idKey = Object.keys(rowData).find(k => k.toLowerCase().startsWith("id_")) || "ID_Dokumen";
+      const updated = [rowData, ...cached.filter(item => !item[idKey] || String(item[idKey]) !== String(rowData[idKey]))];
+      _DB[sheetKey] = updated;
+      if (typeof lsSet === "function") lsSet(sheetKey, updated);
+    } else {
+      _DB[sheetKey] = [rowData];
+      if (typeof lsSet === "function") lsSet(sheetKey, [rowData]);
+    }
+  } catch (_) {}
   return result;
 }
 

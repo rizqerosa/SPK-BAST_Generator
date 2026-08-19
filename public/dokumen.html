@@ -719,7 +719,19 @@
 
     if (cachedMitra)   _allMitra   = cachedMitra;
     if (cachedPegawai) _allPegawai = cachedPegawai;
-    updateStatsAndRender(cachedDocs || []);
+
+    if (Array.isArray(cachedDocs) && cachedDocs.length > 0) {
+      _allDocs = cachedDocs;
+      updateStatsAndRender(_allDocs);
+    } else {
+      const tbody = document.getElementById("table-body");
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:36px 16px; color:var(--gray-500);">
+          <div class="spinner" style="width:24px; height:24px; margin:0 auto 10px; border:3px solid var(--gray-200); border-top-color:var(--brand-primary); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+          Memuat data dokumen dari server...
+        </td></tr>`;
+      }
+    }
 
     // 2. Event listeners
     document.getElementById("search-input")?.addEventListener("input", applyFilters);
@@ -735,7 +747,8 @@
     // 3. Listen background refresh event
     window.addEventListener("sheet-refreshed", (e) => {
       if (e.detail && e.detail.sheet === "spkBast") {
-        updateStatsAndRender(e.detail.data);
+        _allDocs = e.detail.data || [];
+        updateStatsAndRender(_allDocs);
       }
     });
 
@@ -745,7 +758,7 @@
       getMitra().catch(() => []),
       getPegawai().catch(() => []),
     ]).then(([spkBastData, mitraData, pegawaiData]) => {
-      if (Array.isArray(spkBastData) && spkBastData.length) _allDocs = spkBastData;
+      if (Array.isArray(spkBastData)) _allDocs = spkBastData;
       if (Array.isArray(mitraData) && mitraData.length) _allMitra = mitraData;
       if (Array.isArray(pegawaiData) && pegawaiData.length) _allPegawai = pegawaiData;
       updateStatsAndRender(_allDocs);

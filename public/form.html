@@ -2021,10 +2021,8 @@
         await Promise.all(detailsToSave.map(d => appendToSheet("detailPekerjaan", d)));
       }
 
-      clearCache("spkBast");
-      clearCache("detailPekerjaan");
       showToast(`✅ SPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
-      setTimeout(() => window.location.href = "dokumen.html", 1500);
+      setTimeout(() => window.location.href = "dokumen.html", 800);
     } catch (err) {
       showToast("Gagal simpan SPK: " + err.message, "danger");
       console.error(err);
@@ -2137,12 +2135,11 @@
       Status_Verifikasi_PPK:   "Tidak_Perlu",
     };
 
-    setLoading(true);
+    setLoading(true, "Menyimpan BAST ke database...");
     try {
       await appendToSheet("spkBast", record);
-      clearCache("spkBast");
       showToast(`✅ BAST berhasil disimpan!`, "success", 4000);
-      setTimeout(() => window.location.href = "dokumen.html", 1500);
+      setTimeout(() => window.location.href = "dokumen.html", 800);
     } catch (err) {
       showToast("Gagal simpan BAST: " + err.message, "danger");
     } finally {
