@@ -1944,6 +1944,29 @@
       totalHonor += subtotal;
     });
 
+    // Resolve PML dan Ketua Tim dari mapping & kegiatan
+    let resolvedPml = "";
+    let resolvedKetua = "";
+    const firstM = _spkMappingRows[0] || {};
+    const firstKeg = _allKegiatan.find(k => getKegiatanId(k) === firstM.ID_Kegiatan);
+
+    resolvedKetua = firstKeg?.Nama_Tim_Teknis || firstKeg?.Nama_Ketua_Tim || firstKeg?.Ketua_Tim || firstM.Nama_Tim_Teknis || "";
+
+    const isAllPml = _spkMappingRows.every(m => String(m.Peran || "").toLowerCase() === "pml");
+    if (isAllPml) {
+      resolvedPml = petugasNama;
+    } else {
+      resolvedPml = firstM.PML || firstM.Nama_PML || "";
+      if (!resolvedPml) {
+        const foundPml = _allMapping.find(mx =>
+          mx.ID_Kegiatan === firstM.ID_Kegiatan &&
+          String(mx.Peran || "").toLowerCase() === "pml" &&
+          String(mx.ID_Mitra_atau_NIP) !== String(petugasId)
+        );
+        resolvedPml = foundPml ? (foundPml.Nama_Petugas || foundPml.ID_Mitra_atau_NIP || "") : "";
+      }
+    }
+
     const docId = generateId("SPK");
     const record = {
       ID_Dokumen:              docId,
@@ -1952,8 +1975,8 @@
       Tanggal_SPK:             tglSpk,
       Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
       ID_Mitra:                petugasId,
-      PML:                     "",
-      Ketua_Tim:               "",
+      PML:                     resolvedPml,
+      Ketua_Tim:               resolvedKetua,
       PPK:                     ppk,
       Nomor_Kepka:             noKepka,
       Tanggal_Kepka:           tglKepka,
