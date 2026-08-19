@@ -548,39 +548,40 @@
   async function triggerWordExport(tabKey) {
     if (!_selectedDocId) return;
 
-    const noSurat  = document.getElementById("export-no-surat").value.trim();
-    const tglSurat = document.getElementById("export-tgl-surat").value;
+    const targetDocId = _selectedDocId;
+    const noSurat  = document.getElementById("export-no-surat")?.value?.trim() || "";
+    const tglSurat = document.getElementById("export-tgl-surat")?.value || "";
 
     closeExportModal();
 
-    // Tunggu library docx siap (maks 5 detik)
-    if (typeof docx === "undefined") {
+    // Tunggu JSZip siap jika belum
+    if (typeof JSZip === "undefined") {
       setLoading(true);
       let waited = 0;
       await new Promise(resolve => {
         const check = setInterval(() => {
-          waited += 300;
-          if (typeof docx !== "undefined" || waited >= 5000) {
+          waited += 200;
+          if (typeof JSZip !== "undefined" || waited >= 4000) {
             clearInterval(check);
             resolve();
           }
-        }, 300);
+        }, 200);
       });
       setLoading(false);
     }
 
-    if (typeof docx === "undefined" || typeof generateAndDownloadWord === "undefined") {
-      showToast("❌ Library Word (docx.js) gagal dimuat. Periksa koneksi internet, lalu refresh halaman.", "danger", 6000);
+    if (typeof JSZip === "undefined" || typeof generateAndDownloadWord === "undefined") {
+      showToast("❌ Library Word (JSZip) gagal dimuat. Refresh halaman.", "danger", 6000);
       return;
     }
 
     setLoading(true);
     try {
-      const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(_selectedDocId));
-      if (!doc) throw new Error("Dokumen tidak ditemukan");
+      const doc = _allDocs.find(d => String(d.ID_Dokumen) === String(targetDocId));
+      if (!doc) throw new Error("Dokumen ID " + targetDocId + " tidak ditemukan dalam daftar.");
 
       if (_allDetail.length === 0) {
-        _allDetail = await getDetailPekerjaan();
+        _allDetail = await getDetailPekerjaan().catch(() => []);
       }
 
       const dataCtx = buildDataContext(doc, {
@@ -613,10 +614,10 @@
         details: getDetailByDokumen(_allDetail, doc.ID_Dokumen)
       });
 
-      showToast("File Word berhasil diunduh: " + filename, "success");
+      showToast("✅ File Word (" + filename + ") berhasil diunduh!", "success", 4000);
 
     } catch (err) {
-      showToast("Gagal generate Word: " + err.message, "danger", 5000);
+      showToast("Gagal ekspor Word: " + err.message, "danger", 5000);
       console.error(err);
     } finally {
       setLoading(false);
