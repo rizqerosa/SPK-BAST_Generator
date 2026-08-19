@@ -39,9 +39,9 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
   for (const filename of xmlFiles) {
     let xmlStr = await zip.files[filename].async("string");
 
-    // Jika di word/document.xml dan ada rincian pekerjaan (detailsList): duplikasi baris tabel lampiran
+    // A. Jika di word/document.xml dan ada rincian pekerjaan: duplikasi baris tabel lampiran
     if (filename === "word/document.xml" && detailsList && detailsList.length > 0) {
-      const trRegex = /<w:tr[ >].*?(?:&lt;&lt;|<<)URAIAN_TUGAS(?:&gt;&gt;|>>).*?<\/w:tr>/s;
+      const trRegex = /<w:tr[ >].*?URAIAN_TUGAS.*?<\/w:tr>/s;
       const trMatch = xmlStr.match(trRegex);
       if (trMatch) {
         const templateTr = trMatch[0];
@@ -61,6 +61,7 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
             const escVal = _docxXmlEscape(rv);
             trRow = trRow.split(`&lt;&lt;${rk}&gt;&gt;`).join(escVal);
             trRow = trRow.split(`<<${rk}>>`).join(escVal);
+            trRow = trRow.split(`«${rk}»`).join(escVal);
           }
           return trRow;
         });
@@ -68,40 +69,12 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
       }
     }
 
-    // Gabungkan run teks <w:t> yang terpecah dalam satu <w:p>
-    xmlStr = xmlStr.replace(/<w:p[ >].*?<\/w:p>/gs, (pXml) => {
-      const wtRegex = /(<w:t[^>]*>)(.*?)(<\/w:t>)/gs;
-      const matches = [...pXml.matchAll(wtRegex)];
-      if (!matches.length) return pXml;
-
-      const fullText = matches.map(m => m[2]).join("");
-      if (fullText.includes("&lt;&lt;") || fullText.includes("<<")) {
-        let newText = fullText;
-        for (const [k, v] of Object.entries(dataDict)) {
-          const escVal = _docxXmlEscape(v);
-          newText = newText.split(`&lt;&lt;${k}&gt;&gt;`).join(escVal);
-          newText = newText.split(`<<${k}>>`).join(escVal);
-        }
-
-        let first = true;
-        return pXml.replace(wtRegex, (match, openTag, text, closeTag) => {
-          if (first) {
-            first = false;
-            const safeTag = openTag.includes("xml:space") ? openTag : openTag.replace("<w:t", '<w:t xml:space="preserve"');
-            return `${safeTag}${newText}${closeTag}`;
-          } else {
-            return `${openTag}${closeTag}`;
-          }
-        });
-      }
-      return pXml;
-    });
-
-    // Global replacement fallback
+    // B. Replace seluruh placeholder di XML dokumen
     for (const [k, v] of Object.entries(dataDict)) {
       const escVal = _docxXmlEscape(v);
       xmlStr = xmlStr.split(`&lt;&lt;${k}&gt;&gt;`).join(escVal);
       xmlStr = xmlStr.split(`<<${k}>>`).join(escVal);
+      xmlStr = xmlStr.split(`«${k}»`).join(escVal);
     }
 
     zip.file(filename, xmlStr);
