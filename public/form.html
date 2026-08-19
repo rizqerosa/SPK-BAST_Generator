@@ -2160,10 +2160,29 @@
       Status_Verifikasi_PPK:   "Tidak_Perlu",
     };
 
-    setLoading(true, "Menyimpan BAST ke database...");
+    setLoading(true, "Menyimpan nomor & data BAST ke database...");
     try {
-      await appendToSheet("spkBast", record);
-      showToast(`✅ BAST berhasil disimpan!`, "success", 4000);
+      if (spkId) {
+        // UPDATE baris SPK yang sudah ada di database (Satu baris SPK & BAST menyatu)
+        const updatedFields = {
+          No_BAST_PPL_PML:      noBastPplPml,
+          Tanggal_BAST_PPL_PML: tglBastPplPml,
+          No_BAST_PPL_SM:       noBastPplSm,
+          Tanggal_BAST_PPL_SM:  tglBastPplSm,
+          No_BAST_PML_SM:       noBastPmlSm,
+          Tanggal_BAST_PML_SM:  tglBastPmlSm,
+          PML:                  pmlNama || spkRecord.PML || "",
+          Ketua_Tim:            finalKetua,
+          PPK:                  finalPpk,
+          Status_Generate_SPK:  "Sudah",
+        };
+        await updateInSheet("spkBast", "ID_Dokumen", spkId, updatedFields);
+        showToast(`✅ BAST berhasil diperbarui pada dokumen SPK!`, "success", 4000);
+      } else {
+        // Fallback jika tanpa SPK
+        await appendToSheet("spkBast", record);
+        showToast(`✅ BAST berhasil disimpan!`, "success", 4000);
+      }
       setTimeout(() => window.location.href = "dokumen.html", 800);
     } catch (err) {
       showToast("Gagal simpan BAST: " + err.message, "danger");
