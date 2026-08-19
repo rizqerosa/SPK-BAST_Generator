@@ -170,25 +170,87 @@
     const jenisLabel = isPmlMitra ? "Mitra" : "Organik";
     const jenisClass = isPmlMitra ? "badge-mitra" : "badge-organik";
     const isStandaloneBast = (record.Jenis_Dokumen === "BAST");
+    const hasBast = Boolean(
+      record.No_BAST_PPL_PML ||
+      record.No_BAST_PPL_SM ||
+      record.No_BAST_PML_SM ||
+      record.No_BAST_SM_PPK ||
+      record.Tanggal_BAST_PPL_PML ||
+      record.Tanggal_BAST_PPL_SM ||
+      record.Tanggal_BAST_PML_SM ||
+      isStandaloneBast
+    );
     const tabs = [];
 
     if (peran === "sm_ppk") {
-      tabs.push({ key:"sm-ppk", icon:"🏛️", title:"BAST SM → PPK", desc:"Penyerahan SM ke PPK", badge:null });
+      tabs.push({ key:"sm-ppk", icon:"🏛️", title:"BAST SM → PPK", desc:"Penyerahan SM ke PPK", badge:null, enabled:true });
     } else if (peran === "pml") {
       if (!isStandaloneBast) {
-        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null, enabled:true });
       }
-      tabs.push({ key:"pml-sm", icon:"📋", title:"BAST PML → SM",
-        desc: isPmlMitra ? "PML Mitra serahkan ke Ketua Tim" : "PML Organik serahkan ke Ketua Tim",
-        badge:jenisLabel, badgeClass:jenisClass });
+      if (hasBast) {
+        tabs.push({
+          key:"pml-sm",
+          icon:"📋",
+          title:"BAST PML → SM",
+          desc: isPmlMitra ? "PML Mitra serahkan ke Ketua Tim" : "PML Organik serahkan ke Ketua Tim",
+          badge:jenisLabel,
+          badgeClass:jenisClass,
+          enabled:true
+        });
+      } else {
+        tabs.push({
+          key:"pml-sm",
+          icon:"🔒",
+          title:"BAST PML → SM",
+          desc:"BAST belum dibuat (Buat di Form BAST)",
+          badge:"Belum Dibuat",
+          badgeClass:"badge-gray",
+          enabled:false
+        });
+      }
     } else {
       if (!isStandaloneBast) {
-        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null });
+        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null, enabled:true });
       }
-      tabs.push({ key:"ppl-pml", icon:"📋", title:"BAST PPL → PML",
-        desc: isPmlMitra ? "Mitra PPL serahkan ke PML Mitra" : "Mitra PPL serahkan ke PML Organik",
-        badge:jenisLabel, badgeClass:jenisClass });
-      tabs.push({ key:"ppl-sm",  icon:"📋", title:"BAST PPL → SM", desc:"Mitra PPL serahkan ke Ketua Tim / SM", badge:null });
+      if (hasBast) {
+        tabs.push({
+          key:"ppl-pml",
+          icon:"📋",
+          title:"BAST PPL → PML",
+          desc: isPmlMitra ? "Mitra PPL serahkan ke PML Mitra" : "Mitra PPL serahkan ke PML Organik",
+          badge:jenisLabel,
+          badgeClass:jenisClass,
+          enabled:true
+        });
+        tabs.push({
+          key:"ppl-sm",
+          icon:"📋",
+          title:"BAST PPL → SM",
+          desc:"Mitra PPL serahkan ke Ketua Tim / SM",
+          badge:null,
+          enabled:true
+        });
+      } else {
+        tabs.push({
+          key:"ppl-pml",
+          icon:"🔒",
+          title:"BAST PPL → PML",
+          desc:"BAST belum dibuat (Buat di Form BAST)",
+          badge:"Belum Dibuat",
+          badgeClass:"badge-gray",
+          enabled:false
+        });
+        tabs.push({
+          key:"ppl-sm",
+          icon:"🔒",
+          title:"BAST PPL → SM",
+          desc:"BAST belum dibuat (Buat di Form BAST)",
+          badge:"Belum Dibuat",
+          badgeClass:"badge-gray",
+          enabled:false
+        });
+      }
     }
     return tabs;
   }
@@ -197,16 +259,26 @@
     const tabs = getTabConfig(record, isPmlMitra);
     const container = document.getElementById("tab-list");
     if (!container) return;
-    container.innerHTML = tabs.map(t =>
-      `<button class="tab-item ${t.key === activeKey ? 'active' : ''}" data-tab="${t.key}" onclick="switchTab('${t.key}', this)">
+    container.innerHTML = tabs.map(t => {
+      if (!t.enabled) {
+        return `<div class="tab-item disabled" style="opacity:0.45; cursor:not-allowed; background:#f8fafc;" title="BAST belum dibuat untuk dokumen ini">
+          <span class="tab-icon">${t.icon}</span>
+          <div class="tab-info">
+            <div class="tab-title" style="color:var(--gray-500);">${t.title}</div>
+            <div class="tab-desc">${t.desc}</div>
+          </div>
+          ${t.badge ? `<span class="tab-badge" style="background:#e2e8f0; color:#64748b;">${t.badge}</span>` : ""}
+        </div>`;
+      }
+      return `<button class="tab-item ${t.key === activeKey ? 'active' : ''}" data-tab="${t.key}" onclick="switchTab('${t.key}', this)">
         <span class="tab-icon">${t.icon}</span>
         <div class="tab-info">
           <div class="tab-title">${t.title}</div>
           <div class="tab-desc">${t.desc}</div>
         </div>
         ${t.badge ? `<span class="tab-badge ${t.badgeClass}">${t.badge}</span>` : ""}
-      </button>`
-    ).join("");
+      </button>`;
+    }).join("");
   }
 
   function buildTypeChips(record, isPmlMitra) {
@@ -232,48 +304,42 @@
     const base = "display:flex; padding:14px 18px; border-radius:var(--radius-md); border:1px solid; margin-bottom:14px; align-items:center; gap:12px;";
     if (v === "disetujui" || v === "approved" || v === "sudah") {
       box.style.cssText = base + "background:#dcfce7; border-color:#bbf7d0; color:#166534;";
-      box.innerHTML = `<span style="font-size:1.2rem;">🟢</span><div><strong>DISETUJUI PPK</strong><div style="font-size:.8rem;opacity:.9;">Dokumen telah disetujui resmi oleh PPK.</div></div>`;
+      box.innerHTML = `<span style="font-size:1.2rem;">🟢</span><div><strong>DISETUJUI PPK</strong><div style="font-size:.8rem;opacity:.9;">Dokumen telah disetujui resmi oleh PPK. BAST sudah bisa dibuat.</div></div>`;
     } else if (v === "ditolak" || v === "rejected") {
       box.style.cssText = base + "background:#fee2e2; border-color:#fca5a5; color:#991b1b;";
       box.innerHTML = `<span style="font-size:1.2rem;">🔴</span><div><strong>DITOLAK / REVISI PPK</strong><div style="font-size:.8rem;margin-top:2px;">Catatan: <em>"${record.Catatan_Verifikasi_PPK || 'Harap periksa kembali data dokumen'}"</em></div></div>`;
     } else {
       box.style.cssText = base + "background:#fef3c7; border-color:#fde68a; color:#92400e;";
-      box.innerHTML = `<span style="font-size:1.2rem;">🟡</span><div><strong>MENUNGGU VERIFIKASI PPK</strong><div style="font-size:.8rem;">Dokumen m  // ─── Render Document Preview Content ────────────────────────
-  async function renderPreviewContent(record, details, mitraArr, pegawaiArr, defaultTab) {
-    _previewRecord = record;
-    _previewDetails = details || [];
-    mitraArr = mitraArr || [];
-    pegawaiArr = pegawaiArr || [];
+      box.innerHTML = `<span style="font-size:1.2rem;">🟡</span><div><strong>MENUNGGU PERSETUJUAN PPK</strong><div style="font-size:.8rem;opacity:.9;">SPK baru selesai dibuat dan sedang menunggu persetujuan PPK sebelum BAST dapat dibuat.</div></div>`;
+    }
+  }
 
-    AppState.mitra   = mitraArr;
-    AppState.pegawai = pegawaiArr;
+  // ─── Render Utuh Pratinjau Dokumen ───────────────────────────
+  async function renderPreviewContent(record, details, allMitra, allPegawai, defaultTab) {
+    _previewRecord  = record;
+    _previewDetails = details;
 
-    _previewCtx = buildDataContext(_previewRecord, { mitraArr, pegawaiArr, detailArr: _previewDetails });
-    _isPmlMitra = !!(_previewCtx.bastPplPmlCtx?.IS_PML_MITRA || _previewCtx.bastPplSmCtx?.IS_PML_MITRA);
+    _isPmlMitra = checkIsPmlMitra(_previewRecord, allMitra, allPegawai);
+    _previewCtx = buildDocContexts(_previewRecord, _previewDetails, _isPmlMitra, allMitra, allPegawai);
 
-    const m = cariMitra(_previewRecord.ID_Mitra, mitraArr);
-    const petugasName = m ? getMitraName(m) : (() => {
-      const p = cariPegawai(_previewRecord.ID_Mitra, pegawaiArr);
-      return p ? getPegawaiName(p) : (_previewRecord.Ketua_Tim || "—");
-    })();
-
-    const docTitle = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.ID_Dokumen || "Dokumen";
+    const petugasName = _previewCtx?.spkCtx?.mitra_nama || _previewCtx?.bastPplSmCtx?.mitra_nama || _previewRecord?.ID_Mitra || "—";
+    const docTitle = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Nomor_SPK || _previewRecord.ID_Dokumen || "Dokumen SPK/BAST";
     const t1 = document.getElementById("preview-doc-title");
     const t2 = document.getElementById("preview-doc-title-2");
     const idEl = document.getElementById("preview-doc-id");
     const mn1 = document.getElementById("preview-mitra-name");
     const mn2 = document.getElementById("preview-mitra-name-2");
 
-    if (t1) t1.textContent = docTitle;
+    if (t1) t1.textContent = "Preview Dokumen";
     if (t2) t2.textContent = docTitle;
-    if (idEl) idEl.textContent = _previewRecord.ID_Dokumen;
+    if (idEl) idEl.textContent = _previewRecord.ID_Dokumen || _previewRecord.Nomor_SPK || "—";
     if (mn1) mn1.textContent = petugasName;
     if (mn2) mn2.textContent = petugasName;
 
     const elStatus = document.getElementById("preview-status");
     if (elStatus) {
       elStatus.textContent = _previewRecord.Status_Generate_SPK || _previewRecord.Status_Verifikasi_PPK || "Belum";
-      elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" || _previewRecord.Status_Verifikasi_PPK === "Tidak_Perlu" ? "badge-success" : "badge-warning"}`;
+      elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" || _previewRecord.Status_Verifikasi_PPK === "Disetujui" ? "badge-success" : "badge-warning"}`;
     }
 
     const btnEdit = document.getElementById("topbar-btn-edit");
@@ -284,10 +350,22 @@
     renderPpkStatusBanner(_previewRecord);
     buildTypeChips(_previewRecord, _isPmlMitra);
 
+    const isStandaloneBast = (_previewRecord.Jenis_Dokumen === "BAST");
+    const hasBast = Boolean(
+      _previewRecord.No_BAST_PPL_PML ||
+      _previewRecord.No_BAST_PPL_SM ||
+      _previewRecord.No_BAST_PML_SM ||
+      _previewRecord.No_BAST_SM_PPK ||
+      _previewRecord.Tanggal_BAST_PPL_PML ||
+      _previewRecord.Tanggal_BAST_PPL_SM ||
+      _previewRecord.Tanggal_BAST_PML_SM ||
+      isStandaloneBast
+    );
+
     const peran = detectPeran(_previewRecord);
     let targetTab = defaultTab;
-    if (!targetTab) {
-      if (_previewRecord.Jenis_Dokumen === "BAST") {
+    if (!targetTab || (!hasBast && targetTab !== "spk")) {
+      if (isStandaloneBast) {
         targetTab = (peran === "pml" ? "pml-sm" : "ppl-pml");
       } else if (peran === "sm_ppk") {
         targetTab = "sm-ppk";
