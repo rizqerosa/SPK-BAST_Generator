@@ -158,22 +158,22 @@
         </div>
       </div>
 
-      <!-- Tab Switcher -->
-      <div style="display:flex; gap:0; background:var(--gray-100); border-radius:var(--radius-md); padding:4px; margin-bottom:20px; width:fit-content;">
-        <button class="btn" id="tab-spk" onclick="switchVerifTab('spk')"
-                style="border-radius:calc(var(--radius-md) - 2px); padding:9px 20px; font-size:.85rem; font-weight:700; background:#fff; color:#1d4ed8; box-shadow:0 1px 4px rgba(0,0,0,.12); border:none;">
-          📜 Verifikasi SPK
+      <!-- Tab Switcher (SPK vs BAST SM→PPK) -->
+      <div style="display:flex; gap:10px; border-bottom:2px solid var(--gray-200); margin-bottom:20px;">
+        <button type="button" class="btn" id="tab-spk" onclick="switchVerifTab('spk')"
+                style="padding:10px 22px; font-size:.9rem; font-weight:700; border-radius:var(--radius-lg) var(--radius-lg) 0 0; border:1px solid var(--gray-200); border-bottom:2px solid #fff; background:#fff; color:#1d4ed8; margin-bottom:-2px; box-shadow:0 -2px 8px rgba(0,0,0,.04);">
+          📜 Verifikasi SPK <span class="badge" id="badge-verif-spk" style="margin-left:6px; background:#dbeafe; color:#1e40af; font-size:.75rem;">0</span>
         </button>
-        <button class="btn" id="tab-bast-sm" onclick="switchVerifTab('bast_sm')"
-                style="border-radius:calc(var(--radius-md) - 2px); padding:9px 20px; font-size:.85rem; font-weight:700; background:transparent; color:var(--gray-500); border:none;">
-          🏛️ Verifikasi BAST SM→PPK
+        <button type="button" class="btn" id="tab-bast-sm" onclick="switchVerifTab('bast_sm')"
+                style="padding:10px 22px; font-size:.9rem; font-weight:700; border-radius:var(--radius-lg) var(--radius-lg) 0 0; border:1px solid transparent; background:transparent; color:var(--gray-600); margin-bottom:0;">
+          🏛️ Verifikasi BAST SM→PPK <span class="badge" id="badge-verif-sm" style="margin-left:6px; background:#ede9fe; color:#6d28d9; font-size:.75rem;">0</span>
         </button>
       </div>
 
-      <!-- Table Card -->
+      <!-- Table Card SPK -->
       <div class="card" id="verif-card-spk">
         <div class="card-header">
-          <h2>📋 Daftar Pengajuan SPK</h2>
+          <h2>📋 Daftar Pengajuan SPK Petugas</h2>
           <div class="list-controls">
             <!-- Filter status -->
             <div class="filter-bar">
@@ -218,7 +218,7 @@
       <!-- Table Card BAST SM→PPK -->
       <div class="card" id="verif-card-bast-sm" style="display:none;">
         <div class="card-header">
-          <h2>🏛️ Daftar Pengajuan BAST SM→PPK</h2>
+          <h2>🏛️ Daftar Pengajuan BAST SM → PPK</h2>
           <div class="list-controls">
             <div class="filter-bar">
               <button class="btn btn-outline btn-sm active" data-filter-sm="Menunggu_Verifikasi">⏳ Menunggu Verifikasi</button>
@@ -228,7 +228,7 @@
             </div>
             <div class="search-box" style="max-width:220px;">
               <span class="search-icon">🔍</span>
-              <input type="text" id="search-sm-input" class="form-control" placeholder="Cari judul / bulan...">
+              <input type="text" id="search-sm-input" class="form-control" placeholder="Cari judul / no BAST...">
             </div>
           </div>
         </div>
@@ -238,8 +238,10 @@
             <thead>
               <tr>
                 <th style="width:40px;">No</th>
-                <th>Judul Pekerjaan / Bulan</th>
+                <th style="width:160px;">Nomor BAST SM→PPK</th>
+                <th>Nama Kegiatan / Uraian Tugas</th>
                 <th style="width:110px;">Bulan / Tahun</th>
+                <th>Ketua Tim / SM</th>
                 <th style="width:115px;" class="tr">Total Honor</th>
                 <th style="width:150px;">Status Verifikasi</th>
                 <th style="width:160px;" class="tc">Aksi PPK</th>
@@ -247,7 +249,7 @@
             </thead>
             <tbody id="verif-sm-tbody">
               <tr>
-                <td colspan="6" class="text-center text-muted" style="padding:48px;">
+                <td colspan="8" class="text-center text-muted" style="padding:48px;">
                   <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
                   Memuat data BAST SM→PPK...
                 </td>
@@ -365,13 +367,19 @@
     const tabSmEl   = document.getElementById("tab-bast-sm");
     if (tabSpkEl) {
       tabSpkEl.style.background = isSpk ? "#fff" : "transparent";
-      tabSpkEl.style.color      = isSpk ? "#1d4ed8" : "var(--gray-500)";
-      tabSpkEl.style.boxShadow  = isSpk ? "0 1px 4px rgba(0,0,0,.12)" : "none";
+      tabSpkEl.style.color      = isSpk ? "#1d4ed8" : "var(--gray-600)";
+      tabSpkEl.style.borderColor = isSpk ? "var(--gray-200)" : "transparent";
+      tabSpkEl.style.borderBottom = isSpk ? "2px solid #fff" : "none";
+      tabSpkEl.style.marginBottom = isSpk ? "-2px" : "0";
+      tabSpkEl.style.boxShadow  = isSpk ? "0 -2px 8px rgba(0,0,0,.04)" : "none";
     }
     if (tabSmEl) {
       tabSmEl.style.background  = isSpk ? "transparent" : "#fff";
-      tabSmEl.style.color       = isSpk ? "var(--gray-500)" : "#7c3aed";
-      tabSmEl.style.boxShadow   = isSpk ? "none" : "0 1px 4px rgba(0,0,0,.12)";
+      tabSmEl.style.color       = isSpk ? "var(--gray-600)" : "#7c3aed";
+      tabSmEl.style.borderColor = isSpk ? "transparent" : "var(--gray-200)";
+      tabSmEl.style.borderBottom = isSpk ? "none" : "2px solid #fff";
+      tabSmEl.style.marginBottom = isSpk ? "0" : "-2px";
+      tabSmEl.style.boxShadow   = isSpk ? "none" : "0 -2px 8px rgba(0,0,0,.04)";
     }
   }
 
@@ -396,7 +404,7 @@
   function renderTable(data) {
     const tbody = document.getElementById("verif-tbody");
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada dokumen dalam kategori ini</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:48px;">Tidak ada dokumen SPK dalam kategori ini</td></tr>`;
       return;
     }
 
@@ -414,9 +422,9 @@
       return `
         <tr>
           <td class="tc text-muted">${i + 1}</td>
-          <td><div style="font-weight:600; font-size:.88rem;">${namaPetugas}</div></td>
-          <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
-          <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
+          <td><div style="font-weight:600; font-size:.88rem;">${escapeHtml(namaPetugas)}</div></td>
+          <td style="font-size:.85rem;">${escapeHtml(doc.Judul_Pekerjaan_Dokumen || "—")}</td>
+          <td style="font-size:.82rem;">${escapeHtml(doc.Bulan || "—")} ${escapeHtml(doc.Tahun || "")}</td>
           <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
           <td>${renderVerifBadge(doc.Status_Generate_SPK || doc.Status_Verifikasi_PPK)}</td>
           <td>
@@ -434,25 +442,32 @@
   function renderSmTable(data) {
     const tbody = document.getElementById("verif-sm-tbody");
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:48px;">Tidak ada BAST SM→PPK dalam kategori ini</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:48px;">Tidak ada BAST SM→PPK dalam kategori ini</td></tr>`;
       return;
     }
-    tbody.innerHTML = data.map((doc, i) => `
-      <tr>
-        <td class="tc text-muted">${i + 1}</td>
-        <td><div style="font-weight:600; font-size:.88rem;">${doc.Judul_Pekerjaan_Dokumen || doc.Uraian_Tugas || "—"}</div></td>
-        <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
-        <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
-        <td>${renderVerifBadge(doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK)}</td>
-        <td>
-          <div class="action-btns">
-            <button type="button" class="btn btn-primary btn-sm" onclick="openSmVerifModal('${doc.ID_BAST_SM_PPK}')">
-              🔍 Verifikasi
-            </button>
-          </div>
-        </td>
-      </tr>`
-    ).join("");
+    tbody.innerHTML = data.map((doc, i) => {
+      let namaKetua = doc.Ketua_Tim || "—";
+      const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(doc.Ketua_Tim) || item.Nama_Pegawai === doc.Ketua_Tim);
+      if (p) namaKetua = getPegawaiName(p);
+
+      return `
+        <tr>
+          <td class="tc text-muted">${i + 1}</td>
+          <td><strong style="color:#6d28d9; font-size:.85rem;">${escapeHtml(doc.No_BAST_SM_PPK || "—")}</strong></td>
+          <td style="font-size:.85rem;"><div style="font-weight:600;">${escapeHtml(doc.Judul_Pekerjaan_Dokumen || doc.Uraian_Tugas || "—")}</div></td>
+          <td style="font-size:.82rem;">${escapeHtml(doc.Bulan || "—")} ${escapeHtml(doc.Tahun || "")}</td>
+          <td style="font-size:.85rem; font-weight:600;">${escapeHtml(namaKetua)}</td>
+          <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
+          <td>${renderVerifBadge(doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK)}</td>
+          <td>
+            <div class="action-btns">
+              <button type="button" class="btn btn-primary btn-sm" style="background:#7c3aed; border-color:#7c3aed;" onclick="openSmVerifModal('${doc.ID_BAST_SM_PPK}')">
+                🔍 Verifikasi
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
   }
 
   function applySmFilters() {
@@ -465,7 +480,7 @@
       else if (_activeSmFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "Menunggu_Verifikasi");
       if (!matchStatus) return false;
       if (!q) return true;
-      const judul = String(d.Judul_Pekerjaan_Dokumen || d.Uraian_Tugas || "").toLowerCase();
+      const judul = String(d.Judul_Pekerjaan_Dokumen || d.Uraian_Tugas || d.No_BAST_SM_PPK || d.Ketua_Tim || "").toLowerCase();
       return judul.includes(q) || String(d.Bulan||"" ).toLowerCase().includes(q);
     });
     renderSmTable(data);
@@ -474,19 +489,22 @@
   function openSmVerifModal(smDocId) {
     _selectedSmDoc = _allSmDocs.find(d => String(d.ID_BAST_SM_PPK) === String(smDocId));
     if (!_selectedSmDoc) return;
-    // Reuse the same modal but adapt content
+
+    let namaKetua = _selectedSmDoc.Ketua_Tim || "Supervisor Madya";
+    const p = _allPegawai.find(item => String(getPegawaiNip(item)) === String(_selectedSmDoc.Ketua_Tim) || item.Nama_Pegawai === _selectedSmDoc.Ketua_Tim);
+    if (p) namaKetua = getPegawaiName(p);
+
     document.getElementById("vm-title").textContent  = "🏛️ Verifikasi BAST SM→PPK";
-    document.getElementById("vm-desc").textContent   = "Periksa kelengkapan BAST SM→PPK sebelum disetujui.";
+    document.getElementById("vm-desc").textContent   = "Periksa kelengkapan BAST penyerahan hasil pekerjaan SM ke PPK.";
     document.getElementById("vm-id").textContent     = _selectedSmDoc.ID_BAST_SM_PPK || "—";
-    document.getElementById("vm-petugas").textContent = "Supervisor Madya";
+    document.getElementById("vm-petugas").textContent = namaKetua;
     document.getElementById("vm-no-spk").textContent  = _selectedSmDoc.No_BAST_SM_PPK || "—";
-    document.getElementById("vm-tgl-spk").textContent = _selectedSmDoc.Tanggal_BAST_SM_PPK || "—";
+    document.getElementById("vm-tgl-spk").textContent = _selectedSmDoc.Tanggal_BAST_SM_PPK || _selectedSmDoc.Tanggal || "—";
     document.getElementById("vm-periode").textContent = `${_selectedSmDoc.Bulan || "—"} ${_selectedSmDoc.Tahun || ""}`;
     document.getElementById("vm-honor").textContent   = `Rp ${formatRupiah(_selectedSmDoc.Total_Honor || 0)},-`;
     document.getElementById("vm-catatan").value = _selectedSmDoc.Catatan_Verifikasi_PPK || "";
     document.getElementById("vm-preview-link").href = `preview.html?id=${encodeURIComponent(_selectedSmDoc.ID_BAST_SM_PPK || "")}&tab=sm-ppk`;
-    document.getElementById("vm-detail-tbody").innerHTML = `<tr><td colspan="5" style="padding:16px; font-size:.84rem; color:var(--gray-500);">${_selectedSmDoc.Judul_Pekerjaan_Dokumen || _selectedSmDoc.Uraian_Tugas || "—"}</td></tr>`;
-    // Override prosesVerifikasi to handle SM
+    document.getElementById("vm-detail-tbody").innerHTML = `<tr><td colspan="5" style="padding:16px; font-size:.84rem; color:var(--gray-700);"><strong>Kegiatan:</strong> ${_selectedSmDoc.Judul_Pekerjaan_Dokumen || _selectedSmDoc.Uraian_Tugas || "—"}</td></tr>`;
     window._verifyingSmMode = true;
     document.getElementById("verif-modal").classList.add("visible");
   }
@@ -521,6 +539,8 @@
       }
     }
 
+    document.getElementById("vm-title").textContent  = "🔍 Peninjauan Dokumen SPK";
+    document.getElementById("vm-desc").textContent   = "Periksa kelengkapan data dokumen sebelum menentukan persetujuan.";
     document.getElementById("vm-id").textContent = _selectedDoc.ID_Dokumen;
     document.getElementById("vm-petugas").textContent = namaPetugas;
     document.getElementById("vm-no-spk").textContent = _selectedDoc.Nomor_SPK || _selectedDoc.No_SPK || "—";
@@ -529,6 +549,7 @@
     document.getElementById("vm-honor").textContent = `Rp ${formatRupiah(_selectedDoc.Total_Honor || 0)}`;
     document.getElementById("vm-catatan").value = _selectedDoc.Catatan_Verifikasi_PPK || "";
     document.getElementById("vm-preview-link").href = `preview.html?id=${encodeURIComponent(_selectedDoc.ID_Dokumen)}`;
+    window._verifyingSmMode = false;
 
     // Render detail pekerjaan table
     const details = _allDetails.filter(dt => String(dt.ID_Dokumen) === String(_selectedDoc.ID_Dokumen));
@@ -553,6 +574,8 @@
   function closeVerifModal() {
     document.getElementById("verif-modal").classList.remove("visible");
     _selectedDoc = null;
+    _selectedSmDoc = null;
+    window._verifyingSmMode = false;
   }
 
   async function prosesVerifikasi(statusBaru) {
@@ -638,6 +661,11 @@
     document.getElementById("stat-pending").textContent  = pending;
     document.getElementById("stat-approved").textContent = approved;
     document.getElementById("stat-rejected").textContent = rejected;
+
+    const bSpk = document.getElementById("badge-verif-spk");
+    const bSm  = document.getElementById("badge-verif-sm");
+    if (bSpk) bSpk.textContent = spkOnly.length;
+    if (bSm)  bSm.textContent  = _allSmDocs.length;
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
