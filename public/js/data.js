@@ -270,9 +270,17 @@ async function updateInSheet(sheetKey, keyField, keyValue, newData) {
 
 // ─── Public: Hapus baris berdasar key ────────────────────────
 async function deleteFromSheet(sheetKey, keyField, keyValue) {
+  // Optimistic Cache Removal
+  try {
+    const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
+    if (Array.isArray(cached)) {
+      const updated = cached.filter(item => String(item[keyField]) !== String(keyValue));
+      _DB[sheetKey] = updated;
+      if (typeof lsSet === "function") lsSet(sheetKey, updated);
+    }
+  } catch (_) {}
+
   const result = await postToSheet(sheetKey, "delete", {}, { keyField, keyValue });
-  _DB[sheetKey] = null;
-  lsDel(sheetKey);
   return result;
 }
 

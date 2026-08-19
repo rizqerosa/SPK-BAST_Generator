@@ -2185,26 +2185,23 @@
     return "MAP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).substr(2,4).toUpperCase();
   }
 
-  // ─── Hapus Mapping ───────────────────────────────────────────
+  // ─── Hapus Mapping (Instan 0 ms) ─────────────────────────────
   async function hapusMapping(mappingId, namaPetugas, namaKegiatan) {
     const confirmMsg = namaPetugas && namaKegiatan
       ? `Hapus penugasan "${namaPetugas}" dari kegiatan "${namaKegiatan}"?`
       : "Hapus penugasan ini?";
     if (!confirm(confirmMsg)) return;
 
-    setLoading(true);
-    try {
-      await deleteFromSheet("mappingPetugas", "ID_Mapping", mappingId);
-      clearCache("mappingPetugas");
-      _allMapping = await getMappingPetugas().catch(() => []);
-      renderMappingList();
-      updateStats();
-      showToast("Penugasan berhasil dihapus.", "success");
-    } catch (err) {
-      showToast("Gagal menghapus: " + err.message, "danger");
-    } finally {
-      setLoading(false);
-    }
+    // Hapus dari UI dan cache lokal seketika (0 ms)
+    _allMapping = _allMapping.filter(m => String(m.ID_Mapping) !== String(mappingId));
+    renderMappingList();
+    updateStats();
+    showToast("✅ Penugasan berhasil dihapus.", "success", 3500);
+
+    // Kirim hapus ke Google Sheets di background
+    deleteFromSheet("mappingPetugas", "ID_Mapping", mappingId).catch(err => {
+      console.warn("Sync delete mapping error:", err);
+    });
   }
 
   // ─── Toggle View Mode (Kegiatan vs Petugas) ───────────────────

@@ -766,22 +766,21 @@
       console.warn("[dokumen.html] silent bg sync error:", err);
     });
 
-    // 5. Confirm delete
-    document.getElementById("btn-confirm-delete")?.addEventListener("click", async () => {
+    // 5. Confirm delete (Instan & Optimistic 0 ms)
+    document.getElementById("btn-confirm-delete")?.addEventListener("click", () => {
       if (!_deleteDocId) return;
-      setLoading(true);
-      try {
-        await deleteFromSheet("spkBast", "ID_Dokumen", _deleteDocId);
-        clearCache("spkBast");
-        showToast("Dokumen berhasil dihapus", "success");
-        _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(_deleteDocId));
-        updateStatsAndRender(_allDocs);
-      } catch (err) {
-        showToast("Gagal menghapus dokumen: " + err.message, "danger");
-      } finally {
-        setLoading(false);
-        closeDeleteModal();
-      }
+      const targetId = _deleteDocId;
+      closeDeleteModal();
+
+      // Hapus dari UI dan cache lokal secara instan (0 ms)
+      _allDocs = _allDocs.filter(d => String(d.ID_Dokumen) !== String(targetId));
+      updateStatsAndRender(_allDocs);
+      showToast("✅ Dokumen berhasil dihapus", "success", 3500);
+
+      // Kirim perintah hapus ke Google Sheets di latar belakang
+      deleteFromSheet("spkBast", "ID_Dokumen", targetId).catch(err => {
+        console.warn("Sync delete error:", err);
+      });
     });
   });
 </script>
