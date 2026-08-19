@@ -1356,18 +1356,6 @@
     if (previewCard) previewCard.style.display = "none";
   }
 
-  function updatePetugasPreview() {
-    let id   = document.getElementById("wiz-petugas-temp-id")?.value;
-    let nama = document.getElementById("wiz-petugas-temp-nama")?.value;
-    let tipe = document.getElementById("wiz-petugas-temp-tipe")?.value;
-    const card = document.getElementById("wiz-petugas-preview-card");
-    if (!card) return;
-
-    if (!nama && document.getElementById("wiz-search-petugas")?.value.trim()) {
-      nama = document.getElementById("wiz-search-petugas").value.trim();
-      tipe = document.querySelector('input[name="wiz-sumber"]:checked')?.value || "mitra";
-    }
-
   const SBM_MAX_LIMIT = 3500000;
 
   function onPeranChange() {
