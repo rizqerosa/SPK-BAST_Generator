@@ -114,10 +114,8 @@
         Dashboard
         <small>Ringkasan sistem SPK &amp; BAST</small>
       </div>
-      <div class="topbar-actions">
-        <a href="form.html" class="btn btn-primary">
-          <span>➕</span> Buat Dokumen Baru
-        </a>
+      <div class="topbar-actions" id="topbar-dashboard-actions">
+        <!-- Diisi dinamis berdasarkan role -->
       </div>
     </header>
 
@@ -249,34 +247,32 @@
             </div>
           </div>
 
-          <div class="card-body" style="padding: 14px;">
-            <!-- Mini Stats Bar -->
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; padding: 10px 12px; background: var(--gray-50); border-radius: var(--radius-md); border: 1px solid var(--gray-200);">
+          <div class="card-body" style="padding: 14px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:0.78rem; background:var(--gray-50); padding:8px 12px; border-radius:var(--radius-sm);">
               <div>
-                <div style="font-size:0.62rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Mitra Aktif (<span id="label-bulan-terpilih">Bulan</span>)</div>
-                <div id="stat-honor-mitra-aktif" style="font-size:1rem; font-weight:800; color:var(--brand-primary); margin-top:1px;">—</div>
+                <span style="color:var(--gray-500);">Mitra Aktif (<span id="rekap-bulan-label">Bulan Ini</span>):</span>
+                <strong id="total-mitra-aktif" style="color:var(--brand-primary); margin-left:4px; font-size:0.88rem;">0 Mitra</strong>
               </div>
               <div>
-                <div style="font-size:0.62rem; text-transform:uppercase; font-weight:700; color:var(--gray-500); letter-spacing: 0.5px;">Total Honor Terbayar</div>
-                <div id="stat-honor-total-rp" style="font-size:1rem; font-weight:800; color:var(--success); margin-top:1px;">—</div>
+                <span style="color:var(--gray-500);">Total Honor Terbayar:</span>
+                <strong id="total-honor-terbayar" style="color:#15803d; margin-left:4px; font-size:0.88rem;">Rp 0</strong>
               </div>
             </div>
 
-            <!-- Table View dengan Scroll Control -->
-            <div class="table-wrapper dashboard-table-scroll">
-              <table class="data-table" id="table-honor-mitra">
+            <div class="dashboard-table-scroll">
+              <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 36px; text-align: center;">No</th>
+                    <th style="width: 40px; text-align: center;">No</th>
                     <th>Nama Mitra</th>
                     <th style="text-align: right;">Honor Bulan Ini</th>
                     <th style="text-align: right;">Sisa SBM</th>
-                    <th style="text-align: center; min-width: 100px;">Status</th>
+                    <th style="text-align: center;">Status</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-honor-mitra">
                   <tr>
-                    <td colspan="5" class="text-center text-muted" style="padding: 24px;">
+                    <td colspan="5" class="text-center text-muted" style="padding: 30px;">
                       Memuat data honor mitra...
                     </td>
                   </tr>
@@ -286,52 +282,13 @@
           </div>
         </div>
 
-        <!-- KANAN: Akses Cepat Navigasi (Kotak-kotak) -->
+        <!-- KANAN: Akses Cepat Navigasi (Kotak-kotak Dinamis Per Role) -->
         <div>
           <div style="font-size:0.9rem; font-weight:700; color:var(--gray-700); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
             <span>⚡</span> Akses Cepat Navigasi
           </div>
-          <div class="quick-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-top: 0;">
-            <a href="form.html" class="quick-card" style="padding: 16px;">
-              <div class="qc-icon qc-blue" style="width:40px; height:40px; font-size:1.2rem;">➕</div>
-              <div>
-                <div class="qc-label" style="font-size:0.85rem;">Buat Dokumen</div>
-                <div class="qc-desc" style="font-size:0.72rem;">Generate SPK &amp; BAST</div>
-              </div>
-              <span class="qc-arrow">›</span>
-            </a>
-            <a href="dokumen.html" class="quick-card" style="padding: 16px;">
-              <div class="qc-icon qc-green" style="width:40px; height:40px; font-size:1.2rem;">📋</div>
-              <div>
-                <div class="qc-label" style="font-size:0.85rem;">Daftar Dokumen</div>
-                <div class="qc-desc" style="font-size:0.72rem;">Lihat semua dokumen</div>
-              </div>
-              <span class="qc-arrow">›</span>
-            </a>
-            <a href="mitra.html" class="quick-card" style="padding: 16px;">
-              <div class="qc-icon qc-purple" style="width:40px; height:40px; font-size:1.2rem;">👥</div>
-              <div>
-                <div class="qc-label" style="font-size:0.85rem;">Daftar Mitra</div>
-                <div class="qc-desc" style="font-size:0.72rem;">Data mitra &amp; PPL</div>
-              </div>
-              <span class="qc-arrow">›</span>
-            </a>
-            <a href="pegawai.html" class="quick-card" style="padding: 16px;">
-              <div class="qc-icon qc-orange" style="width:40px; height:40px; font-size:1.2rem;">🏛️</div>
-              <div>
-                <div class="qc-label" style="font-size:0.85rem;">Daftar Pegawai</div>
-                <div class="qc-desc" style="font-size:0.72rem;">Data pegawai BPS</div>
-              </div>
-              <span class="qc-arrow">›</span>
-            </a>
-            <a href="kegiatan.html" class="quick-card" style="padding: 16px;">
-              <div class="qc-icon" style="background:#fef3c7; width:40px; height:40px; font-size:1.2rem;">📁</div>
-              <div>
-                <div class="qc-label" style="font-size:0.85rem;">Daftar Kegiatan</div>
-                <div class="qc-desc" style="font-size:0.72rem;">Master kegiatan &amp; tarif</div>
-              </div>
-              <span class="qc-arrow">›</span>
-            </a>
+          <div class="quick-grid" id="dashboard-quick-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-top: 0;">
+            <!-- Diisi dinamis berdasarkan role user -->
           </div>
         </div>
 
@@ -348,16 +305,88 @@
   <div class="spinner"></div>
 </div>
 
-<script src="js/config.js?v=4.2"></script>
-<script src="js/data.js?v=4.2"></script>
-<script src="js/auth.js?v=4.2"></script>
-<script src="js/utils.js?v=4.2"></script>
-<script src="js/render.js?v=4.2"></script>
-<script src="js/sidebar.js?v=4.2"></script>
-<script src="js/app.js?v=4.2"></script>
+<script src="js/config.js?v=4.6"></script>
+<script src="js/data.js?v=4.6"></script>
+<script src="js/auth.js?v=4.6"></script>
+<script src="js/utils.js?v=4.6"></script>
+<script src="js/render.js?v=4.6"></script>
+<script src="js/sidebar.js?v=4.6"></script>
+<script src="js/app.js?v=4.6"></script>
 <script>
+  function renderDashboardByRole() {
+    const role = (typeof Auth !== "undefined" && Auth.getRole) ? Auth.getRole() : "PENGGUNA";
+    const isAdmin = (typeof Auth !== "undefined" && Auth.isAdmin) ? Auth.isAdmin() : (role === "ADMIN");
+
+    // 1. Topbar button: Hanya ADMIN yang bisa buat dokumen
+    const topbarActions = document.getElementById("topbar-dashboard-actions");
+    if (topbarActions) {
+      if (isAdmin) {
+        topbarActions.innerHTML = `
+          <a href="form.html" class="btn btn-primary">
+            <span>➕</span> Buat Dokumen Baru
+          </a>`;
+      } else {
+        topbarActions.innerHTML = "";
+      }
+    }
+
+    // 2. Quick Access Navigasi per Role
+    const gridEl = document.getElementById("dashboard-quick-grid");
+    if (!gridEl) return;
+
+    let cards = [];
+
+    if (isAdmin) {
+      cards = [
+        { href: "form.html", icon: "➕", iconClass: "qc-blue", label: "Buat Dokumen", desc: "Generate SPK & BAST" },
+        { href: "dokumen.html", icon: "📋", iconClass: "qc-green", label: "Daftar Dokumen", desc: "Histori semua dokumen" },
+        { href: "katim.html", icon: "📋", iconClass: "qc-purple", label: "Penugasan Petugas", desc: "Mapping kegiatan & petugas" },
+        { href: "verifikasi-ppk.html", icon: "🛡️", iconClass: "qc-orange", label: "Verifikasi PPK", desc: "Persetujuan SPK & BAST" },
+        { href: "mitra.html", icon: "👥", iconClass: "qc-purple", label: "Daftar Mitra", desc: "Data mitra & PPL" },
+        { href: "pegawai.html", icon: "🏛️", iconClass: "qc-orange", label: "Daftar Pegawai", desc: "Data pegawai BPS" },
+        { href: "kegiatan.html", icon: "📁", iconBg: "#fef3c7", label: "Daftar Kegiatan", desc: "Master kegiatan & tarif" },
+      ];
+    } else if (role === "KATIM") {
+      cards = [
+        { href: "katim.html", icon: "📋", iconClass: "qc-purple", label: "Penugasan Petugas", desc: "Tugaskan mitra & pegawai" },
+        { href: "kegiatan.html", icon: "📁", iconBg: "#fef3c7", label: "Daftar Kegiatan", desc: "Master kegiatan tim Anda" },
+        { href: "mitra.html", icon: "👥", iconClass: "qc-blue", label: "Daftar Mitra", desc: "Data mitra & PPL" },
+        { href: "pegawai.html", icon: "🏛️", iconClass: "qc-orange", label: "Daftar Pegawai", desc: "Data pegawai BPS" },
+        { href: "dokumen.html", icon: "📋", iconClass: "qc-green", label: "Daftar Dokumen", desc: "Lihat SPK & BAST" },
+      ];
+    } else if (role === "PPK") {
+      cards = [
+        { href: "verifikasi-ppk.html", icon: "🛡️", iconClass: "qc-orange", label: "Verifikasi PPK", desc: "Persetujuan SPK & BAST" },
+        { href: "dokumen.html", icon: "📋", iconClass: "qc-green", label: "Daftar Dokumen", desc: "Histori dokumen disetujui" },
+        { href: "mitra.html", icon: "👥", iconClass: "qc-blue", label: "Daftar Mitra", desc: "Data mitra lapangan" },
+        { href: "kegiatan.html", icon: "📁", iconBg: "#fef3c7", label: "Daftar Kegiatan", desc: "Master kegiatan BPS" },
+      ];
+    } else {
+      // PENGGUNA
+      cards = [
+        { href: "dokumen.html", icon: "📋", iconClass: "qc-green", label: "Daftar Dokumen", desc: "Lihat semua dokumen" },
+        { href: "mitra.html", icon: "👥", iconClass: "qc-blue", label: "Daftar Mitra", desc: "Data mitra & PPL" },
+        { href: "pegawai.html", icon: "🏛️", iconClass: "qc-orange", label: "Daftar Pegawai", desc: "Data pegawai BPS" },
+        { href: "kegiatan.html", icon: "📁", iconBg: "#fef3c7", label: "Daftar Kegiatan", desc: "Master kegiatan & tarif" },
+      ];
+    }
+
+    gridEl.innerHTML = cards.map(c => `
+      <a href="${c.href}" class="quick-card" style="padding: 16px;">
+        <div class="qc-icon ${c.iconClass || ''}" style="${c.iconBg ? 'background:'+c.iconBg+';' : ''} width:40px; height:40px; font-size:1.2rem;">${c.icon}</div>
+        <div>
+          <div class="qc-label" style="font-size:0.85rem;">${c.label}</div>
+          <div class="qc-desc" style="font-size:0.72rem;">${c.desc}</div>
+        </div>
+        <span class="qc-arrow">›</span>
+      </a>
+    `).join("");
+  }
+
   // Load stat cards secara paralel
   document.addEventListener("DOMContentLoaded", async () => {
+    renderDashboardByRole();
+
     try {
       const [spkBastData, mitraData, kegiatanData, pegawaiData] = await Promise.all([
         getSpkBast(),
@@ -381,4 +410,3 @@
 </script>
 </body>
 </html>
-

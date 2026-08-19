@@ -348,21 +348,24 @@
 
   // ─── Deteksi Role ────────────────────────────────────────────
   const _role = (typeof Auth !== "undefined" && Auth.getRole) ? Auth.getRole() : "PENGGUNA";
+  const _isAdmin = (typeof Auth !== "undefined" && Auth.isAdmin) ? Auth.isAdmin() : (_role === "ADMIN");
   // PENGGUNA hanya bisa preview
-  const _canEdit   = (_role !== "PENGGUNA");
+  const _canEdit   = _isAdmin;
   const _canExport = (_role !== "PENGGUNA");
-  const _canDelete = (_role !== "PENGGUNA");
+  const _canDelete = _isAdmin;
 
   // ─── Setup UI berdasarkan role ───────────────────────────────
   document.addEventListener("DOMContentLoaded", () => {
-    // Tombol topbar
+    // Tombol topbar: Hanya tampil untuk ADMIN
     const topbarActions = document.getElementById("topbar-actions");
     if (topbarActions) {
-      if (_canEdit) {
+      if (_isAdmin) {
         topbarActions.innerHTML = `
           <a href="form.html" class="btn btn-primary" id="btn-buat-dokumen">
             <span>➕</span> Buat Dokumen Baru
           </a>`;
+      } else {
+        topbarActions.innerHTML = "";
       }
     }
 

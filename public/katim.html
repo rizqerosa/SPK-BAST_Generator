@@ -588,7 +588,7 @@
                   </div>
                 </div>
 
-                <!-- Input Pencarian, Peran, Volume & Tombol -->
+                <!-- Input Pencarian, Peran, PML Pengawas, Volume & Tombol -->
                 <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
                   <div class="petugas-search-wrap" style="flex:2; min-width:220px;">
                     <label class="form-label" for="wiz-search-petugas">Cari Nama Petugas</label>
@@ -602,13 +602,21 @@
 
                   <div style="flex:1; min-width:140px;">
                     <label class="form-label" for="wiz-peran-input">Peran Petugas</label>
-                    <select class="form-control" id="wiz-peran-input" onchange="updatePetugasPreview()">
+                    <select class="form-control" id="wiz-peran-input" onchange="onPeranChange()">
                       <option value="ppl">PPL (Pendataan)</option>
                       <option value="pml">PML (Pemeriksaan)</option>
                     </select>
                   </div>
 
-                  <div style="width:110px;">
+                  <!-- Dropdown PML Pengawas untuk Petugas PPL -->
+                  <div id="wiz-pml-wrap" style="flex:2; min-width:200px;">
+                    <label class="form-label" for="wiz-pml-select">PML Pengawas (untuk PPL) <span class="required">*</span></label>
+                    <select class="form-control" id="wiz-pml-select">
+                      <option value="">-- Pilih PML Pengawas --</option>
+                    </select>
+                  </div>
+
+                  <div style="width:100px;">
                     <label class="form-label" for="wiz-volume-input">Volume <span class="required">*</span></label>
                     <input type="number" class="form-control" id="wiz-volume-input" value="1" min="1" step="1"
                            oninput="updatePetugasPreview()" onchange="updatePetugasPreview()">
@@ -622,8 +630,9 @@
 
                 <!-- Preview Honor Real-time (Muncul saat petugas terpilih / diketik) -->
                 <div id="wiz-petugas-preview-card" style="display:none; margin-top:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:12px 16px;">
-                  <div style="font-weight:700; color:#166534; font-size:.82rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                  <div style="font-weight:700; color:#166534; font-size:.82rem; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
                     <span>💡 Rincian Honor Penugasan</span>
+                    <span id="prev-sbm-badge" class="badge badge-success" style="font-size:.7rem;">Di Bawah SBM</span>
                   </div>
                   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; font-size:.82rem;">
                     <div>
@@ -646,6 +655,11 @@
                       <span style="color:var(--gray-500); font-size:.73rem;">Total Honor:</span><br>
                       <strong id="prev-total-honor" style="color:#15803d; font-size:.95rem;">-</strong>
                     </div>
+                  </div>
+
+                  <!-- Alert Warning SBM Realtime -->
+                  <div id="prev-sbm-warning-box" style="display:none; margin-top:10px; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:var(--radius-sm); font-size:.78rem; color:#dc2626; font-weight:600;">
+                    ⚠️ PERINGATAN: Total honor akumulasi petugas ini di bulan yang sama mencapai <span id="prev-sbm-total" style="text-decoration:underline;"></span> (Melebihi batas SBM Rp 3.500.000,-).
                   </div>
                 </div>
 
@@ -1354,6 +1368,112 @@
       tipe = document.querySelector('input[name="wiz-sumber"]:checked')?.value || "mitra";
     }
 
+  const SBM_MAX_LIMIT = 3500000;
+
+  function onPeranChange() {
+    const peran = document.getElementById("wiz-peran-input")?.value || "ppl";
+    const pmlWrap = document.getElementById("wiz-pml-wrap");
+    if (pmlWrap) {
+      pmlWrap.style.display = (peran === "ppl") ? "block" : "none";
+    }
+    if (peran === "ppl") {
+      populatePmlDropdown();
+    }
+    updatePetugasPreview();
+  }
+
+  function populatePmlDropdown(selectedPmlId = "") {
+    const selectEl = document.getElementById("wiz-pml-select");
+    if (!selectEl) return;
+
+    const currentVal = selectedPmlId || selectEl.value;
+    const assignedPmls = _wizAssignedOfficers.filter(p => p.peran === "pml");
+    const pegawaiList  = _allPegawai || [];
+    const mitraPmls    = (_allMitra || []).filter(m => (m.Posisi || m.posisi || "").toLowerCase().includes("pml"));
+
+    let html = `<option value="">-- Pilih PML Pengawas --</option>`;
+
+    if (assignedPmls.length > 0) {
+      html += `<optgroup label="⭐ PML Terpilih di Kegiatan Ini">`;
+      assignedPmls.forEach(p => {
+        const isSel = String(p.id) === String(currentVal) ? "selected" : "";
+        html += `<option value="${escapeHtml(p.id)}" data-nama="${escapeHtml(p.nama)}" ${isSel}>⭐ ${escapeHtml(p.nama)} (${p.tipe === 'mitra' ? 'Mitra' : 'Pegawai'})</option>`;
+      });
+      html += `</optgroup>`;
+    }
+
+    html += `<optgroup label="🏛️ Pegawai BPS Organik">`;
+    pegawaiList.forEach(p => {
+      const nip = (typeof getPegawaiNip === "function") ? getPegawaiNip(p) : (p.NIP || p.nip || "");
+      const nama = (typeof getPegawaiName === "function") ? getPegawaiName(p) : (p.Nama_Pegawai || p.Nama || "");
+      if (!assignedPmls.some(ap => String(ap.id) === String(nip))) {
+        const isSel = String(nip) === String(currentVal) ? "selected" : "";
+        html += `<option value="${escapeHtml(nip)}" data-nama="${escapeHtml(nama)}" ${isSel}>${escapeHtml(nama)} (NIP: ${escapeHtml(nip)})</option>`;
+      }
+    });
+    html += `</optgroup>`;
+
+    if (mitraPmls.length > 0) {
+      html += `<optgroup label="👥 Mitra PML">`;
+      mitraPmls.forEach(m => {
+        const id = (typeof getMitraId === "function") ? getMitraId(m) : (m.ID_Mitra || m.ID || "");
+        const nama = (typeof getMitraName === "function") ? getMitraName(m) : (m.Nama_Mitra || m.Nama || "");
+        if (!assignedPmls.some(ap => String(ap.id) === String(id))) {
+          const isSel = String(id) === String(currentVal) ? "selected" : "";
+          html += `<option value="${escapeHtml(id)}" data-nama="${escapeHtml(nama)}" ${isSel}>${escapeHtml(nama)} (Mitra)</option>`;
+        }
+      });
+      html += `</optgroup>`;
+    }
+
+    selectEl.innerHTML = html;
+  }
+
+  function getPetugasMonthlyHonor(petugasId, tglMulaiStr, addHonor = 0) {
+    if (!petugasId) return addHonor;
+    const targetDate = tglMulaiStr ? new Date(tglMulaiStr) : new Date();
+    const targetYear = isNaN(targetDate) ? new Date().getFullYear() : targetDate.getFullYear();
+    const targetMonth = isNaN(targetDate) ? new Date().getMonth() : targetDate.getMonth();
+
+    let total = Number(addHonor) || 0;
+
+    // 1. Dari _allMapping di database
+    (_allMapping || []).forEach(m => {
+      if (String(m.ID_Mitra_atau_NIP) === String(petugasId)) {
+        let mDate = m.Tanggal_Mulai ? new Date(m.Tanggal_Mulai) : null;
+        if (!mDate || isNaN(mDate)) mDate = m.Tanggal_Dibuat ? new Date(m.Tanggal_Dibuat) : null;
+        if (mDate && !isNaN(mDate)) {
+          if (mDate.getFullYear() === targetYear && mDate.getMonth() === targetMonth) {
+            total += Number(m.Total_Honor || 0);
+          }
+        } else {
+          total += Number(m.Total_Honor || 0);
+        }
+      }
+    });
+
+    // 2. Dari _wizAssignedOfficers
+    _wizAssignedOfficers.forEach(p => {
+      if (String(p.id) === String(petugasId)) {
+        total += Number(p.totalHonor || 0);
+      }
+    });
+
+    return total;
+  }
+
+  function updatePetugasPreview() {
+    let id   = document.getElementById("wiz-petugas-temp-id")?.value;
+    let nama = document.getElementById("wiz-petugas-temp-nama")?.value;
+    let tipe = document.getElementById("wiz-petugas-temp-tipe")?.value;
+    const card = document.getElementById("wiz-petugas-preview-card");
+    if (!card) return;
+
+    if (!nama && document.getElementById("wiz-search-petugas")?.value.trim()) {
+      nama = document.getElementById("wiz-search-petugas").value.trim();
+      tipe = document.querySelector('input[name="wiz-sumber"]:checked')?.value || "mitra";
+    }
+
     if (!_wizSelectedKegiatan || !nama) {
       card.style.display = "none";
       return;
@@ -1369,6 +1489,30 @@
     document.getElementById("prev-volume-satuan").textContent = `${vol} ${satuan}`;
     document.getElementById("prev-harga-satuan").textContent = `Rp ${formatRupiah(harga)}`;
     document.getElementById("prev-total-honor").textContent = `Rp ${formatRupiah(total)}`;
+
+    // Pengecekan SBM Maksimal
+    const akumulasi = getPetugasMonthlyHonor(id, _wizSelectedKegiatan.tglMulai, total);
+    const warnBox = document.getElementById("prev-sbm-warning-box");
+    const warnBadge = document.getElementById("prev-sbm-badge");
+    const warnTotal = document.getElementById("prev-sbm-total");
+
+    if (akumulasi > SBM_MAX_LIMIT) {
+      if (warnBadge) {
+        warnBadge.className = "badge badge-danger";
+        warnBadge.textContent = `⚠️ Melebihi SBM (Rp ${formatRupiah(akumulasi)})`;
+      }
+      if (warnBox) {
+        warnBox.style.display = "block";
+        if (warnTotal) warnTotal.textContent = `Rp ${formatRupiah(akumulasi)}`;
+      }
+    } else {
+      if (warnBadge) {
+        warnBadge.className = "badge badge-success";
+        warnBadge.textContent = `✅ Di Bawah SBM (Total: Rp ${formatRupiah(akumulasi)})`;
+      }
+      if (warnBox) warnBox.style.display = "none";
+    }
+
     card.style.display = "block";
   }
 
@@ -1453,9 +1597,28 @@
       return;
     }
 
+    // Ambil info PML jika perannya PPL
+    let pmlId = "", pmlNama = "";
+    if (peran === "ppl") {
+      const pmlSel = document.getElementById("wiz-pml-select");
+      if (pmlSel && pmlSel.value) {
+        pmlId = pmlSel.value;
+        const opt = pmlSel.options[pmlSel.selectedIndex];
+        pmlNama = opt?.getAttribute("data-nama") || opt?.text || pmlId;
+        // Bersihkan prefix label jika ada
+        pmlNama = pmlNama.replace(/^⭐\s*/, "").replace(/\s*\(.*?\)$/, "").trim();
+      }
+    }
+
     const satuan = _wizSelectedKegiatan?.satuan || "Dokumen";
     const hargaSatuan = Number(_wizSelectedKegiatan?.honor || 0);
     const totalHonor = volume * hargaSatuan;
+
+    // Cek Warning SBM
+    const totalAkumulasi = getPetugasMonthlyHonor(id, _wizSelectedKegiatan?.tglMulai, totalHonor);
+    if (totalAkumulasi > SBM_MAX_LIMIT) {
+      showToast(`⚠️ Perhatian: Total honor ${nama} bulan ini mencapai Rp ${formatRupiah(totalAkumulasi)} (Melebihi batas SBM Rp 3.500.000,-)!`, "warning", 6000);
+    }
 
     // Tambahkan ke array
     _wizAssignedOfficers.push({
@@ -1463,6 +1626,8 @@
       nama: nama,
       tipe: tipe || "mitra",
       peran: peran,
+      pmlId: pmlId,
+      pmlNama: pmlNama,
       volume: volume,
       satuan: satuan,
       hargaSatuan: hargaSatuan,
@@ -1474,12 +1639,14 @@
 
     renderAssignedOfficers();
     clearPetugasSearchInput();
+    populatePmlDropdown(); // Refresh opsi PML jika yang baru ditambahkan adalah PML
     showToast(`✅ ${nama} (${peran.toUpperCase()}, ${volume} ${satuan}) ditambahkan.`, "success", 2500);
   }
 
   function hapusPetugasRow(idx) {
     const removed = _wizAssignedOfficers.splice(idx, 1);
     renderAssignedOfficers();
+    populatePmlDropdown();
     if (removed[0]) {
       showToast(`Petugas "${removed[0].nama}" dihapus dari daftar.`, "info", 2000);
     }
@@ -1488,6 +1655,22 @@
   function updateOfficerPeran(idx, newPeran) {
     if (_wizAssignedOfficers[idx]) {
       _wizAssignedOfficers[idx].peran = newPeran;
+      if (newPeran === "pml") {
+        _wizAssignedOfficers[idx].pmlId = "";
+        _wizAssignedOfficers[idx].pmlNama = "";
+      }
+      renderAssignedOfficers();
+      populatePmlDropdown();
+    }
+  }
+
+  function updateOfficerPml(idx, newPmlId) {
+    if (_wizAssignedOfficers[idx]) {
+      _wizAssignedOfficers[idx].pmlId = newPmlId;
+      const foundP = _allPegawai.find(p => String(getPegawaiNip(p)) === String(newPmlId));
+      const foundM = _allMitra.find(m => String(getMitraId(m)) === String(newPmlId));
+      const foundAssigned = _wizAssignedOfficers.find(p => String(p.id) === String(newPmlId));
+      _wizAssignedOfficers[idx].pmlNama = foundAssigned?.nama || (foundP ? getPegawaiName(foundP) : (foundM ? getMitraName(foundM) : newPmlId));
       renderAssignedOfficers();
     }
   }
@@ -1520,7 +1703,7 @@
       container.innerHTML = `
         <div class="empty-officers" id="empty-officers-msg">
           Belum ada petugas yang ditambahkan ke kegiatan ini.<br>
-          Cari nama petugas di atas, tentukan volume lalu klik <strong>"➕ Tambahkan"</strong>.
+          Cari nama petugas di atas, tentukan peran &amp; PML, lalu klik <strong>"➕ Tambahkan"</strong>.
         </div>`;
       return;
     }
@@ -1531,6 +1714,12 @@
       return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
     };
 
+    // Daftar PML untuk dropdown per baris
+    const pmlOptions = [
+      ..._wizAssignedOfficers.filter(p => p.peran === "pml").map(p => ({ id: p.id, nama: p.nama, tipe: p.tipe })),
+      ...(_allPegawai || []).map(p => ({ id: (typeof getPegawaiNip === "function" ? getPegawaiNip(p) : p.NIP), nama: (typeof getPegawaiName === "function" ? getPegawaiName(p) : p.Nama_Pegawai), tipe: "pegawai" }))
+    ];
+
     container.innerHTML = `
       <div class="assigned-table-wrap">
         <table class="assigned-table">
@@ -1539,8 +1728,9 @@
               <th style="width:36px; text-align:center;">#</th>
               <th>Nama Petugas</th>
               <th>Tipe</th>
-              <th style="width:120px;">Peran</th>
-              <th style="width:85px; text-align:center;">Volume</th>
+              <th style="width:110px;">Peran</th>
+              <th style="width:160px;">PML Pengawas</th>
+              <th style="width:75px; text-align:center;">Volume</th>
               <th>Satuan</th>
               <th>Harga Satuan</th>
               <th>Total Honor</th>
@@ -1551,8 +1741,11 @@
           <tbody>
             ${_wizAssignedOfficers.map((p, idx) => {
               const initial = (p.nama || "?")[0].toUpperCase();
+              const monthlyHonor = getPetugasMonthlyHonor(p.id, p.tglMulai, 0);
+              const isOverSbm = monthlyHonor > SBM_MAX_LIMIT;
+
               return `
-                <tr>
+                <tr style="${isOverSbm ? 'background:#fff7ed;' : ''}">
                   <td style="text-align:center; font-weight:700; color:var(--gray-400);">${idx + 1}</td>
                   <td>
                     <div class="officer-cell">
@@ -1560,6 +1753,7 @@
                       <div>
                         <div class="officer-name">${escapeHtml(p.nama)}</div>
                         <div class="officer-sub">${p.tipe === 'mitra' ? 'ID: ' + escapeHtml(p.id) : 'NIP: ' + escapeHtml(p.id)}</div>
+                        ${isOverSbm ? `<span class="badge badge-danger" style="font-size:.65rem; margin-top:2px; display:inline-block;">⚠️ Over SBM (Rp ${formatRupiah(monthlyHonor)})</span>` : ''}
                       </div>
                     </div>
                   </td>
@@ -1575,8 +1769,22 @@
                       <option value="pml" ${p.peran === 'pml' ? 'selected' : ''}>PML (Pemeriksaan)</option>
                     </select>
                   </td>
+                  <td>
+                    ${p.peran === 'ppl' ? `
+                      <select class="form-control" style="padding:4px 6px; font-size:.76rem;" onchange="updateOfficerPml(${idx}, this.value)">
+                        <option value="">-- Pilih PML --</option>
+                        ${pmlOptions.map(pml => `
+                          <option value="${escapeHtml(pml.id)}" ${String(p.pmlId) === String(pml.id) || p.pmlNama === pml.nama ? 'selected' : ''}>
+                            ${escapeHtml(pml.nama)}
+                          </option>
+                        `).join("")}
+                      </select>
+                    ` : `
+                      <span class="badge" style="background:#ede9fe; color:#5b21b6; font-size:.72rem;">👑 Supervisor (PML)</span>
+                    `}
+                  </td>
                   <td style="text-align:center;">
-                    <input type="number" min="1" class="form-control" style="width:70px; text-align:center; padding:3px 4px; font-weight:700;"
+                    <input type="number" min="1" class="form-control" style="width:65px; text-align:center; padding:3px 4px; font-weight:700;"
                            value="${p.volume || 1}" onchange="updateOfficerVolume(${idx}, this.value)">
                   </td>
                   <td style="font-size:.8rem; color:var(--gray-600);">${escapeHtml(p.satuan || 'Dokumen')}</td>
@@ -1595,7 +1803,7 @@
           </tbody>
           <tfoot>
             <tr style="background:#f8fafc; font-weight:700; border-top:2px solid var(--gray-300);">
-              <td colspan="4" style="text-align:right; padding:10px 14px; font-size:.84rem; color:var(--gray-700);">Total Keseluruhan:</td>
+              <td colspan="5" style="text-align:right; padding:10px 14px; font-size:.84rem; color:var(--gray-700);">Total Keseluruhan:</td>
               <td style="text-align:center; padding:10px 4px; font-size:.88rem; color:#1e40af;">${totalVol}</td>
               <td colspan="2"></td>
               <td style="padding:10px 14px; font-size:.92rem; color:#15803d; white-space:nowrap;">Rp ${formatRupiah(totalAnggaran)}</td>
@@ -1644,6 +1852,7 @@
             <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
               📦 Volume: <strong>${p.volume || 1} ${escapeHtml(p.satuan || 'Dokumen')}</strong> &nbsp;|&nbsp;
               💵 Harga Satuan: Rp ${formatRupiah(p.hargaSatuan || 0)}
+              ${p.peran === 'ppl' && p.pmlNama ? `&nbsp;|&nbsp; 👤 PML: <strong>${escapeHtml(p.pmlNama)}</strong>` : ''}
             </div>
           </div>
         </div>
@@ -1690,20 +1899,38 @@
           ID_Kegiatan:         keg.id,
           Uraian_Kegiatan:     keg.nama,
           Peran:               p.peran,
+          PML:                 p.pmlNama || p.pmlId || "",
           Volume:              vol,
           Satuan:              sat,
           Harga_Satuan:        hrg,
           Total_Honor:         tot,
-          Tanggal_Mulai:       p.tglMulai || keg.tglMulai,
-          Tanggal_Selesai:     p.tglSelesai || keg.tglSelesai,
+          Tanggal_Mulai:       p.tglMulai || keg.tglMulai || "",
+          Tanggal_Selesai:     p.tglSelesai || keg.tglSelesai || "",
           Batas_Terlambat:     p.batasTerlambat || keg.batasTerlambat || "",
-          Nomor_Kepka:         keg.noKepka,
-          Tanggal_Kepka:       keg.tglKepka,
+          Nomor_Kepka:         keg.noKepka || "",
+          Tanggal_Kepka:       keg.tglKepka || "",
           Dibuat_Oleh:         currUser.username || "",
           Tanggal_Dibuat:      new Date().toISOString(),
         };
         await appendToSheet("mappingPetugas", record);
       }
+
+      clearCache("mappingPetugas");
+      showToast(`✅ Berhasil menyimpan penugasan ${_wizAssignedOfficers.length} petugas untuk kegiatan "${keg.nama.substring(0,40)}"!`, "success", 5000);
+      cancelWizard();
+
+      // Reload mapping
+      setLoading(true);
+      _allMapping = await getMappingPetugas().catch(() => []);
+      renderMappingList();
+      updateStats();
+    } catch (err) {
+      showToast("Gagal menyimpan: " + err.message, "danger");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
       clearCache("mappingPetugas");
       showToast(`✅ Berhasil menyimpan penugasan ${_wizAssignedOfficers.length} petugas untuk kegiatan "${keg.nama.substring(0,40)}"!`, "success", 5000);

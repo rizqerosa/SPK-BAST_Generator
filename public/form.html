@@ -346,11 +346,19 @@
                 </div>
               </div>
 
+              <!-- Shortcut Chips Petugas yang Sudah Dimapping KATIM -->
+              <div id="spk-mapped-chips-container" style="margin-bottom:12px; display:none;">
+                <div style="font-size:.78rem; font-weight:700; color:var(--gray-600); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                  <span>⚡ Petugas dengan Penugasan Katim:</span>
+                </div>
+                <div id="spk-mapped-chips" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+              </div>
+
               <div class="mitra-search-wrap" id="spk-search-wrap">
                 <div class="search-input-wrap">
                   <span class="ico">🔍</span>
                   <input type="text" id="spk-search-petugas" class="form-control"
-                         placeholder="Cari nama petugas..." autocomplete="off">
+                         placeholder="Ketik atau pilih nama petugas yang dimapping..." autocomplete="off">
                   <div id="spk-live-results" class="live-search-results"></div>
                 </div>
               </div>
@@ -760,6 +768,9 @@
   document.addEventListener("DOMContentLoaded", async () => {
     setLoading(true);
     try {
+      // Selalu refresh mapping agar data terbaru dari Katim langsung muncul
+      if (typeof clearCache === "function") clearCache("mappingPetugas");
+
       const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
         getMitra(),
         getPegawai(),
@@ -783,6 +794,7 @@
       });
 
       populatePegawaiDropdowns();
+      renderMappedOfficerChips();
       setupSearchListeners();
       setupDateListeners();
       setupDocNumberListeners();
@@ -902,6 +914,50 @@
     });
   }
 
+  // ─── Render Shortcut Chips Petugas Hasil Mapping Katim ───────
+  function renderMappedOfficerChips() {
+    const container = document.getElementById("spk-mapped-chips-container");
+    const chipsEl   = document.getElementById("spk-mapped-chips");
+    if (!container || !chipsEl) return;
+
+    if (!_allMapping || _allMapping.length === 0) {
+      container.style.display = "none";
+      return;
+    }
+
+    // Kelompokkan mapping per petugas unik
+    const mapByPetugas = new Map();
+    _allMapping.forEach(m => {
+      const id   = String(m.ID_Mitra_atau_NIP || m.ID_Mitra || m.NIP || "").trim();
+      const nama = String(m.Nama_Petugas || m.Nama || "").trim() || id;
+      const tipe = m.Tipe_Petugas || (id.length > 10 && /^\d+$/.test(id) ? "pegawai" : "mitra");
+      if (!id && !nama) return;
+
+      const key = id || nama;
+      if (!mapByPetugas.has(key)) {
+        mapByPetugas.set(key, { id: id || nama, nama: nama, tipe: tipe, count: 0, peran: m.Peran || 'ppl' });
+      }
+      mapByPetugas.get(key).count += 1;
+    });
+
+    const list = Array.from(mapByPetugas.values());
+    if (list.length === 0) {
+      container.style.display = "none";
+      return;
+    }
+
+    chipsEl.innerHTML = list.map(item => `
+      <button type="button" class="btn btn-sm btn-outline"
+              style="border-radius:18px; font-size:.76rem; padding:3px 10px; font-weight:600; display:inline-flex; align-items:center; gap:5px; background:#fff; border:1px solid #bfdbfe;"
+              onclick="selectPetugas('spk', '${escapeHtml(item.id)}', '${escapeHtml(item.nama)}', '${item.tipe}')">
+        <span>👤 ${escapeHtml(item.nama)}</span>
+        <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:.68rem; padding:1px 6px;">${item.count} Keg</span>
+      </button>
+    `).join("");
+
+    container.style.display = "block";
+  }
+
   function onSearchPetugas(formPrefix) {
     const q = (document.getElementById(`${formPrefix}-search-petugas`)?.value || "").toLowerCase().trim();
     const sumber = formPrefix === "spk"
@@ -936,10 +992,21 @@
           const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
           const id   = tipe === "mitra" ? getMitraId(item)   : getPegawaiNip(item);
           const meta = tipe === "mitra" ? `Mitra · ${item.Asal || "—"}` : `NIP: ${id}`;
+          
+          // Cek apakah punya mapping di Katim
+          const mappingCount = _allMapping.filter(m => {
+            const mId = String(m.ID_Mitra_atau_NIP || "").trim();
+            const mNama = String(m.Nama_Petugas || "").toLowerCase().trim();
+            return (mId && mId === String(id).trim()) || (mNama && mNama === nama.toLowerCase().trim());
+          }).length;
+
           return `<div class="live-search-item" onclick="selectPetugas('${formPrefix}','${escapeHtml(id)}','${escapeHtml(nama)}','${tipe}')">
             <div class="item-avatar">${(nama||"?")[0].toUpperCase()}</div>
-            <div>
-              <div class="item-name">${escapeHtml(nama)}</div>
+            <div style="flex:1;">
+              <div class="item-name" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>${escapeHtml(nama)}</span>
+                ${mappingCount > 0 ? `<span class="badge" style="background:#dcfce7; color:#15803d; font-size:.66rem;">📌 ${mappingCount} Dimapping</span>` : ''}
+              </div>
               <div class="item-meta">${escapeHtml(meta)}</div>
             </div>
           </div>`;
@@ -956,6 +1023,14 @@
     }
     document.getElementById(`${formPrefix}-search-petugas`).value = nama;
     document.getElementById(`${formPrefix}-live-results`)?.classList.remove("visible");
+
+    // Otomatis sesuaikan radio button sumber jika tipe pegawai
+    if (formPrefix === "spk") {
+      const radioPeg = document.querySelector('input[name="spk-sumber"][value="pegawai"]');
+      const radioMit = document.querySelector('input[name="spk-sumber"][value="mitra"]');
+      if (tipe === "pegawai" && radioPeg) radioPeg.checked = true;
+      else if (radioMit) radioMit.checked = true;
+    }
 
     const card = document.getElementById(`${formPrefix}-selected-card`);
     if (card) card.style.display = "flex";
@@ -994,9 +1069,14 @@
 
   // ─── Load kegiatan dari mapping KATIM (SPK) ──────────────────
   function loadSpkMappingKegiatan(petugasId, tipe) {
-    const mappingItems = _allMapping.filter(m =>
-      String(m.ID_Mitra_atau_NIP) === String(petugasId)
-    );
+    const cleanId = String(petugasId || "").trim();
+    const cleanNama = (document.getElementById("spk-petugas-nama")?.value || "").toLowerCase().trim();
+
+    const mappingItems = _allMapping.filter(m => {
+      const mId = String(m.ID_Mitra_atau_NIP || m.ID_Mitra || m.NIP || "").trim();
+      const mNama = String(m.Nama_Petugas || m.Nama || "").toLowerCase().trim();
+      return (cleanId && mId === cleanId) || (cleanNama && mNama && mNama === cleanNama);
+    });
 
     const section = document.getElementById("spk-mapping-section");
     const listEl  = document.getElementById("spk-mapping-list");
@@ -1014,7 +1094,6 @@
 
     const formatTglIndo = str => {
       if (!str) return "—";
-      // Coba parse tanggal
       const raw = str.includes("T") ? str.split("T")[0] : str;
       const parts = raw.split("-");
       if (parts.length !== 3) return str;
@@ -1033,12 +1112,15 @@
       totalHonor += subtotal;
 
       // Cari PML yang di-mapping untuk kegiatan ini
-      const pmlItem = _allMapping.find(mx =>
-        mx.ID_Kegiatan === m.ID_Kegiatan &&
-        String(mx.Peran || "").toLowerCase() === "pml" &&
-        String(mx.ID_Mitra_atau_NIP) !== String(petugasId)
-      );
-      const pmlNama = pmlItem ? (pmlItem.Nama_Petugas || pmlItem.ID_Mitra_atau_NIP || "—") : "—";
+      let pmlNama = m.PML || m.Nama_PML || "";
+      if (!pmlNama) {
+        const pmlItem = _allMapping.find(mx =>
+          mx.ID_Kegiatan === m.ID_Kegiatan &&
+          String(mx.Peran || "").toLowerCase() === "pml" &&
+          String(mx.ID_Mitra_atau_NIP) !== String(petugasId)
+        );
+        pmlNama = pmlItem ? (pmlItem.Nama_Petugas || pmlItem.ID_Mitra_atau_NIP || "—") : "—";
+      }
 
       const tglRange = (m.Tanggal_Mulai && m.Tanggal_Selesai)
         ? `${formatTglIndo(m.Tanggal_Mulai)} – ${formatTglIndo(m.Tanggal_Selesai)}`
@@ -1053,7 +1135,7 @@
           💰 Rp ${formatRupiah(subtotal)}
           &nbsp;·&nbsp;
           📅 ${tglRange}
-          ${pmlItem ? `&nbsp;·&nbsp; <strong>PML: ${escapeHtml(pmlNama)}</strong>` : ''}
+          ${pmlNama && pmlNama !== '—' ? `&nbsp;·&nbsp; <strong>PML: ${escapeHtml(pmlNama)}</strong>` : ''}
         </span>
       </div>`;
     }).join("");
@@ -1061,12 +1143,13 @@
     document.getElementById("spk-honor-amount").textContent = `Rp ${formatRupiah(totalHonor)},-`;
     document.getElementById("spk-honor-terbilang").textContent = terbilang(totalHonor) + " Rupiah";
 
-  // Auto-fill Kepka & Judul
+    // Auto-fill Kepka, Judul & PML
     const firstMapping = mappingItems[0];
     if (firstMapping) {
       const kepkaEl = document.getElementById("spk-nomor-kepka");
       const tglKepEl = document.getElementById("spk-tgl-kepka");
       const judulEl = document.getElementById("spk-judul");
+      const pmlEl = document.getElementById("spk-sel-pml");
       const ketuaEl = document.getElementById("spk-sel-ketua");
 
       if (kepkaEl && !kepkaEl.value) kepkaEl.value = firstMapping.Nomor_Kepka || "";
@@ -1080,13 +1163,23 @@
         judulEl.value = uraianList.join(", ").toUpperCase().substring(0, 200);
       }
 
+      // Auto-select PML dropdown jika ada PML di mapping
+      if (pmlEl && (firstMapping.PML || firstMapping.Nama_PML)) {
+        const targetPml = (firstMapping.PML || firstMapping.Nama_PML).toLowerCase().trim();
+        for (let i = 0; i < pmlEl.options.length; i++) {
+          const opt = pmlEl.options[i];
+          if (opt.text.toLowerCase().includes(targetPml) || opt.value.toLowerCase() === targetPml) {
+            pmlEl.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
       // Auto-fill Ketua Tim dari mapping jika ada
       if (ketuaEl && !ketuaEl.value) {
         const nipKetua = firstMapping.NIP_Ketua_Tim || firstMapping.ID_Ketua_Tim || firstMapping.Ketua_Tim || "";
         if (nipKetua) {
-          // Coba set value langsung
           ketuaEl.value = nipKetua;
-          // Jika tidak ada di opsi, cari by nama
           if (!ketuaEl.value) {
             Array.from(ketuaEl.options).forEach(opt => {
               if (opt.textContent.toLowerCase().includes(String(nipKetua).toLowerCase())) {
