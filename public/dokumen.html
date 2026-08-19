@@ -322,40 +322,21 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/config.js?v=4.4"></script>
-<script src="js/data.js?v=4.4"></script>
-<script src="js/auth.js?v=4.4"></script>
-<script src="js/utils.js?v=4.4"></script>
-<script src="js/render.js?v=4.4"></script>
-<script src="js/sidebar.js?v=4.4"></script>
-<script src="js/app.js?v=4.4"></script>
-
-<!-- docx.js library untuk export Word dengan dual CDN fallback -->
+<script src="js/docx.umd.js"></script>
 <script>
-  (function() {
-    function loadDocxScript(url, fallbackUrl) {
-      const s = document.createElement('script');
-      s.src = url;
-      s.onerror = function() {
-        if (fallbackUrl) {
-          console.warn('[docx] Gagal load dari ' + url + ', mencoba fallback...');
-          const s2 = document.createElement('script');
-          s2.src = fallbackUrl;
-          s2.onerror = function() {
-            console.error('[docx] Gagal load dari kedua CDN. Export Word tidak akan berfungsi.');
-          };
-          document.head.appendChild(s2);
-        }
-      };
-      document.head.appendChild(s);
-    }
-    loadDocxScript(
-      'https://unpkg.com/docx@8/build/index.min.js',
-      'https://cdn.jsdelivr.net/npm/docx@8/build/index.min.js'
-    );
-  })();
+  if (typeof docx === "undefined") {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"><\/script>');
+  }
 </script>
-<script src="js/word-export.js?v=4.4"></script>
+<script src="js/config.js?v=4.5"></script>
+<script src="js/data.js?v=4.5"></script>
+<script src="js/auth.js?v=4.5"></script>
+<script src="js/utils.js?v=4.5"></script>
+<script src="js/render.js?v=4.5"></script>
+<script src="js/word-export.js?v=4.5"></script>
+<script src="js/sidebar.js?v=4.5"></script>
+<script src="js/app.js?v=4.5"></script>
+
 
 <script>
   let _allDocs     = [];
