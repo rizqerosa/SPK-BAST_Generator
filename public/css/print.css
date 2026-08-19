@@ -26,6 +26,13 @@
   color: #000;
   position: relative;
   border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.doc-page.page-landscape {
+  width: 1123px;
+  min-height: 794px;
+  padding: 40px 60px 40px 60px;
 }
 
 /* ─── Tipografi dokumen ─────────────────────────────────────── */

@@ -41,17 +41,18 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
 
     // A. Jika di word/document.xml dan ada rincian pekerjaan: duplikasi baris tabel lampiran
     if (filename === "word/document.xml" && detailsList && detailsList.length > 0) {
-      const trRegex = /<w:tr[ >].*?URAIAN_TUGAS.*?<\/w:tr>/s;
+      const trRegex = /<w:tr(?:(?!<w:tr).)*?URAIAN_TUGAS.*?<\/w:tr>/s;
       const trMatch = xmlStr.match(trRegex);
       if (trMatch) {
         const templateTr = trMatch[0];
         const newTrs = detailsList.map((d, idx) => {
           let trRow = templateTr;
+          const volVal = d.Volume !== undefined && d.Volume !== "" ? d.Volume : (d.volume !== undefined ? d.volume : 1);
           const rowDict = {
             "NO_URUT": String(d.No_Urut || idx + 1),
             "URAIAN_TUGAS": String(d.Uraian_Tugas || ""),
             "JANGKA_WAKTU": typeof formatJangkaWaktu === "function" ? formatJangkaWaktu(d.Jangka_Waktu) : String(d.Jangka_Waktu || ""),
-            "VOLUME": String(d.Volume !== undefined ? d.Volume : 1),
+            "VOLUME": String(volVal),
             "SATUAN": String(d.Satuan || "Dokumen"),
             "HARGA_SATUAN": typeof formatRupiah === "function" ? formatRupiah(d.Harga_Satuan) : String(d.Harga_Satuan || 0),
             "NILAI_PERJANJIAN": typeof formatRupiah === "function" ? formatRupiah(d.Nilai_Perjanjian) : String(d.Nilai_Perjanjian || 0),
