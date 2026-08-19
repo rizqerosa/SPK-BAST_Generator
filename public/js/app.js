@@ -2064,7 +2064,8 @@ function initDashboardHonorMitra(spkBastData, mitraData) {
       // Fallback bulan & tahun dari tanggal jika kosong
       const rawDate = r["Tanggal SPK"] || r.Tanggal_SPK || r.Tanggal_Mulai;
       if (rawDate && (!rBulan || !rTahun)) {
-        const parts = String(rawDate).split("-");
+        const cleanDate = String(rawDate).includes("T") ? String(rawDate).split("T")[0] : String(rawDate);
+        const parts = cleanDate.split("-");
         if (parts.length === 3) {
           const y = Number(parts[0]);
           const mIdx = Number(parts[1]) - 1;

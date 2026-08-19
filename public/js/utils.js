@@ -185,14 +185,25 @@ function getDetailByDokumen(detailPekerjaanArray, idDokumen) {
 }
 
 /**
- * Format tanggal ISO ke dd-mm-yyyy (display singkat)
+ * Format tanggal ISO ke format resmi Indonesia (contoh: "29 Juli 2026")
  */
 function formatTanggal(isoStr) {
   if (!isoStr) return "-";
-  const parts = String(isoStr).split("-");
-  if (parts.length < 3) return isoStr;
-  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  let s = String(isoStr).trim();
+  if (s.includes("T")) s = s.split("T")[0];
+  if (s.includes(" ")) s = s.split(" ")[0];
+  const parts = s.split("-");
+  if (parts.length < 3) return s;
+  const d = parseInt(parts[2], 10);
+  const m = parseInt(parts[1], 10);
+  const y = parseInt(parts[0], 10);
+  if (!isNaN(d) && !isNaN(m) && !isNaN(y) && m >= 1 && m <= 12) {
+    const _BULAN_INDO = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    return `${d} ${_BULAN_INDO[m]} ${y}`;
+  }
+  return s;
 }
+
 
 /**
  * Escape karakter HTML khusus (&, <, >, ", ')
