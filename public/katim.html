@@ -1891,11 +1891,23 @@
         const mSubround = !isNaN(tglMulaiDate) ? (tglMulaiDate.getMonth() < 4 ? 1 : (tglMulaiDate.getMonth() < 8 ? 2 : 3)) : 1;
         const batasVal = p.batasTerlambat || keg.batasTerlambat || "";
 
+        let pmlNameStr = "";
+        if (String(p.peran || "").toLowerCase() === "ppl") {
+          pmlNameStr = p.pmlNama || "";
+          if (!pmlNameStr && p.pmlId) {
+            const foundP = _allPegawai.find(pg => String(getPegawaiNip(pg)) === String(p.pmlId));
+            const foundM = _allMitra.find(m => String(getMitraId(m)) === String(p.pmlId));
+            pmlNameStr = foundP ? getPegawaiName(foundP) : (foundM ? getMitraName(foundM) : String(p.pmlId));
+          }
+        }
+
         const record = {
           ID_Mapping:          generateId(),
           ID_Mitra_atau_NIP:   p.id,
           Tipe_Petugas:        p.tipe,
           Nama_Petugas:        p.nama,
+          Nama_PML:            pmlNameStr,
+          PML:                 pmlNameStr,
           ID_Kegiatan:         keg.id,
           Uraian_Kegiatan:     keg.nama,
           Peran:               p.peran,
@@ -1915,7 +1927,6 @@
           Tahap:               "",
           Subround:            mSubround,
           Tahun:               mYear,
-          PML:                 p.pmlNama || p.pmlId || "",
           Satuan:              sat,
           Harga_Satuan:        hrg,
           Total_Honor:         tot,
@@ -2036,8 +2047,11 @@
             const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
             const sat = m.Satuan || "Dokumen";
             const hrg = Number(m.Harga_Satuan || 0);
-            const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
-            const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
+            const pmlText = m.Nama_PML || m.PML || "";
+            const pmlBadge = ((m.Peran || "").toLowerCase() === "ppl" && pmlText)
+              ? `&nbsp;·&nbsp; <span style="color:#2563eb; font-weight:600;">👤 PML: ${escapeHtml(pmlText)}</span>`
+              : "";
+
             return `
             <div class="mapping-sub-row">
               <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
@@ -2051,6 +2065,7 @@
                 <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
                   📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>
                   ${tot > 0 ? `&nbsp;·&nbsp; 💰 Total Honor: <strong style="color:#15803d;">Rp ${formatRupiah(tot)}</strong>` : ''}
+                  ${pmlBadge}
                 </div>
               </div>
               <span class="msr-dates">📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}</span>
@@ -2108,6 +2123,10 @@
             const hrg = Number(m.Harga_Satuan || 0);
             const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
             const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
+            const pmlText = m.Nama_PML || m.PML || "";
+            const pmlBadge = ((m.Peran || "").toLowerCase() === "ppl" && pmlText)
+              ? `&nbsp;·&nbsp; <span style="color:#2563eb; font-weight:600;">👤 PML: ${escapeHtml(pmlText)}</span>`
+              : "";
             return `
             <div class="mapping-sub-row">
               <span class="peran-badge peran-${(m.Peran||'ppl').toLowerCase()}" style="flex-shrink:0;">
