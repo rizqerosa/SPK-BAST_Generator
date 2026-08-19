@@ -258,10 +258,23 @@ async function appendToSheet(sheetKey, rowData) {
   return result;
 }
 
-// ─── Public: Update baris berdasar key ───────────────────────
+// ─── Public: Update baris berdasar key (Instan 0 ms) ────────
 async function updateInSheet(sheetKey, keyField, keyValue, newData) {
-  _DB[sheetKey] = null;
-  lsDel(sheetKey);
+  // Optimistic Cache Update
+  try {
+    const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
+    if (Array.isArray(cached)) {
+      const updated = cached.map(item => {
+        if (String(item[keyField]) === String(keyValue)) {
+          return { ...item, ...newData };
+        }
+        return item;
+      });
+      _DB[sheetKey] = updated;
+      if (typeof lsSet === "function") lsSet(sheetKey, updated);
+    }
+  } catch (_) {}
+
   const result = await postToSheet(sheetKey, "update", newData, { keyField, keyValue });
   return result;
 }

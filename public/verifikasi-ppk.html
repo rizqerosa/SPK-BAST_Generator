@@ -564,27 +564,27 @@
       }
       const currUser = Auth.getUser() || {};
       const verifikatorInfo = `${currUser.nama || 'PPK'} (NIP. ${currUser.nip || '-'})`;
-      setLoading(true);
-      try {
-        await updateInSheet("bastSmPpk", "ID_BAST_SM_PPK", _selectedSmDoc.ID_BAST_SM_PPK, {
-          Status_Generate_BAST_SM_PPK: statusBaru,
-          Status_Verifikasi_PPK: statusBaru,
-          Catatan_Verifikasi_PPK: catatan,
-          Tanggal_Verifikasi_PPK: new Date().toISOString().split("T")[0],
-          PPK_Verifikator: verifikatorInfo
-        });
-        _selectedSmDoc.Status_Generate_BAST_SM_PPK = statusBaru;
-        _selectedSmDoc.Status_Verifikasi_PPK = statusBaru;
-        clearCache("bastSmPpk");
-        showToast(`BAST SM→PPK berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning");
-        closeVerifModal();
-        updateStats();
-        applySmFilters();
-      } catch (err) {
-        showToast("Gagal memperbarui: " + err.message, "danger");
-      } finally {
-        setLoading(false);
-      }
+      const targetSm = _selectedSmDoc;
+
+      // Update instan di UI (0 ms)
+      targetSm.Status_Generate_BAST_SM_PPK = statusBaru;
+      targetSm.Status_Verifikasi_PPK = statusBaru;
+      targetSm.Catatan_Verifikasi_PPK = catatan;
+      closeVerifModal();
+      updateStats();
+      applySmFilters();
+      showToast(`✅ BAST SM→PPK berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning", 3500);
+
+      // Simpan di background
+      updateInSheet("bastSmPpk", "ID_BAST_SM_PPK", targetSm.ID_BAST_SM_PPK, {
+        Status_Generate_BAST_SM_PPK: statusBaru,
+        Status_Verifikasi_PPK: statusBaru,
+        Catatan_Verifikasi_PPK: catatan,
+        Tanggal_Verifikasi_PPK: new Date().toISOString().split("T")[0],
+        PPK_Verifikator: verifikatorInfo
+      }).catch(err => {
+        showToast("Gagal menyimpan ke database: " + err.message, "danger");
+      });
       return;
     }
 
@@ -599,36 +599,30 @@
 
     const currUser = Auth.getUser() || {};
     const verifikatorInfo = `${currUser.nama || 'PPK'} (NIP. ${currUser.nip || '-'})`;
+    const targetDoc = _selectedDoc;
 
-    setLoading(true);
-    try {
-      // Direct update to sheet — update both Status_Generate_SPK and Status_Verifikasi_PPK
-      await updateInSheet("spkBast", "ID_Dokumen", _selectedDoc.ID_Dokumen, {
-        Status_Generate_SPK: statusBaru,
-        Status_Verifikasi_PPK: statusBaru,
-        Catatan_Verifikasi_PPK: catatan,
-        Tanggal_Verifikasi_PPK: new Date().toISOString().split("T")[0],
-        PPK_Verifikator: verifikatorInfo
-      });
+    // Update instan di UI (0 ms)
+    targetDoc.Status_Generate_SPK = statusBaru;
+    targetDoc.Status_Verifikasi_PPK = statusBaru;
+    targetDoc.Catatan_Verifikasi_PPK = catatan;
+    targetDoc.Tanggal_Verifikasi_PPK = new Date().toISOString().split("T")[0];
+    targetDoc.PPK_Verifikator = verifikatorInfo;
 
-      // Update local array
-      _selectedDoc.Status_Generate_SPK = statusBaru;
-      _selectedDoc.Status_Verifikasi_PPK = statusBaru;
-      _selectedDoc.Catatan_Verifikasi_PPK = catatan;
-      _selectedDoc.Tanggal_Verifikasi_PPK = new Date().toISOString().split("T")[0];
-      _selectedDoc.PPK_Verifikator = verifikatorInfo;
+    closeVerifModal();
+    updateStats();
+    applyFilters();
+    showToast(`✅ Dokumen berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning", 3500);
 
-      clearCache("spkBast");
-
-      showToast(`Dokumen berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning");
-      closeVerifModal();
-      updateStats();
-      applyFilters();
-    } catch (err) {
-      showToast("Gagal memperbarui verifikasi: " + err.message, "danger");
-    } finally {
-      setLoading(false);
-    }
+    // Simpan ke Google Sheets di background
+    updateInSheet("spkBast", "ID_Dokumen", targetDoc.ID_Dokumen, {
+      Status_Generate_SPK: statusBaru,
+      Status_Verifikasi_PPK: statusBaru,
+      Catatan_Verifikasi_PPK: catatan,
+      Tanggal_Verifikasi_PPK: new Date().toISOString().split("T")[0],
+      PPK_Verifikator: verifikatorInfo
+    }).catch(err => {
+      showToast("Gagal memperbarui verifikasi di server: " + err.message, "danger");
+    });
   }
 
   function updateStats() {
@@ -647,20 +641,55 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    setLoading(true);
+    // 1. Render data dari cache secara instan (0 ms)
+    const cachedDocs    = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast || [];
+    const cachedSmDocs  = (typeof lsGet === "function" ? lsGet("bastSmPpk")?.data : null) || _DB.bastSmPpk || [];
+    const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra || [];
+    const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai || [];
+    const cachedDetails = (typeof lsGet === "function" ? lsGet("detailPekerjaan")?.data : null) || _DB.detailPekerjaan || [];
+
+    _allDocs    = cachedDocs.filter(r => r.Jenis_Dokumen === "SPK" || !r.Jenis_Dokumen);
+    _allSmDocs  = cachedSmDocs;
+    _allMitra   = cachedMitra;
+    _allPegawai = cachedPegawai;
+    _allDetails = cachedDetails;
+
+    updateStats();
+    applyFilters();
+    applySmFilters();
+
+    // 2. Setup listeners
+    document.getElementById("search-input")?.addEventListener("input", applyFilters);
+    document.getElementById("search-sm-input")?.addEventListener("input", applySmFilters);
+
+    document.querySelectorAll("[data-filter]").forEach(btn => {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+        this.classList.add("active");
+        _activeFilter = this.dataset.filter;
+        applyFilters();
+      });
+    });
+
+    document.querySelectorAll("[data-filter-sm]").forEach(btn => {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("[data-filter-sm]").forEach(b => b.classList.remove("active"));
+        this.classList.add("active");
+        _activeSmFilter = this.dataset.filterSm;
+        applySmFilters();
+      });
+    });
+
+    // 3. Background Revalidation secara senyap
     try {
-      // Bersihkan cache agar data verifikasi selalu fresh
-      clearCache("spkBast");
-      clearCache("bastSmPpk");
       const [spkBastData, mitraData, pegawaiData, detailData, smData] = await Promise.all([
-        getSpkBast(),
-        getMitra(),
-        getPegawai(),
-        getDetailPekerjaan(),
+        getSpkBast().catch(() => []),
+        getMitra().catch(() => []),
+        getPegawai().catch(() => []),
+        getDetailPekerjaan().catch(() => []),
         getBastSmPpk().catch(() => []),
       ]);
 
-      // Filter hanya SPK (bukan BAST petugas) untuk tab verifikasi SPK
       const allSpkBast = spkBastData || [];
       _allDocs    = allSpkBast.filter(r => r.Jenis_Dokumen === "SPK" || !r.Jenis_Dokumen);
       _allSmDocs  = smData     || [];
@@ -671,32 +700,8 @@
       updateStats();
       applyFilters();
       applySmFilters();
-
-      document.getElementById("search-input")?.addEventListener("input", applyFilters);
-      document.getElementById("search-sm-input")?.addEventListener("input", applySmFilters);
-
-      document.querySelectorAll("[data-filter]").forEach(btn => {
-        btn.addEventListener("click", function() {
-          document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
-          this.classList.add("active");
-          _activeFilter = this.dataset.filter;
-          applyFilters();
-        });
-      });
-
-      document.querySelectorAll("[data-filter-sm]").forEach(btn => {
-        btn.addEventListener("click", function() {
-          document.querySelectorAll("[data-filter-sm]").forEach(b => b.classList.remove("active"));
-          this.classList.add("active");
-          _activeSmFilter = this.dataset.filterSm;
-          applySmFilters();
-        });
-      });
-
     } catch (err) {
-      showToast("Gagal memuat pengajuan verifikasi: " + err.message, "danger");
-    } finally {
-      setLoading(false);
+      console.warn("Background sync verifikasi-ppk:", err.message);
     }
   });
 </script>
