@@ -817,28 +817,24 @@
   let _bastMappingRows = [];
 
   // ─── Init ────────────────────────────────────────────────────
+  // ─── Init (Instan dengan Cache-First) ────────────────────────
   document.addEventListener("DOMContentLoaded", async () => {
-    setLoading(true);
-    try {
-      // Selalu refresh mapping agar data terbaru dari Katim langsung muncul
-      if (typeof clearCache === "function") clearCache("mappingPetugas");
+    // 1. Render data dari cache secara instan (0 ms) jika ada
+    const cachedMitra   = (typeof lsGet === "function" ? lsGet("mitra")?.data : null) || _DB.mitra;
+    const cachedPegawai = (typeof lsGet === "function" ? lsGet("pegawai")?.data : null) || _DB.pegawai;
+    const cachedKegiatan= (typeof lsGet === "function" ? lsGet("kegiatan")?.data : null) || _DB.kegiatan;
+    const cachedSpkBast = (typeof lsGet === "function" ? lsGet("spkBast")?.data : null) || _DB.spkBast;
+    const cachedBastSm  = (typeof lsGet === "function" ? lsGet("bastSmPpk")?.data : null) || _DB.bastSmPpk;
+    const cachedMapping = (typeof lsGet === "function" ? lsGet("mappingPetugas")?.data : null) || _DB.mappingPetugas;
 
-      const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
-        getMitra(),
-        getPegawai(),
-        getKegiatan(),
-        getSpkBast(),
-        getBastSmPpk().catch(() => []),
-        getMappingPetugas().catch(() => []),
-      ]);
-      _allMitra     = mitra     || [];
-      _allPegawai   = pegawai   || [];
-      _allKegiatan  = kegiatan  || [];
-      _allSpkBast   = spkBast   || [];
-      _allBastSmPpk = smPpk     || [];
-      _allMapping   = mapping   || [];
+    if (cachedMitra)    _allMitra     = cachedMitra;
+    if (cachedPegawai)  _allPegawai   = cachedPegawai;
+    if (cachedKegiatan) _allKegiatan  = cachedKegiatan;
+    if (cachedSpkBast)  _allSpkBast   = cachedSpkBast;
+    if (cachedBastSm)   _allBastSmPpk = cachedBastSm;
+    if (cachedMapping)  _allMapping   = cachedMapping;
 
-      // Filter SPK yang sudah disetujui PPK (cek Status_Generate_SPK dan Status_Verifikasi_PPK)
+    if (cachedMitra && cachedPegawai && cachedKegiatan) {
       _approvedSpkList = _allSpkBast.filter(r => {
         if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
         const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
@@ -852,12 +848,44 @@
       setupDocNumberListeners();
       populateSmBulanDropdown();
       setupFormSubmit();
+      applyAutoDocNumber("spk", false);
+    } else {
+      setLoading(true);
+    }
 
-      // Initial auto-fill nomor SPK if empty
+    // 2. Background Revalidation (update data terbaru secara tenang)
+    try {
+      const [mitra, pegawai, kegiatan, spkBast, smPpk, mapping] = await Promise.all([
+        getMitra().catch(() => []),
+        getPegawai().catch(() => []),
+        getKegiatan().catch(() => []),
+        getSpkBast().catch(() => []),
+        getBastSmPpk().catch(() => []),
+        getMappingPetugas().catch(() => []),
+      ]);
+      _allMitra     = mitra     || [];
+      _allPegawai   = pegawai   || [];
+      _allKegiatan  = kegiatan  || [];
+      _allSpkBast   = spkBast   || [];
+      _allBastSmPpk = smPpk     || [];
+      _allMapping   = mapping   || [];
+
+      _approvedSpkList = _allSpkBast.filter(r => {
+        if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
+        const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
+        return s === "disetujui" || s === "approved" || s === "sudah";
+      });
+
+      populatePegawaiDropdowns();
+      renderMappedOfficerChips();
+      setupSearchListeners();
+      setupDateListeners();
+      setupDocNumberListeners();
+      populateSmBulanDropdown();
+      setupFormSubmit();
       applyAutoDocNumber("spk", false);
     } catch (err) {
-      showToast("Gagal memuat data: " + err.message, "danger");
-      console.error(err);
+      console.warn("[form.html] loadAll:", err.message);
     } finally {
       setLoading(false);
     }

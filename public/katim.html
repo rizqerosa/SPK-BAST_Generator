@@ -2224,6 +2224,8 @@
             const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
             const sat = m.Satuan || "Dokumen";
             const hrg = Number(m.Harga_Satuan || 0);
+            const tot = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+            const batasT = m.Batas_Terlambat || m.Batas_Terlambar || "";
             const pmlText = m.Nama_PML || m.PML || "";
             const pmlBadge = ((m.Peran || "").toLowerCase() === "ppl" && pmlText)
               ? `&nbsp;·&nbsp; <span style="color:#2563eb; font-weight:600;">👤 PML: ${escapeHtml(pmlText)}</span>`

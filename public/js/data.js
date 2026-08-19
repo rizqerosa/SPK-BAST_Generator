@@ -129,21 +129,26 @@ async function _fetchFromNetwork(sheetKey) {
   return [];
 }
 
+// ─── Request Deduplication Map ──────────────────────────────
+const _inflightFetches = {};
+
 // ─── Core: fetch satu sheet (Stale-While-Revalidate) ──────────
 async function fetchSheet(sheetKey) {
-  // 1. In-memory cache (paling cepat)
+  // 1. In-memory cache (paling cepat, 0ms)
   if (_DB[sheetKey] !== null && _DB[sheetKey] !== undefined && Array.isArray(_DB[sheetKey]) && _DB[sheetKey].length > 0) {
     return _DB[sheetKey];
   }
 
-  // 2. LocalStorage cache (cepat, lintas halaman)
+  // 2. LocalStorage cache (cepat lintas halaman, <5ms)
   const cached = lsGet(sheetKey);
   if (cached && Array.isArray(cached.data) && cached.data.length > 0) {
     _DB[sheetKey] = cached.data;
-    // Jika stale atau sudah lewat 20 detik, refresh di background
-    if (cached.isStale || (Date.now() - (cached.ts || 0) > 20000)) {
-      _fetchFromNetwork(sheetKey)
+    // Jika stale atau sudah lewat 3 menit (180s), refresh di background (tanpa memblokir user)
+    const isOld = (Date.now() - (cached.ts || 0) > 180000);
+    if ((cached.isStale || isOld) && !_inflightFetches[sheetKey]) {
+      _inflightFetches[sheetKey] = _fetchFromNetwork(sheetKey)
         .then(freshData => {
+          delete _inflightFetches[sheetKey];
           if (Array.isArray(freshData) && freshData.length > 0) {
             _DB[sheetKey] = freshData;
             lsSet(sheetKey, freshData);
@@ -154,34 +159,46 @@ async function fetchSheet(sheetKey) {
             } catch(e) {}
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          delete _inflightFetches[sheetKey];
+        });
     }
     return cached.data;
   }
 
   // 3. Fetch dari network (pertama kali / belum ada cache sama sekali)
-  try {
-    const data = await _fetchFromNetwork(sheetKey);
-    if (Array.isArray(data) && data.length > 0) {
-      _DB[sheetKey] = data;
-      lsSet(sheetKey, data);
-      return data;
-    }
-    if (cached && Array.isArray(cached.data) && cached.data.length > 0) {
-      _DB[sheetKey] = cached.data;
-      return cached.data;
-    }
-    _DB[sheetKey] = data || [];
-    return _DB[sheetKey];
-  } catch (err) {
-    console.error(`[data.js] Gagal fetch sheet '${sheetKey}':`, err);
-    if (cached && Array.isArray(cached.data) && cached.data.length > 0) {
-      _DB[sheetKey] = cached.data;
-      return cached.data;
-    }
-    if (_DB[sheetKey]) return _DB[sheetKey];
-    return [];
+  if (_inflightFetches[sheetKey]) {
+    return _inflightFetches[sheetKey];
   }
+
+  _inflightFetches[sheetKey] = (async () => {
+    try {
+      const data = await _fetchFromNetwork(sheetKey);
+      if (Array.isArray(data) && data.length > 0) {
+        _DB[sheetKey] = data;
+        lsSet(sheetKey, data);
+        return data;
+      }
+      if (cached && Array.isArray(cached.data) && cached.data.length > 0) {
+        _DB[sheetKey] = cached.data;
+        return cached.data;
+      }
+      _DB[sheetKey] = data || [];
+      return _DB[sheetKey];
+    } catch (err) {
+      console.error(`[data.js] Gagal fetch sheet '${sheetKey}':`, err);
+      if (cached && Array.isArray(cached.data) && cached.data.length > 0) {
+        _DB[sheetKey] = cached.data;
+        return cached.data;
+      }
+      if (_DB[sheetKey]) return _DB[sheetKey];
+      return [];
+    } finally {
+      delete _inflightFetches[sheetKey];
+    }
+  })();
+
+  return _inflightFetches[sheetKey];
 }
 
 // ─── Normalisasi tipe data per sheet ─────────────────────────
