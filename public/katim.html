@@ -497,6 +497,32 @@
                 </div>
               </div>
 
+              <!-- Periode Pelaksanaan (Bulan, Triwulan, Tahap, Subround) -->
+              <div style="font-weight:700; color:var(--gray-800); font-size:.88rem; margin-bottom:10px;">📅 Periode &amp; Tahun Anggaran</div>
+              <div class="form-row" style="margin-bottom:16px;">
+                <div class="form-group" style="flex:1.2;">
+                  <label class="form-label" for="wiz-tipe-periode">Tipe Periode <span class="required">*</span></label>
+                  <select class="form-control" id="wiz-tipe-periode" onchange="onTipePeriodeChange()">
+                    <option value="bulan" selected>Bulan</option>
+                    <option value="triwulan">Triwulan</option>
+                    <option value="tahap">Tahap</option>
+                    <option value="subround">Subround</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="flex:1.5;">
+                  <label class="form-label" for="wiz-detail-periode">Detail Periode <span class="required">*</span></label>
+                  <select class="form-control" id="wiz-detail-periode">
+                    <!-- Dinamis terisi berdasarkan Tipe Periode -->
+                  </select>
+                </div>
+
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label" for="wiz-tahun-periode">Tahun <span class="required">*</span></label>
+                  <input type="number" class="form-control" id="wiz-tahun-periode" value="2026" min="2020" max="2035">
+                </div>
+              </div>
+
               <!-- Jadwal Pelaksanaan -->
               <div class="form-row">
                 <div class="form-group">
@@ -724,7 +750,8 @@
                   <div class="summary-keg-grid">
                     <div>🏛️ <strong>No. Kepka:</strong> <span id="sum-no-kepka">—</span></div>
                     <div>📅 <strong>Tgl Kepka:</strong> <span id="sum-tgl-kepka">—</span></div>
-                    <div>⏱️ <strong>Periode:</strong> <span id="sum-periode">—</span></div>
+                    <div>🗓️ <strong>Periode Kegiatan:</strong> <span id="sum-detail-periode" style="color:var(--brand-primary); font-weight:700;">—</span></div>
+                    <div>⏱️ <strong>Jadwal Pelaksanaan:</strong> <span id="sum-periode">—</span></div>
                     <div>⏰ <strong>Batas Terlambat:</strong> <span id="sum-batas-terlambat">—</span></div>
                   </div>
                 </div>
@@ -953,6 +980,9 @@
       updateTglKepkaDisplay();
       validateKepkaInput();
     });
+
+    // Inisialisasi default dropdown periode
+    onTipePeriodeChange();
   });
 
   async function loadAll() {
@@ -1278,6 +1308,55 @@
     }
   }
 
+  // ─── Periode Dropdown Handlers ──────────────────────────────
+  function onTipePeriodeChange() {
+    const tipeEl   = document.getElementById("wiz-tipe-periode");
+    const detailEl = document.getElementById("wiz-detail-periode");
+    if (!tipeEl || !detailEl) return;
+
+    const tipe = tipeEl.value;
+    detailEl.innerHTML = "";
+
+    if (!tipe) {
+      detailEl.disabled = true;
+      detailEl.innerHTML = `<option value="">-- Pilih Tipe Periode Dulu --</option>`;
+      return;
+    }
+
+    detailEl.disabled = false;
+
+    if (tipe === "bulan") {
+      const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+      const tglMulai = document.getElementById("wiz-tgl-mulai")?.value;
+      const d = tglMulai ? new Date(tglMulai) : new Date();
+      const currentM = !isNaN(d) ? months[d.getMonth()] : "Januari";
+      detailEl.innerHTML = months.map(m => `<option value="${m}" ${m === currentM ? "selected" : ""}>${m}</option>`).join("");
+    } else if (tipe === "triwulan") {
+      const triwulanList = [
+        { val: "I",   label: "Triwulan I (Jan - Mar)" },
+        { val: "II",  label: "Triwulan II (Apr - Jun)" },
+        { val: "III", label: "Triwulan III (Jul - Sep)" },
+        { val: "IV",  label: "Triwulan IV (Okt - Des)" },
+      ];
+      detailEl.innerHTML = triwulanList.map(t => `<option value="${t.val}">${t.label}</option>`).join("");
+    } else if (tipe === "tahap") {
+      const tahapList = [
+        { val: "I",   label: "Tahap I" },
+        { val: "II",  label: "Tahap II" },
+        { val: "III", label: "Tahap III" },
+        { val: "IV",  label: "Tahap IV" },
+      ];
+      detailEl.innerHTML = tahapList.map(th => `<option value="${th.val}">${th.label}</option>`).join("");
+    } else if (tipe === "subround") {
+      const subroundList = [
+        { val: "1", label: "Subround 1 (Jan - Apr)" },
+        { val: "2", label: "Subround 2 (Mei - Agu)" },
+        { val: "3", label: "Subround 3 (Sep - Des)" },
+      ];
+      detailEl.innerHTML = subroundList.map(s => `<option value="${s.val}">${s.label}</option>`).join("");
+    }
+  }
+
   // ─── Wizard Navigation ───────────────────────────────────────
   function startWizard() {
     _currentStep = 1;
@@ -1292,6 +1371,13 @@
     document.getElementById("wiz-no-kepka").value = "";
     document.getElementById("wiz-tgl-kepka").value = "";
     document.getElementById("tgl-kepka-display").textContent = "—";
+
+    const tipeEl = document.getElementById("wiz-tipe-periode");
+    if (tipeEl) tipeEl.value = "bulan";
+    const thnEl = document.getElementById("wiz-tahun-periode");
+    if (thnEl) thnEl.value = "2026";
+    onTipePeriodeChange();
+
     clearPetugasSearchInput();
 
     document.getElementById("wizard-section").style.display = "block";
@@ -1318,21 +1404,29 @@
           showToast("Pilih kegiatan terlebih dahulu!", "warning"); return;
         }
 
-        const tglMulai = document.getElementById("wiz-tgl-mulai").value;
-        const tglSls   = document.getElementById("wiz-tgl-selesai").value;
-        const noKepka  = document.getElementById("wiz-no-kepka").value.trim();
-        const tglKepka = document.getElementById("wiz-tgl-kepka").value;
+        const tglMulai      = document.getElementById("wiz-tgl-mulai").value;
+        const tglSls        = document.getElementById("wiz-tgl-selesai").value;
+        const noKepka       = document.getElementById("wiz-no-kepka").value.trim();
+        const tglKepka      = document.getElementById("wiz-tgl-kepka").value;
+        const tipePeriode   = document.getElementById("wiz-tipe-periode")?.value || "bulan";
+        const detailPeriode = document.getElementById("wiz-detail-periode")?.value || "";
+        const tahunPeriode  = parseInt(document.getElementById("wiz-tahun-periode")?.value || "2026", 10);
 
-        if (!tglMulai) { showToast("Isi Tanggal Mulai kegiatan!", "warning"); return; }
-        if (!tglSls)   { showToast("Isi Tanggal Selesai kegiatan!", "warning"); return; }
-        if (!noKepka)  { showToast("Isi Nomor SK Kepala (Kepka)!", "warning"); return; }
-        if (!tglKepka) { showToast("Isi Tanggal SK Kepala (Kepka)!", "warning"); return; }
+        if (!tipePeriode)   { showToast("Pilih Tipe Periode!", "warning"); return; }
+        if (!detailPeriode) { showToast("Pilih Detail Periode!", "warning"); return; }
+        if (!tglMulai)      { showToast("Isi Tanggal Mulai kegiatan!", "warning"); return; }
+        if (!tglSls)        { showToast("Isi Tanggal Selesai kegiatan!", "warning"); return; }
+        if (!noKepka)       { showToast("Isi Nomor SK Kepala (Kepka)!", "warning"); return; }
+        if (!tglKepka)      { showToast("Isi Tanggal SK Kepala (Kepka)!", "warning"); return; }
 
         _wizSelectedKegiatan.tglMulai       = tglMulai;
         _wizSelectedKegiatan.tglSelesai     = tglSls;
         _wizSelectedKegiatan.batasTerlambat = document.getElementById("wiz-batas-terlambat").value || "";
         _wizSelectedKegiatan.noKepka        = noKepka;
         _wizSelectedKegiatan.tglKepka       = tglKepka;
+        _wizSelectedKegiatan.tipePeriode    = tipePeriode;
+        _wizSelectedKegiatan.detailPeriode  = detailPeriode;
+        _wizSelectedKegiatan.tahunPeriode   = tahunPeriode;
 
         updateStep2Banner();
       }
@@ -1368,9 +1462,13 @@
       const d = new Date(str);
       return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short", year:"numeric"});
     };
+    const tipe = _wizSelectedKegiatan.tipePeriode ? _wizSelectedKegiatan.tipePeriode.toUpperCase() : "PERIODE";
+    const detail = _wizSelectedKegiatan.detailPeriode || "";
+    const thn = _wizSelectedKegiatan.tahunPeriode || 2026;
     document.getElementById("step2-keg-title").textContent = `📌 Kegiatan: ${_wizSelectedKegiatan.nama}`;
     document.getElementById("step2-keg-meta").innerHTML =
-      `📅 Periode: <strong>${formatTgl(_wizSelectedKegiatan.tglMulai)} – ${formatTgl(_wizSelectedKegiatan.tglSelesai)}</strong>` +
+      `🗓️ <strong>${tipe}: ${detail} (${thn})</strong> &nbsp;|&nbsp; ` +
+      `📅 Jadwal: <strong>${formatTgl(_wizSelectedKegiatan.tglMulai)} – ${formatTgl(_wizSelectedKegiatan.tglSelesai)}</strong>` +
       ` &nbsp;|&nbsp; 🏛️ Kepka: <strong>${escapeHtml(_wizSelectedKegiatan.noKepka)}</strong>` +
       (_wizSelectedKegiatan.batasTerlambat ? ` &nbsp;|&nbsp; ⏰ Terlambat: <strong>${formatTgl(_wizSelectedKegiatan.batasTerlambat)}</strong>` : '');
   }
@@ -1848,9 +1946,14 @@
       return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"long", year:"numeric"});
     };
 
+    const tipe   = (_wizSelectedKegiatan.tipePeriode || "bulan").toUpperCase();
+    const detail = _wizSelectedKegiatan.detailPeriode || "—";
+    const thn    = _wizSelectedKegiatan.tahunPeriode || 2026;
+
     document.getElementById("sum-keg-nama").textContent         = _wizSelectedKegiatan.nama;
     document.getElementById("sum-no-kepka").textContent         = _wizSelectedKegiatan.noKepka || "—";
     document.getElementById("sum-tgl-kepka").textContent        = formatTglLong(_wizSelectedKegiatan.tglKepka);
+    document.getElementById("sum-detail-periode").textContent   = `${tipe}: ${detail} (${thn})`;
     document.getElementById("sum-periode").textContent          = `${formatTglLong(_wizSelectedKegiatan.tglMulai)} s/d ${formatTglLong(_wizSelectedKegiatan.tglSelesai)}`;
     document.getElementById("sum-batas-terlambat").textContent  = _wizSelectedKegiatan.batasTerlambat ? formatTglLong(_wizSelectedKegiatan.batasTerlambat) : "—";
 
@@ -1891,12 +1994,16 @@
 
     const btnSimpan = document.getElementById("btn-simpan-penugasan");
     if (btnSimpan) {
+      btnSimpan.disabled = false;
       btnSimpan.textContent = `💾 Simpan Penugasan (${total} Petugas — Rp ${formatRupiah(totalAnggaran)})`;
     }
   }
 
-  // ─── Simpan Penugasan ke Google Sheets ────────────────────────
+  // ─── Simpan Penugasan ke Google Sheets (Anti-Double-Submit) ───
+  let _isSavingMapping = false;
+
   async function simpanPenugasan() {
+    if (_isSavingMapping) return;
     if (!_wizSelectedKegiatan) {
       showToast("Kegiatan belum dipilih!", "warning"); return;
     }
@@ -1904,10 +2011,17 @@
       showToast("Tambahkan minimal 1 petugas!", "warning"); return;
     }
 
+    _isSavingMapping = true;
+    const btnSimpan = document.getElementById("btn-simpan-penugasan");
+    if (btnSimpan) {
+      btnSimpan.disabled = true;
+      btnSimpan.innerHTML = `⏳ Menyimpan... Mohon Tunggu`;
+    }
+
     const currUser = (typeof Auth !== "undefined" && Auth.getUser) ? Auth.getUser() : {};
     const keg = _wizSelectedKegiatan;
 
-    setLoading(true);
+    setLoading(true, "Menyimpan penugasan ke database...");
     try {
       for (const p of _wizAssignedOfficers) {
         const vol = Number(p.volume) || 1;
@@ -1918,8 +2032,8 @@
         const tglMulaiVal = p.tglMulai || keg.tglMulai || "";
         const tglMulaiDate = tglMulaiVal ? new Date(tglMulaiVal) : new Date();
         const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-        const mMonth = !isNaN(tglMulaiDate) ? months[tglMulaiDate.getMonth()] : (keg.bulan || "");
-        const mYear = !isNaN(tglMulaiDate) ? tglMulaiDate.getFullYear() : (parseInt(keg.tahun) || new Date().getFullYear());
+        const mMonth = !isNaN(tglMulaiDate) ? months[tglMulaiDate.getMonth()] : "";
+        const mYear = !isNaN(tglMulaiDate) ? tglMulaiDate.getFullYear() : new Date().getFullYear();
         const mQuarter = !isNaN(tglMulaiDate) ? Math.floor(tglMulaiDate.getMonth() / 3) + 1 : 1;
         const mSubround = !isNaN(tglMulaiDate) ? (tglMulaiDate.getMonth() < 4 ? 1 : (tglMulaiDate.getMonth() < 8 ? 2 : 3)) : 1;
         const batasVal = p.batasTerlambat || keg.batasTerlambat || "";
@@ -1932,6 +2046,22 @@
             const foundM = _allMitra.find(m => String(getMitraId(m)) === String(p.pmlId));
             pmlNameStr = foundP ? getPegawaiName(foundP) : (foundM ? getMitraName(foundM) : String(p.pmlId));
           }
+        }
+
+        let finalBulan = mMonth;
+        let finalTriwulan = mQuarter;
+        let finalTahap = "";
+        let finalSubround = mSubround;
+        let finalTahun = keg.tahunPeriode || mYear;
+
+        if (keg.tipePeriode === "bulan" && keg.detailPeriode) {
+          finalBulan = keg.detailPeriode;
+        } else if (keg.tipePeriode === "triwulan" && keg.detailPeriode) {
+          finalTriwulan = keg.detailPeriode;
+        } else if (keg.tipePeriode === "tahap" && keg.detailPeriode) {
+          finalTahap = keg.detailPeriode;
+        } else if (keg.tipePeriode === "subround" && keg.detailPeriode) {
+          finalSubround = keg.detailPeriode;
         }
 
         const record = {
@@ -1955,11 +2085,11 @@
           Tanggal_Dibuat:      new Date().toISOString(),
           volume:              vol,
           Volume:              vol,
-          Bulan:               mMonth,
-          Triwulan:            mQuarter,
-          Tahap:               "",
-          Subround:            mSubround,
-          Tahun:               mYear,
+          Bulan:               finalBulan,
+          Triwulan:            finalTriwulan,
+          Tahap:               finalTahap,
+          Subround:            finalSubround,
+          Tahun:               finalTahun,
           Satuan:              sat,
           Harga_Satuan:        hrg,
           Total_Honor:         tot,
@@ -1968,18 +2098,32 @@
       }
 
       clearCache("mappingPetugas");
-      showToast(`✅ Berhasil menyimpan penugasan ${_wizAssignedOfficers.length} petugas untuk kegiatan "${keg.nama.substring(0,40)}"!`, "success", 5000);
+      const targetKegNama = keg.nama;
       cancelWizard();
 
+      showToast(`✅ Berhasil menyimpan penugasan ${_wizAssignedOfficers.length} petugas untuk kegiatan "${targetKegNama.substring(0,40)}"!`, "success", 5000);
+
       // Reload mapping
-      setLoading(true);
       _allMapping = await getMappingPetugas().catch(() => []);
       renderMappingList();
       updateStats();
+
+      // Scroll ke bagian daftar mapping agar user langsung bisa melihat hasilnya
+      setTimeout(() => {
+        const daftarSec = document.getElementById("daftar-section");
+        if (daftarSec) {
+          daftarSec.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+
     } catch (err) {
       showToast("Gagal menyimpan: " + err.message, "danger");
       console.error(err);
     } finally {
+      _isSavingMapping = false;
+      if (btnSimpan) {
+        btnSimpan.disabled = false;
+      }
       setLoading(false);
     }
   }
