@@ -372,11 +372,18 @@
     }
   }
 
+  function getDocStatus(status) {
+    const s = String(status || "").toLowerCase().trim();
+    if (s === "disetujui" || s === "approved" || s === "sudah") return "Disetujui";
+    if (s === "ditolak" || s === "rejected") return "Ditolak";
+    return "Menunggu_Verifikasi";
+  }
+
   function renderVerifBadge(status) {
-    const s = String(status || "Menunggu_Verifikasi").toLowerCase();
-    if (s === "disetujui" || s === "approved") {
+    const st = getDocStatus(status);
+    if (st === "Disetujui") {
       return `<span class="badge-ppk-approved">🟢 Disetujui PPK</span>`;
-    } else if (s === "ditolak" || s === "rejected") {
+    } else if (st === "Ditolak") {
       return `<span class="badge-ppk-rejected">🔴 Ditolak PPK</span>`;
     } else {
       return `<span class="badge-ppk-pending">🟡 Menunggu Verifikasi</span>`;
@@ -408,7 +415,7 @@
           <td style="font-size:.85rem;">${doc.Judul_Pekerjaan_Dokumen || "—"}</td>
           <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
           <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
-          <td>${renderVerifBadge(doc.Status_Verifikasi_PPK)}</td>
+          <td>${renderVerifBadge(doc.Status_Generate_SPK || doc.Status_Verifikasi_PPK)}</td>
           <td>
             <div class="action-btns">
               <button type="button" class="btn btn-primary btn-sm" onclick="openVerifModal('${doc.ID_Dokumen}')">
@@ -433,7 +440,7 @@
         <td><div style="font-weight:600; font-size:.88rem;">${doc.Judul_Pekerjaan_Dokumen || doc.Uraian_Tugas || "—"}</div></td>
         <td style="font-size:.82rem;">${doc.Bulan || "—"} ${doc.Tahun || ""}</td>
         <td class="tr" style="font-weight:600; font-size:.85rem;">Rp ${formatRupiah(doc.Total_Honor || 0)}</td>
-        <td>${renderVerifBadge(doc.Status_Verifikasi_PPK)}</td>
+        <td>${renderVerifBadge(doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK)}</td>
         <td>
           <div class="action-btns">
             <button type="button" class="btn btn-primary btn-sm" onclick="openSmVerifModal('${doc.ID_BAST_SM_PPK}')">
@@ -448,11 +455,11 @@
   function applySmFilters() {
     const q = (document.getElementById("search-sm-input")?.value || "").toLowerCase().trim();
     const data = _allSmDocs.filter(d => {
-      const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      const vStatus = getDocStatus(d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK);
       let matchStatus = true;
-      if (_activeSmFilter === "Disetujui")          matchStatus = (vStatus === "disetujui");
-      else if (_activeSmFilter === "Ditolak")        matchStatus = (vStatus === "ditolak");
-      else if (_activeSmFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "menunggu_verifikasi" || vStatus === "" || !d.Status_Verifikasi_PPK);
+      if (_activeSmFilter === "Disetujui")          matchStatus = (vStatus === "Disetujui");
+      else if (_activeSmFilter === "Ditolak")        matchStatus = (vStatus === "Ditolak");
+      else if (_activeSmFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "Menunggu_Verifikasi");
       if (!matchStatus) return false;
       if (!q) return true;
       const judul = String(d.Judul_Pekerjaan_Dokumen || d.Uraian_Tugas || "").toLowerCase();
@@ -483,11 +490,11 @@
   function applyFilters() {
     const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
     const data = _allDocs.filter(d => {
-      const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      const vStatus = getDocStatus(d.Status_Generate_SPK || d.Status_Verifikasi_PPK);
       let matchStatus = false;
       if (_activeFilter === "all") matchStatus = true;
-      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "menunggu_verifikasi" || vStatus === "pending" || vStatus === "" || !d.Status_Verifikasi_PPK);
-      else matchStatus = vStatus === _activeFilter.toLowerCase();
+      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "Menunggu_Verifikasi");
+      else matchStatus = (vStatus.toLowerCase() === _activeFilter.toLowerCase());
 
       const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
         .some(v => String(v || "").toLowerCase().includes(q));
@@ -556,11 +563,13 @@
       setLoading(true);
       try {
         await updateInSheet("bastSmPpk", "ID_BAST_SM_PPK", _selectedSmDoc.ID_BAST_SM_PPK, {
+          Status_Generate_BAST_SM_PPK: statusBaru,
           Status_Verifikasi_PPK: statusBaru,
           Catatan_Verifikasi_PPK: catatan,
-          Tanggal_Verifikasi_PPK: new Date().toISOString(),
+          Tanggal_Verifikasi_PPK: new Date().toISOString().split("T")[0],
           PPK_Verifikator: verifikatorInfo
         });
+        _selectedSmDoc.Status_Generate_BAST_SM_PPK = statusBaru;
         _selectedSmDoc.Status_Verifikasi_PPK = statusBaru;
         clearCache("bastSmPpk");
         showToast(`BAST SM→PPK berhasil ${statusBaru === "Disetujui" ? "DISETUJUI 🟢" : "DITOLAK 🔴"}`, statusBaru === "Disetujui" ? "success" : "warning");
@@ -589,18 +598,20 @@
 
     setLoading(true);
     try {
-      // Direct update to sheet
+      // Direct update to sheet — update both Status_Generate_SPK and Status_Verifikasi_PPK
       await updateInSheet("spkBast", "ID_Dokumen", _selectedDoc.ID_Dokumen, {
+        Status_Generate_SPK: statusBaru,
         Status_Verifikasi_PPK: statusBaru,
         Catatan_Verifikasi_PPK: catatan,
-        Tanggal_Verifikasi_PPK: new Date().toISOString(),
+        Tanggal_Verifikasi_PPK: new Date().toISOString().split("T")[0],
         PPK_Verifikator: verifikatorInfo
       });
 
       // Update local array
+      _selectedDoc.Status_Generate_SPK = statusBaru;
       _selectedDoc.Status_Verifikasi_PPK = statusBaru;
       _selectedDoc.Catatan_Verifikasi_PPK = catatan;
-      _selectedDoc.Tanggal_Verifikasi_PPK = new Date().toISOString();
+      _selectedDoc.Tanggal_Verifikasi_PPK = new Date().toISOString().split("T")[0];
       _selectedDoc.PPK_Verifikator = verifikatorInfo;
 
       clearCache("spkBast");
@@ -620,12 +631,10 @@
     // Count from both SPK and SM→PPK docs
     const spkOnly = _allDocs.filter(d => d.Jenis_Dokumen === "SPK" || !d.Jenis_Dokumen);
     const total   = spkOnly.length + _allSmDocs.length;
-    const pending = [...spkOnly, ..._allSmDocs].filter(d => {
-      const s = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
-      return s === "menunggu_verifikasi" || s === "pending" || s === "" || !d.Status_Verifikasi_PPK;
-    }).length;
-    const approved = [...spkOnly, ..._allSmDocs].filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui").length;
-    const rejected = [...spkOnly, ..._allSmDocs].filter(d => String(d.Status_Verifikasi_PPK || "").toLowerCase() === "ditolak").length;
+    const allList = [...spkOnly, ..._allSmDocs];
+    const pending = allList.filter(d => getDocStatus(d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK) === "Menunggu_Verifikasi").length;
+    const approved = allList.filter(d => getDocStatus(d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK) === "Disetujui").length;
+    const rejected = allList.filter(d => getDocStatus(d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK) === "Ditolak").length;
 
     document.getElementById("stat-total").textContent    = total;
     document.getElementById("stat-pending").textContent  = pending;

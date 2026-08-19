@@ -431,8 +431,9 @@
         }
       }
 
-      const vStatus = String(doc.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
-      const isApproved = (vStatus === "disetujui" || vStatus === "approved");
+      const rawStatus = doc.Status_Generate_SPK || doc.Status_Generate_BAST_SM_PPK || doc.Status_Verifikasi_PPK || "Belum";
+      const vStatus = String(rawStatus).toLowerCase().trim();
+      const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
       const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
 
       let statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🟡 Menunggu PPK</span>`;
@@ -505,11 +506,17 @@
         if (jenis !== _activeJenisFilter) return false;
       }
       // Status filter
-      const vStatus = String(d.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+      const rawStatus = d.Status_Generate_SPK || d.Status_Generate_BAST_SM_PPK || d.Status_Verifikasi_PPK || "Belum";
+      const vStatus = String(rawStatus).toLowerCase().trim();
+      const isApproved = (vStatus === "disetujui" || vStatus === "approved" || vStatus === "sudah");
+      const isRejected = (vStatus === "ditolak" || vStatus === "rejected");
+      const isPending = !isApproved && !isRejected;
+
       let matchStatus = false;
       if (_activeFilter === "all") matchStatus = true;
-      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = (vStatus === "menunggu_verifikasi" || vStatus === "pending" || vStatus === "" || !d.Status_Verifikasi_PPK);
-      else matchStatus = vStatus === _activeFilter.toLowerCase();
+      else if (_activeFilter === "Menunggu_Verifikasi") matchStatus = isPending;
+      else if (_activeFilter === "Disetujui") matchStatus = isApproved;
+      else if (_activeFilter === "Ditolak") matchStatus = isRejected;
 
       const matchQ = !q || [d.Judul_Pekerjaan_Dokumen, d.Nomor_SPK, d.No_SPK, d.ID_Dokumen, d.ID_Mitra, d.Bulan]
         .some(v => String(v || "").toLowerCase().includes(q));
@@ -517,6 +524,7 @@
     });
     renderTable(data);
   }
+
 
   // ─── Export Modal ────────────────────────────────────────────
   function openExportModal(docId) {

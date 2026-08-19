@@ -216,11 +216,12 @@
   }
 
   function renderPpkStatusBanner(record) {
-    const v = String(record?.Status_Verifikasi_PPK || "Menunggu_Verifikasi").toLowerCase();
+    const raw = record?.Status_Generate_SPK || record?.Status_Generate_BAST_SM_PPK || record?.Status_Verifikasi_PPK || "Menunggu_Verifikasi";
+    const v = String(raw).toLowerCase().trim();
     const box = document.getElementById("ppk-status-banner");
     if (!box) return;
     const base = "display:flex; padding:14px 18px; border-radius:var(--radius-md); border:1px solid; margin-bottom:14px; align-items:center; gap:12px;";
-    if (v === "disetujui" || v === "approved") {
+    if (v === "disetujui" || v === "approved" || v === "sudah") {
       box.style.cssText = base + "background:#dcfce7; border-color:#bbf7d0; color:#166534;";
       box.innerHTML = `<span style="font-size:1.2rem;">🟢</span><div><strong>DISETUJUI PPK</strong><div style="font-size:.8rem;opacity:.9;">Dokumen telah disetujui resmi oleh PPK.</div></div>`;
     } else if (v === "ditolak" || v === "rejected") {

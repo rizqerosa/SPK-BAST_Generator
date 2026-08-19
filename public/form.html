@@ -775,11 +775,12 @@
       _allBastSmPpk = smPpk     || [];
       _allMapping   = mapping   || [];
 
-      // Filter SPK yang sudah disetujui PPK
-      _approvedSpkList = _allSpkBast.filter(r =>
-        (r.Jenis_Dokumen === "SPK" || !r.Jenis_Dokumen) &&
-        String(r.Status_Verifikasi_PPK || "").toLowerCase() === "disetujui"
-      );
+      // Filter SPK yang sudah disetujui PPK (cek Status_Generate_SPK dan Status_Verifikasi_PPK)
+      _approvedSpkList = _allSpkBast.filter(r => {
+        if (r.Jenis_Dokumen && r.Jenis_Dokumen !== "SPK") return false;
+        const s = String(r.Status_Generate_SPK || r.Status_Verifikasi_PPK || "").toLowerCase().trim();
+        return s === "disetujui" || s === "approved" || s === "sudah";
+      });
 
       populatePegawaiDropdowns();
       setupSearchListeners();
