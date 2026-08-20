@@ -548,13 +548,13 @@
                 <div class="form-group">
                   <label class="form-label" for="wiz-no-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
                   <div style="display:flex; gap:8px;">
-                    <input type="text" class="form-control" id="wiz-no-kepka" placeholder="Nomor xx Tahun xxxx">
+                    <input type="text" class="form-control" id="wiz-no-kepka" placeholder="xx Tahun xxxx">
                     <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoKepkaNumber(true)"
                             style="white-space:nowrap; padding:0 14px; font-weight:600;" title="Generate nomor Kepka urut berikutnya dari database">
                       ⚡ Auto
                     </button>
                   </div>
-                  <div id="wiz-kepka-status" class="format-hint">Format: Nomor xx Tahun xxxx</div>
+                  <div id="wiz-kepka-status" class="format-hint">Format: xx Tahun xxxx</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="wiz-tgl-kepka">Tanggal SK Kepala <span class="required">*</span></label>
@@ -1106,7 +1106,7 @@
     const yr = targetYear || getKepkaYear();
     const maxSeq = getMaxKepkaSeq(yr);
     const nextSeq = maxSeq + 1; // Mulai dari 1 jika belum ada
-    return `Nomor ${nextSeq} Tahun ${yr}`;
+    return `${nextSeq} Tahun ${yr}`;
   }
 
   function checkKepkaDuplicate(val) {
@@ -1132,7 +1132,7 @@
     // Nomor Kepka bebas (boleh dobel, boleh tidak urut, boleh kosong)
     const statusEl = document.getElementById("wiz-kepka-status");
     if (statusEl) {
-      statusEl.innerHTML = `Format: Nomor xx Tahun xxxx`;
+      statusEl.innerHTML = `Format: xx Tahun xxxx`;
     }
   }
 
@@ -2108,6 +2108,16 @@
           finalBulan = mMonth;
         }
 
+        const uraianKegiatanLengkap = buildJudulDenganPeriode(keg.nama, {
+          detailPeriode: keg.detailPeriode,
+          tahunPeriode: keg.tahunPeriode,
+          Bulan: finalBulan,
+          Triwulan: finalTriwulan,
+          Tahap: finalTahap,
+          Subround: finalSubround,
+          Tahun: finalTahun
+        });
+
         const record = {
           ID_Mapping:          generateId(),
           ID_Mitra_atau_NIP:   p.id,
@@ -2116,7 +2126,7 @@
           Nama_PML:            pmlNameStr,
           PML:                 pmlNameStr,
           ID_Kegiatan:         keg.id,
-          Uraian_Kegiatan:     keg.nama,
+          Uraian_Kegiatan:     uraianKegiatanLengkap,
           Peran:               p.peran,
           Tanggal_Mulai:       tglMulaiVal,
           Tanggal_Selesai:     p.tglSelesai || keg.tglSelesai || "",
@@ -2269,7 +2279,7 @@
         container.innerHTML = Object.entries(grouped).map(([key, items], idx) => {
           if (!items || items.length === 0) return "";
           const first = items[0] || {};
-          const kegNama = first.Uraian_Kegiatan || first.Uraian_Tugas || first.ID_Kegiatan || "—";
+          const kegNama = buildJudulDenganPeriode(first.Uraian_Kegiatan || first.Uraian_Tugas || first.ID_Kegiatan || "—", first);
           const noKepka = first.Nomor_Kepka || "—";
           const tglMulai = first.Tanggal_Mulai;
           const tglSls   = first.Tanggal_Selesai;
@@ -2370,7 +2380,7 @@
                 ${(m.Peran||'ppl').toUpperCase()}
               </span>
               <div class="msr-title" style="flex:1;">
-                <strong style="color:var(--gray-900);">${escapeHtml(m.Uraian_Kegiatan || m.Uraian_Tugas || m.ID_Kegiatan || '—')}</strong>
+                <strong style="color:var(--gray-900);">${escapeHtml(buildJudulDenganPeriode(m.Uraian_Kegiatan || m.Uraian_Tugas || m.ID_Kegiatan || '—', m))}</strong>
                 <span style="font-size:.73rem; color:var(--gray-500); margin-left:6px;">(Kepka: ${escapeHtml(m.Nomor_Kepka || '—')})</span>
                 <div style="font-size:.74rem; color:var(--gray-600); margin-top:2px;">
                   📦 Volume: <strong>${vol} ${escapeHtml(sat)}</strong>

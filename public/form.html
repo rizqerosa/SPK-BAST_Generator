@@ -410,13 +410,13 @@
                   <label class="form-label" for="spk-no-spk">Nomor SPK <span class="required">*</span></label>
                   <div style="display:flex; gap:8px;">
                     <input type="text" class="form-control" id="spk-no-spk"
-                           name="no_spk" placeholder="Nomor xx Tahun xxxx" required>
+                           name="no_spk" placeholder="xx Tahun xxxx" required>
                     <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('spk', true)"
                             style="white-space:nowrap; padding:0 14px; font-weight:600;" title="Generate nomor urut berikutnya dari database">
                       ⚡ Auto
                     </button>
                   </div>
-                  <div id="spk-no-status" class="format-hint">Format: Nomor xx Tahun xxxx</div>
+                  <div id="spk-no-status" class="format-hint">Format: xx Tahun xxxx</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="spk-tgl-spk">Tanggal SPK <span class="required">*</span></label>
@@ -444,7 +444,7 @@
                 <div class="form-group">
                   <label class="form-label" for="spk-nomor-kepka">Nomor SK Kepala (Kepka) <span class="required">*</span></label>
                   <input type="text" class="form-control" id="spk-nomor-kepka"
-                         name="nomor_kepka" placeholder="Nomor xx Tahun xxxx" required>
+                         name="nomor_kepka" placeholder="xx Tahun xxxx" required>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="spk-tgl-kepka">Tanggal SK Kepala <span class="required">*</span></label>
@@ -1339,7 +1339,14 @@
       }
       if (judulEl && !judulEl.value) {
         const uraianList = mappingItems.map(m => m.Uraian_Kegiatan || "").filter(Boolean);
-        judulEl.value = uraianList.join(", ").toUpperCase().substring(0, 200);
+        const cleanItems = uraianList.map(item => {
+          return String(item)
+            .replace(/\b(bulan|triwulan|subround|tahap|semester)?\s*(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|\d{4})\b/gi, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }).filter(Boolean);
+        const rawTitle = (cleanItems.length > 0 ? cleanItems.join(", ") : uraianList.join(", ")).trim();
+        judulEl.value = buildJudulDenganPeriode(rawTitle, firstMapping, mappingItems).substring(0, 200);
       }
     }
   }
@@ -1745,7 +1752,7 @@
 
     const val = inputEl.value.trim();
     if (!val) {
-      statusEl.innerHTML = `Format: Nomor xxx Tahun xxxx`;
+      statusEl.innerHTML = (docType === "spk") ? `Format: xx Tahun xxxx` : `Format: Nomor xxx Tahun xxxx`;
       return;
     }
 
@@ -2200,7 +2207,13 @@
       Tanggal_BAST_PML_SM:     "",
       No_BAST_SM_PPK:          "",
       Tanggal_BAST_SM_PPK:     "",
-      Judul_Pekerjaan_Dokumen: judul,
+      Judul_Pekerjaan_Dokumen: buildJudulDenganPeriode(judul, {
+        Bulan: meta.bulan,
+        Triwulan: meta.triwulan,
+        Subround: meta.subround,
+        Tahun: meta.tahun,
+        ...firstM
+      }, _spkMappingRows),
       Tanggal_Mulai:           tglMulai,
       Tanggal_Selesai:         tglSelesai,
       Batas_Penyerahan:        batasTerlambat,
@@ -2502,18 +2515,28 @@
     const meta     = getPeriodMeta(tglBast, bulan, parseInt(tahun));
     const tBAST    = tanggalTerbilang(tglBast);
 
+<<<<<<< Updated upstream
     const docId = (_isEditMode && _editDocId) ? _editDocId : generateId("BSM");
+=======
+    const docId = generateId("BSM");
+    const finalJudul = buildJudulDenganPeriode(judul, {
+      Bulan: meta.bulan,
+      Triwulan: meta.triwulan,
+      Subround: meta.subround,
+      Tahun: meta.tahun
+    });
+>>>>>>> Stashed changes
     const record = {
       ID_BAST_SM_PPK:              docId,
       Hari:                        tBAST.hari,
       Tanggal:                     tglBast,
       Bulan:                       meta.bulan,
       Tahun:                       meta.tahun,
-      Uraian_Tugas:                judul,
+      Uraian_Tugas:                finalJudul,
       PPK:                         ppk,
       Ketua_Tim:                   ketua,
       No_BAST_SM_PPK:              noBast,
-      Judul_Pekerjaan_Dokumen:     judul,
+      Judul_Pekerjaan_Dokumen:     finalJudul,
       Status_Generate_BAST_SM_PPK: "Belum",
       Triwulan:                    "",
       Tahap:                       "",
