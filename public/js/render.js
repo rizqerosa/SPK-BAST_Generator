@@ -332,9 +332,17 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   // === Helper: Build judul & uraian pekerjaan dengan periode ===
   const judulDenganPeriode = buildJudulDenganPeriode(record, details);
 
-  // === Helper: Clean NO_SPK — strip "Nomor" prefix, uppercase ===
-  let cleanNoSpk = record.Nomor_SPK || record.No_SPK || "";
-  cleanNoSpk = cleanNoSpk.replace(/^\s*nomor\s+/i, "").toUpperCase();
+  // === Helper: Clean NO_SPK & NO_SPK_HEADER ===
+  const rawNoSpk = (record.Nomor_SPK || record.No_SPK || "").trim();
+  let cleanNoSpk = rawNoSpk;
+  let noSpkHeader = rawNoSpk;
+  if (/^nomor\s+/i.test(rawNoSpk)) {
+    noSpkHeader = rawNoSpk;
+    cleanNoSpk = rawNoSpk.replace(/^nomor\s+/i, "").trim();
+  } else {
+    noSpkHeader = rawNoSpk ? `Nomor ${rawNoSpk}` : "";
+    cleanNoSpk = rawNoSpk;
+  }
 
   // === Helper: URAIAN_PEKERJAAN lowercase (bersihkan awalan 'hasil ' jika ada, dan sertakan periode) ===
   let cleanUraian = judulDenganPeriode;
@@ -392,6 +400,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     // === Header & nomor ===
     JUDUL_PEKERJAAN_DOKUMEN: judulDenganPeriode,
     NO_SPK:                  cleanNoSpk,
+    NO_SPK_HEADER:           noSpkHeader,
     URAIAN_PEKERJAAN:        uraianPekerjaanLower,
 
     // === Tanggal SPK (terbilang) ===
