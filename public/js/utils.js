@@ -99,6 +99,37 @@ function tanggalTerbilang(tanggalISO) {
 }
 
 /**
+ * Dapatkan metadata periode (Bulan, Tahun, Triwulan, Subround, Semester)
+ */
+function getPeriodMeta(dateStr, bulanName, tahunNum) {
+  const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  let d = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(d.getTime())) d = new Date();
+
+  let bName = bulanName;
+  if (!bName) {
+    bName = months[d.getMonth()];
+  }
+
+  let mIdx = months.findIndex(m => String(m).toLowerCase() === String(bName).toLowerCase());
+  if (mIdx === -1) mIdx = d.getMonth();
+
+  const yr = tahunNum || (!isNaN(d.getFullYear()) ? d.getFullYear() : new Date().getFullYear());
+  const triwulan = Math.floor(mIdx / 3) + 1;
+  const subround = mIdx < 4 ? 1 : (mIdx < 8 ? 2 : 3);
+  const semester = mIdx < 6 ? 1 : 2;
+
+  return {
+    bulan: bName || months[mIdx],
+    tahun: String(yr),
+    triwulan: String(triwulan),
+    subround: String(subround),
+    semester: String(semester),
+    monthIndex: mIdx
+  };
+}
+
+/**
  * Format angka ke format mata uang Indonesia (1.234.567)
  */
 function formatRupiah(angka) {
