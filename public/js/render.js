@@ -89,6 +89,80 @@ function renderTabelLampiran(detailPekerjaanArray) {
 }
 
 /**
+ * Bangun judul pekerjaan dokumen lengkap dengan periode yang sesuai (Bulan/Triwulan/Tahap/Subround/Semester/Tahun).
+ */
+function buildJudulDenganPeriode(record, details = []) {
+  const d0 = details.length > 0 ? details[0] : {};
+  const rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || d0.Uraian_Tugas || "").trim();
+  if (!rawJudul) return "";
+
+  const tipePeriode = String(record.Tipe_Periode || record.tipePeriode || d0.Tipe_Periode || d0.tipePeriode || "").toLowerCase().trim();
+  const subroundVal = record.Subround || d0.Subround || "";
+  const semesterVal = record.Semester || d0.Semester || "";
+  const triwulanVal = record.Triwulan || d0.Triwulan || "";
+  const tahapVal    = record.Tahap    || d0.Tahap    || "";
+  const bulanVal    = record.Bulan    || d0.Bulan    || "";
+  const tahunVal    = record.Tahun    || d0.Tahun    || (record.Tanggal_SPK ? new Date(record.Tanggal_SPK).getFullYear() : (record.Tanggal ? new Date(record.Tanggal).getFullYear() : ""));
+
+  const periodeInfoParts = [];
+
+  if (tipePeriode === "subround" && subroundVal) {
+    periodeInfoParts.push(`Subround ${subroundVal}`);
+  } else if (tipePeriode === "semester" && semesterVal) {
+    periodeInfoParts.push(`Semester ${semesterVal}`);
+  } else if (tipePeriode === "triwulan" && triwulanVal) {
+    periodeInfoParts.push(`Triwulan ${triwulanVal}`);
+  } else if (tipePeriode === "tahap" && tahapVal) {
+    periodeInfoParts.push(`Tahap ${tahapVal}`);
+  } else if (tipePeriode === "bulan" && bulanVal) {
+    periodeInfoParts.push(`Bulan ${bulanVal}`);
+  } else {
+    // Fallback cerdas: jika tidak ada tipePeriode eksplisit
+    const rawLower = rawJudul.toLowerCase();
+    if (tahapVal && (rawLower.includes("tahap") || !bulanVal)) {
+      periodeInfoParts.push(`Tahap ${tahapVal}`);
+    } else if (semesterVal && (rawLower.includes("semester") || !bulanVal)) {
+      periodeInfoParts.push(`Semester ${semesterVal}`);
+    } else if (subroundVal && (rawLower.includes("subround") || rawLower.includes("ksa") || (!bulanVal && !triwulanVal))) {
+      periodeInfoParts.push(`Subround ${subroundVal}`);
+    } else if (triwulanVal && (rawLower.includes("triwulan") || !bulanVal)) {
+      periodeInfoParts.push(`Triwulan ${triwulanVal}`);
+    } else if (bulanVal) {
+      periodeInfoParts.push(`Bulan ${bulanVal}`);
+    } else if (subroundVal && !triwulanVal) {
+      periodeInfoParts.push(`Subround ${subroundVal}`);
+    } else if (triwulanVal) {
+      periodeInfoParts.push(`Triwulan ${triwulanVal}`);
+    }
+  }
+
+  if (tahunVal) {
+    periodeInfoParts.push(`Tahun ${tahunVal}`);
+  }
+
+  let judulFinal = rawJudul;
+  if (periodeInfoParts.length > 0) {
+    const periodeStr = periodeInfoParts.join(" ");
+    const rawLower = rawJudul.toLowerCase();
+
+    // Jangan duplikasi jika rawJudul sudah menyebutkan periode terkait
+    const hasPeriodeAlready =
+      rawLower.includes(periodeStr.toLowerCase()) ||
+      rawLower.includes("subround") ||
+      rawLower.includes("semester") ||
+      rawLower.includes("triwulan") ||
+      rawLower.includes("tahap") ||
+      (bulanVal && rawLower.includes(String(bulanVal).toLowerCase()));
+
+    if (!hasPeriodeAlready) {
+      judulFinal = (rawJudul + " " + periodeStr).trim();
+    }
+  }
+
+  return judulFinal;
+}
+
+/**
  * Bangun objek data lengkap untuk satu record spkBast.
  * Menggabungkan semua lookup (mitra, pegawai, detailPekerjaan) jadi satu flat object
  * siap dipakai oleh renderTemplate().
@@ -224,31 +298,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const tabelRows = renderTabelLampiran(details);
 
   // === Helper: Build judul & uraian pekerjaan dengan periode ===
-  const subroundVal = record.Subround || (details.length > 0 ? details[0].Subround : "");
-  const semesterVal = record.Semester || (details.length > 0 ? details[0].Semester : "");
-  const triwulanVal = record.Triwulan || (details.length > 0 ? details[0].Triwulan : "");
-  const tahapVal    = record.Tahap    || (details.length > 0 ? details[0].Tahap : "");
-  const tahunVal    = record.Tahun    || (details.length > 0 ? details[0].Tahun : "") || (record.Tanggal_SPK ? new Date(record.Tanggal_SPK).getFullYear() : (record.Tanggal ? new Date(record.Tanggal).getFullYear() : ""));
-
-  const periodeInfoParts = [];
-  if (subroundVal) periodeInfoParts.push(`Subround ${subroundVal}`);
-  else if (semesterVal) periodeInfoParts.push(`Semester ${semesterVal}`);
-  else if (triwulanVal) periodeInfoParts.push(`Triwulan ${triwulanVal}`);
-  else if (tahapVal) periodeInfoParts.push(`Tahap ${tahapVal}`);
-  if (tahunVal) periodeInfoParts.push(`Tahun ${tahunVal}`);
-
-  const rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || "").trim();
-  let judulDenganPeriode = rawJudul;
-  if (periodeInfoParts.length > 0) {
-    const periodeStr = periodeInfoParts.join(" ");
-    if (!rawJudul.toLowerCase().includes(periodeStr.toLowerCase()) &&
-        !rawJudul.toLowerCase().includes("subround") &&
-        !rawJudul.toLowerCase().includes("semester") &&
-        !rawJudul.toLowerCase().includes("triwulan") &&
-        !rawJudul.toLowerCase().includes("tahap")) {
-      judulDenganPeriode = (rawJudul + " " + periodeStr).trim();
-    }
-  }
+  const judulDenganPeriode = buildJudulDenganPeriode(record, details);
 
   // === Helper: Clean NO_SPK — strip "Nomor" prefix, uppercase ===
   let cleanNoSpk = record.Nomor_SPK || record.No_SPK || "";
@@ -454,31 +504,7 @@ function buildBastSmPpkContext(record, pegawaiArr) {
   const smPpkTahun = fParts[2] || (fParts.length >= 3 ? fParts[2] : "-");
 
   // Build judul dengan periode
-  const subroundVal = record.Subround || "";
-  const semesterVal = record.Semester || "";
-  const triwulanVal = record.Triwulan || "";
-  const tahapVal    = record.Tahap    || "";
-  const tahunVal    = record.Tahun    || (record.Tanggal_BAST_SM_PPK ? new Date(record.Tanggal_BAST_SM_PPK).getFullYear() : (record.Tanggal ? new Date(record.Tanggal).getFullYear() : ""));
-
-  const periodeInfoParts = [];
-  if (subroundVal) periodeInfoParts.push(`Subround ${subroundVal}`);
-  else if (semesterVal) periodeInfoParts.push(`Semester ${semesterVal}`);
-  else if (triwulanVal) periodeInfoParts.push(`Triwulan ${triwulanVal}`);
-  else if (tahapVal) periodeInfoParts.push(`Tahap ${tahapVal}`);
-  if (tahunVal) periodeInfoParts.push(`Tahun ${tahunVal}`);
-
-  const rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || "").trim();
-  let judulDenganPeriode = rawJudul;
-  if (periodeInfoParts.length > 0) {
-    const periodeStr = periodeInfoParts.join(" ");
-    if (!rawJudul.toLowerCase().includes(periodeStr.toLowerCase()) &&
-        !rawJudul.toLowerCase().includes("subround") &&
-        !rawJudul.toLowerCase().includes("semester") &&
-        !rawJudul.toLowerCase().includes("triwulan") &&
-        !rawJudul.toLowerCase().includes("tahap")) {
-      judulDenganPeriode = (rawJudul + " " + periodeStr).trim();
-    }
-  }
+  const judulDenganPeriode = buildJudulDenganPeriode(record);
 
   // URAIAN_PEKERJAAN lowercase (bersihkan 'hasil ' jika ada)
   let cleanUraian = judulDenganPeriode;

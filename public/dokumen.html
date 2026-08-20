@@ -699,6 +699,13 @@
           👁️ Preview
         </a>`;
 
+      if (_canEdit) {
+        aksiHTML += `
+          <a href="form.html?id=${encodeURIComponent(doc.ID_BAST_SM_PPK || '')}" class="btn btn-outline btn-sm" title="Edit Isian Dokumen BAST SM→PPK">
+            ✏️ Edit
+          </a>`;
+      }
+
       if (_canExport && isApproved) {
         aksiHTML += `
           <button type="button" class="btn btn-primary btn-sm" onclick="exportBastSmDirect('${doc.ID_BAST_SM_PPK}')" style="background:#7c3aed; border-color:#7c3aed;" title="Ekspor BAST SM→PPK Word (.docx)">

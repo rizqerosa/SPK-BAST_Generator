@@ -351,9 +351,10 @@
       elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" || _previewRecord.Status_Verifikasi_PPK === "Disetujui" ? "badge-success" : "badge-warning"}`;
     }
 
+    const editDocId = _previewRecord.ID_Dokumen || _previewRecord.ID_BAST_SM_PPK || "";
     const btnEdit = document.getElementById("topbar-btn-edit");
-    if (btnEdit && _previewRecord.ID_Dokumen) {
-      btnEdit.href = `form.html?id=${encodeURIComponent(_previewRecord.ID_Dokumen)}`;
+    if (btnEdit && editDocId) {
+      btnEdit.href = `form.html?id=${encodeURIComponent(editDocId)}`;
     }
 
     renderPpkStatusBanner(_previewRecord);

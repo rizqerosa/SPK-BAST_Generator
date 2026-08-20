@@ -2086,20 +2086,26 @@
           }
         }
 
-        let finalBulan = mMonth;
-        let finalTriwulan = mQuarter;
+        let finalBulan = "";
+        let finalTriwulan = "";
         let finalTahap = "";
-        let finalSubround = mSubround;
+        let finalSubround = "";
+        let finalSemester = "";
         let finalTahun = keg.tahunPeriode || mYear;
+        const tipePeriode = (keg.tipePeriode || "bulan").toLowerCase();
 
-        if (keg.tipePeriode === "bulan" && keg.detailPeriode) {
-          finalBulan = keg.detailPeriode;
-        } else if (keg.tipePeriode === "triwulan" && keg.detailPeriode) {
-          finalTriwulan = keg.detailPeriode;
-        } else if (keg.tipePeriode === "tahap" && keg.detailPeriode) {
-          finalTahap = keg.detailPeriode;
-        } else if (keg.tipePeriode === "subround" && keg.detailPeriode) {
-          finalSubround = keg.detailPeriode;
+        if (tipePeriode === "bulan") {
+          finalBulan = keg.detailPeriode || mMonth;
+        } else if (tipePeriode === "triwulan") {
+          finalTriwulan = keg.detailPeriode || mQuarter;
+        } else if (tipePeriode === "tahap") {
+          finalTahap = keg.detailPeriode || "";
+        } else if (tipePeriode === "subround") {
+          finalSubround = keg.detailPeriode || mSubround;
+        } else if (tipePeriode === "semester") {
+          finalSemester = keg.detailPeriode || "";
+        } else {
+          finalBulan = mMonth;
         }
 
         const record = {
@@ -2127,7 +2133,9 @@
           Triwulan:            finalTriwulan,
           Tahap:               finalTahap,
           Subround:            finalSubround,
+          Semester:            finalSemester,
           Tahun:               finalTahun,
+          Tipe_Periode:        tipePeriode,
           Satuan:              sat,
           Harga_Satuan:        hrg,
           Total_Honor:         tot,

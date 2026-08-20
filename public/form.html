@@ -1030,6 +1030,19 @@
     container.style.display = "block";
   }
 
+  // Helper: Cocokkan ID atau Nama Petugas dengan baris mapping Katim
+  function matchOfficerToMapping(officerId, officerNama, m) {
+    const cleanOId = String(officerId || "").toLowerCase().trim();
+    const cleanONama = String(officerNama || "").toLowerCase().trim();
+    
+    const mId = String(m.ID_Mitra_atau_NIP || m.ID_Mitra || m.NIP || "").toLowerCase().trim();
+    const mNama = String(m.Nama_Petugas || m.Nama || "").toLowerCase().trim();
+
+    if (cleanOId && mId && (cleanOId === mId || mId.includes(cleanOId) || cleanOId.includes(mId))) return true;
+    if (cleanONama && mNama && (cleanONama === mNama || mNama.includes(cleanONama) || cleanONama.includes(mNama))) return true;
+    return false;
+  }
+
   function onSearchPetugas(formPrefix) {
     const q = (document.getElementById(`${formPrefix}-search-petugas`)?.value || "").toLowerCase().trim();
     const sumber = formPrefix === "spk"
@@ -1038,48 +1051,47 @@
 
     let results = [];
     if (formPrefix === "bast") {
-      // Hanya tampilkan yang ada di approved SPK
-      const approvedIds = _approvedSpkList.map(r => r.ID_Mitra);
-      const mitraApproved = _allMitra.filter(m => approvedIds.includes(getMitraId(m)));
-      results = mitraApproved.filter(m => {
-        const nama = getMitraName(m);
-        return !q || nama.toLowerCase().includes(q);
-      }).slice(0, 15);
+      // Gabungkan Mitra & Pegawai, prioritaskan yang punya SPK atau mapping
+      const allOfficers = [
+        ..._allMitra.map(m => ({ item: m, id: getMitraId(m), nama: getMitraName(m), tipe: "mitra", meta: `Mitra · ${m.Asal || m.asal || "Subulussalam"}` })),
+        ..._allPegawai.map(p => ({ item: p, id: getPegawaiNip(p), nama: getPegawaiName(p), tipe: "pegawai", meta: `NIP: ${p.NIP || p.nip || ""}` }))
+      ];
+      results = allOfficers.filter(o => {
+        return !q || o.nama.toLowerCase().includes(q) || String(o.id).toLowerCase().includes(q);
+      }).slice(0, 20);
     } else {
       const source = sumber === "mitra" ? _allMitra : _allPegawai;
-      results = source.filter(item => {
+      results = source.map(item => {
         const nama = sumber === "mitra" ? getMitraName(item) : getPegawaiName(item);
         const id   = sumber === "mitra" ? getMitraId(item) : getPegawaiNip(item);
-        return !q || nama.toLowerCase().includes(q) || String(id).toLowerCase().includes(q);
+        const meta = sumber === "mitra" ? `Mitra · ${item.Asal || "—"}` : `NIP: ${id}`;
+        return { item, id, nama, tipe: sumber, meta };
+      }).filter(o => {
+        return !q || o.nama.toLowerCase().includes(q) || String(o.id).toLowerCase().includes(q);
       }).slice(0, 15);
     }
 
     const resEl = document.getElementById(`${formPrefix}-live-results`);
     if (!resEl) return;
 
-    const tipe = formPrefix === "bast" ? "mitra" : sumber;
     resEl.innerHTML = results.length === 0
       ? `<div class="live-search-item" style="color:var(--gray-400);">Tidak ada hasil.</div>`
-      : results.map(item => {
-          const nama = tipe === "mitra" ? getMitraName(item) : getPegawaiName(item);
-          const id   = tipe === "mitra" ? getMitraId(item)   : getPegawaiNip(item);
-          const meta = tipe === "mitra" ? `Mitra · ${item.Asal || "—"}` : `NIP: ${id}`;
-          
+      : results.map(o => {
           // Cek apakah punya mapping di Katim
-          const mappingCount = _allMapping.filter(m => {
-            const mId = String(m.ID_Mitra_atau_NIP || "").trim();
-            const mNama = String(m.Nama_Petugas || "").toLowerCase().trim();
-            return (mId && mId === String(id).trim()) || (mNama && mNama === nama.toLowerCase().trim());
-          }).length;
+          const mappingCount = _allMapping.filter(m => matchOfficerToMapping(o.id, o.nama, m)).length;
+          const hasSpk = _allSpkBast.some(s => String(s.ID_Mitra) === String(o.id) || (s.Nama_Petugas && String(s.Nama_Petugas).toLowerCase() === o.nama.toLowerCase()));
 
-          return `<div class="live-search-item" onclick="selectPetugas('${formPrefix}','${escapeHtml(id)}','${escapeHtml(nama)}','${tipe}')">
-            <div class="item-avatar">${(nama||"?")[0].toUpperCase()}</div>
+          return `<div class="live-search-item" onclick="selectPetugas('${formPrefix}','${escapeHtml(o.id)}','${escapeHtml(o.nama)}','${o.tipe}')">
+            <div class="item-avatar">${(o.nama||"?")[0].toUpperCase()}</div>
             <div style="flex:1;">
               <div class="item-name" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>${escapeHtml(nama)}</span>
-                ${mappingCount > 0 ? `<span class="badge" style="background:#dcfce7; color:#15803d; font-size:.66rem;">📌 ${mappingCount} Dimapping</span>` : ''}
+                <span>${escapeHtml(o.nama)}</span>
+                <div>
+                  ${mappingCount > 0 ? `<span class="badge" style="background:#dcfce7; color:#15803d; font-size:.66rem; margin-right:4px;">📌 ${mappingCount} Dimapping</span>` : ''}
+                  ${hasSpk ? `<span class="badge" style="background:#dbeafe; color:#1e40af; font-size:.66rem;">📜 Ada SPK</span>` : ''}
+                </div>
               </div>
-              <div class="item-meta">${escapeHtml(meta)}</div>
+              <div class="item-meta">${escapeHtml(o.meta)}</div>
             </div>
           </div>`;
         }).join("");
@@ -1140,15 +1152,46 @@
   }
 
   // ─── Load kegiatan dari mapping KATIM (SPK) ──────────────────
-  function loadSpkMappingKegiatan(petugasId, tipe) {
+  async function loadSpkMappingKegiatan(petugasId, tipe) {
     const cleanId = String(petugasId || "").trim();
     const cleanNama = (document.getElementById("spk-petugas-nama")?.value || "").toLowerCase().trim();
 
-    const mappingItems = _allMapping.filter(m => {
-      const mId = String(m.ID_Mitra_atau_NIP || m.ID_Mitra || m.NIP || "").trim();
-      const mNama = String(m.Nama_Petugas || m.Nama || "").toLowerCase().trim();
-      return (cleanId && mId === cleanId) || (cleanNama && mNama && mNama === cleanNama);
-    });
+    let mappingItems = (_allMapping || []).filter(m => matchOfficerToMapping(petugasId, cleanNama, m));
+
+    // Fallback jika dalam mode Edit atau belum ada mapping di cache: ambil detailPekerjaan dari SPK yang ada
+    if (mappingItems.length === 0 && _isEditMode && _editDocId) {
+      try {
+        const allDetails = await getDetailPekerjaan().catch(() => []);
+        const docDetails = (allDetails || []).filter(d => String(d.ID_Dokumen) === String(_editDocId));
+        if (docDetails.length > 0) {
+          const rec = (_allSpkBast || []).find(r => String(r.ID_Dokumen) === String(_editDocId)) || {};
+          mappingItems = docDetails.map(d => ({
+            ID_Kegiatan:     d.ID_Kegiatan || _editDocId,
+            Uraian_Kegiatan: d.Uraian_Tugas || rec.Judul_Pekerjaan_Dokumen || "Kegiatan SPK",
+            Peran:           rec.Peran || "ppl",
+            Tanggal_Mulai:   rec.Tanggal_Mulai,
+            Tanggal_Selesai: rec.Tanggal_Selesai,
+            Batas_Terlambat: rec.Batas_Penyerahan,
+            Volume:          d.Volume || 1,
+            Satuan:          d.Satuan || "Dokumen",
+            Harga_Satuan:    d.Harga_Satuan || 0,
+            Total_Honor:     d.Nilai_Perjanjian || rec.Total_Honor || 0,
+            Bulan:           d.Bulan || rec.Bulan,
+            Triwulan:        d.Triwulan || rec.Triwulan,
+            Tahap:           d.Tahap || rec.Tahap,
+            Subround:        d.Subround || rec.Subround,
+            Tahun:           d.Tahun || rec.Tahun,
+            Tipe_Periode:    d.Tipe_Periode || rec.Tipe_Periode,
+            Nama_Tim_Teknis: rec.Ketua_Tim || "",
+            Nomor_Kepka:     rec.Nomor_Kepka || "",
+            Tanggal_Kepka:   rec.Tanggal_Kepka || "",
+            PML:             rec.PML || "",
+          }));
+        }
+      } catch (e) {
+        console.warn("Fallback detail SPK error:", e);
+      }
+    }
 
     const section = document.getElementById("spk-mapping-section");
     const listEl  = document.getElementById("spk-mapping-list");
@@ -1234,16 +1277,88 @@
     }
   }
 
-  // ─── Load kegiatan BAST (hanya yang SPK sudah disetujui) ──────
-  function loadBastKegiatanFromMapping(petugasId) {
-    const approvedSpk = _approvedSpkList.find(r => String(r.ID_Mitra) === String(petugasId));
-    if (approvedSpk) {
-      document.getElementById("bast-spk-id").value = approvedSpk.ID_Dokumen || "";
+  // ─── Load kegiatan BAST (dari mapping Katim atau dari SPK) ─────
+  async function loadBastKegiatanFromMapping(petugasId) {
+    const cleanNama = (document.getElementById("bast-petugas-nama")?.value || "").toLowerCase().trim();
+
+    // Cari SPK terkait untuk petugas ini
+    const matchedSpk = (_allSpkBast || []).find(r => {
+      const rId = String(r.ID_Mitra || "").trim();
+      const rNama = String(r.Nama_Petugas || r.Nama || "").toLowerCase().trim();
+      return (petugasId && rId === String(petugasId).trim()) || (cleanNama && rNama && (rNama === cleanNama || cleanNama.includes(rNama) || rNama.includes(cleanNama)));
+    });
+
+    if (matchedSpk) {
+      document.getElementById("bast-spk-id").value = matchedSpk.ID_Dokumen || "";
     }
 
-    const mappingItems = _allMapping.filter(m =>
-      String(m.ID_Mitra_atau_NIP) === String(petugasId)
-    );
+    // 1. Ambil dari mapping Katim
+    let mappingItems = (_allMapping || []).filter(m => matchOfficerToMapping(petugasId, cleanNama, m));
+
+    // 2. Jika di mapping belum ada tapi sudah ada SPK (atau saat edit BAST), ambil detail dari SPK
+    if (mappingItems.length === 0 && matchedSpk) {
+      try {
+        const details = await getDetailPekerjaan().catch(() => []);
+        const spkDetails = (details || []).filter(d => String(d.ID_Dokumen) === String(matchedSpk.ID_Dokumen));
+        if (spkDetails.length > 0) {
+          mappingItems = spkDetails.map(d => ({
+            ID_Kegiatan:     d.ID_Kegiatan || matchedSpk.ID_Dokumen,
+            Uraian_Kegiatan: d.Uraian_Tugas || matchedSpk.Judul_Pekerjaan_Dokumen || "Kegiatan SPK",
+            Peran:           matchedSpk.Peran || "ppl",
+            Tanggal_Mulai:   matchedSpk.Tanggal_Mulai,
+            Tanggal_Selesai: matchedSpk.Tanggal_Selesai,
+            Batas_Terlambat: matchedSpk.Batas_Penyerahan,
+            Volume:          d.Volume || 1,
+            Satuan:          d.Satuan || "Dokumen",
+            Harga_Satuan:    d.Harga_Satuan || 0,
+            Total_Honor:     d.Nilai_Perjanjian || matchedSpk.Total_Honor || 0,
+            Bulan:           d.Bulan || matchedSpk.Bulan,
+            Triwulan:        d.Triwulan || matchedSpk.Triwulan,
+            Tahap:           d.Tahap || matchedSpk.Tahap,
+            Subround:        d.Subround || matchedSpk.Subround,
+            Tahun:           d.Tahun || matchedSpk.Tahun,
+            Tipe_Periode:    d.Tipe_Periode || matchedSpk.Tipe_Periode,
+            Nama_Tim_Teknis: matchedSpk.Ketua_Tim || "",
+          }));
+        }
+      } catch (e) {
+        console.warn("Load SPK details fallback error:", e);
+      }
+    }
+
+    _bastMappingRows = mappingItems;
+    const container = document.getElementById("bast-keg-selector");
+
+    if (mappingItems.length === 0) {
+      container.innerHTML = `<div class="empty-mapping-notice">
+        Tidak ada kegiatan yang ter-mapping untuk petugas ini. Hubungi KATIM.
+      </div>`;
+      return;
+    }
+
+    const formatTgl = str => {
+      if (!str) return "—";
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
+    };
+
+    container.innerHTML = mappingItems.map((m, i) => `
+      <div class="bast-keg-option ${i === 0 ? 'selected' : ''}" id="bko-${i}" onclick="selectBastKegiatan(${i})">
+        <div class="bko-check" id="bkc-${i}">✓</div>
+        <div class="bko-info">
+          <div class="bko-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</div>
+          <div class="bko-meta">
+            <span class="mki-badge mki-${m.Peran||'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
+            📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    if (mappingItems.length > 0) {
+      selectBastKegiatan(0);
+    }
+  }
 
     _bastMappingRows = mappingItems;
     const container = document.getElementById("bast-keg-selector");
@@ -1690,54 +1805,6 @@
           validateDocNumberInput(type);
           if (type === "bast_ppl_pml") validateDocNumberInput("bast_ppl_sm");
           if (type === "bast_ppl_sm") validateDocNumberInput("bast_ppl_pml");
-        });
-      }
-    });
-  }
-
-  function updateDateDisplay(inputId, displayId) {
-    const inputEl = document.getElementById(inputId);
-    const displayEl = document.getElementById(displayId);
-    if (inputEl && displayEl && inputEl.value) {
-      const t = tanggalTerbilang(inputEl.value);
-      displayEl.textContent = `${t.hari}, ${t.tanggalFormat}`;
-    }
-  }
-
-  // ─── Date listeners ──────────────────────────────────────────
-  function setupDateListeners() {
-    // SPK Tanggal
-    document.getElementById("spk-tgl-spk")?.addEventListener("change", function() {
-      updateDateDisplay("spk-tgl-spk", "spk-tgl-display");
-      applyAutoDocNumber("spk", false);
-    });
-
-    // BAST PPL-PML
-    document.getElementById("bast-tgl-ppl-pml")?.addEventListener("change", function() {
-      updateDateDisplay("bast-tgl-ppl-pml", "bast-tgl-ppl-pml-display");
-      applyAutoDocNumber("bast_ppl_pml", false);
-    });
-
-    // BAST PPL-SM
-    document.getElementById("bast-tgl-ppl-sm")?.addEventListener("change", function() {
-      updateDateDisplay("bast-tgl-ppl-sm", "bast-tgl-ppl-sm-display");
-      applyAutoDocNumber("bast_ppl_sm", false);
-    });
-
-    // BAST PML-SM
-    document.getElementById("bast-tgl-pml-sm")?.addEventListener("change", function() {
-      updateDateDisplay("bast-tgl-pml-sm", "bast-tgl-pml-sm-display");
-      applyAutoDocNumber("bast_pml_sm", false);
-    });
-
-    // SM→PPK Tanggal
-    document.getElementById("sm-tgl-bast")?.addEventListener("change", function() {
-      updateDateDisplay("sm-tgl-bast", "sm-tgl-display");
-      applyAutoDocNumber("bast_sm", false);
-    });
-  }
-
-  // ─── BAST SM→PPK Helpers (5 Input Utama) ─────────────────────
   function populateSmKegiatanDropdown() {
     const kegSel = document.getElementById("sm-sel-kegiatan");
     if (!kegSel) return;
@@ -1793,10 +1860,17 @@
       }
       const kegId = opt?.dataset?.id || "";
       const timTeknis = opt?.dataset?.tim || "";
-      const honor = opt?.dataset?.honor || "0";
-
+      const honor = Number(opt?.dataset?.honor || 0);
       document.getElementById("sm-selected-keg-id").value = kegId;
-      document.getElementById("sm-selected-keg-honor").value = honor;
+
+      let totalHonorKegiatan = 0;
+      (_allMapping || []).forEach(m => {
+        if ((kegId && String(m.ID_Kegiatan) === String(kegId)) || (val && String(m.Uraian_Kegiatan || "").toLowerCase() === val.toLowerCase())) {
+          totalHonorKegiatan += Number(m.Total_Honor || 0);
+        }
+      });
+      if (totalHonorKegiatan === 0 && honor > 0) totalHonorKegiatan = honor;
+      document.getElementById("sm-selected-keg-honor").value = totalHonorKegiatan;
 
       if (timTeknis) {
         autoSelectSmKetuaTim(timTeknis);
@@ -1811,7 +1885,6 @@
 
     for (let i = 0; i < ketuaEl.options.length; i++) {
       const optText = ketuaEl.options[i].text.toLowerCase();
-      const optVal  = ketuaEl.options[i].value.toLowerCase();
       if (optText.includes(cleanTim) || cleanTim.includes(optText.split(" ")[0])) {
         ketuaEl.selectedIndex = i;
         return;
@@ -1839,18 +1912,77 @@
     }
   }
 
-  // ─── Form submit handlers ────────────────────────────────────
+  function setupDocNumberListeners() {
+    [
+      { id: "spk-no-spk",          type: "spk" },
+      { id: "bast-no-ppl-pml",     type: "bast_ppl_pml" },
+      { id: "bast-no-ppl-sm",      type: "bast_ppl_sm" },
+      { id: "bast-no-pml-sm",      type: "bast_pml_sm" },
+      { id: "sm-no-bast",          type: "bast_sm" }
+    ].forEach(({ id, type }) => {
+      const inputEl = document.getElementById(id);
+      if (inputEl) {
+        inputEl.addEventListener("input", () => {
+          validateDocNumberInput(type);
+          if (type === "bast_ppl_pml") validateDocNumberInput("bast_ppl_sm");
+          if (type === "bast_ppl_sm") validateDocNumberInput("bast_ppl_pml");
+        });
+        inputEl.addEventListener("blur", () => {
+          validateDocNumberInput(type);
+          if (type === "bast_ppl_pml") validateDocNumberInput("bast_ppl_sm");
+          if (type === "bast_ppl_sm") validateDocNumberInput("bast_ppl_pml");
+        });
+      }
+    });
+  }
+
+  function updateDateDisplay(inputId, displayId) {
+    const inputEl = document.getElementById(inputId);
+    const displayEl = document.getElementById(displayId);
+    if (inputEl && displayEl && inputEl.value) {
+      const t = tanggalTerbilang(inputEl.value);
+      displayEl.textContent = `${t.hari}, ${t.tanggalFormat}`;
+    }
+  }
+
+  function setupDateListeners() {
+    document.getElementById("spk-tgl-spk")?.addEventListener("change", function() {
+      updateDateDisplay("spk-tgl-spk", "spk-tgl-display");
+      applyAutoDocNumber("spk", false);
+    });
+
+    document.getElementById("bast-tgl-ppl-pml")?.addEventListener("change", function() {
+      updateDateDisplay("bast-tgl-ppl-pml", "bast-tgl-ppl-pml-display");
+      applyAutoDocNumber("bast_ppl_pml", false);
+    });
+
+    document.getElementById("bast-tgl-ppl-sm")?.addEventListener("change", function() {
+      updateDateDisplay("bast-tgl-ppl-sm", "bast-tgl-ppl-sm-display");
+      applyAutoDocNumber("bast_ppl_sm", false);
+    });
+
+    document.getElementById("bast-tgl-pml-sm")?.addEventListener("change", function() {
+      updateDateDisplay("bast-tgl-pml-sm", "bast-tgl-pml-sm-display");
+      applyAutoDocNumber("bast_pml_sm", false);
+    });
+
+    document.getElementById("sm-tgl-bast")?.addEventListener("change", function() {
+      updateDateDisplay("sm-tgl-bast", "sm-tgl-display");
+      applyAutoDocNumber("bast_sm", false);
+    });
+  }
+
   function setupFormSubmit() {
-    document.getElementById("fspk")?.addEventListener("submit", handleSpkSubmit);
-    document.getElementById("fbast")?.addEventListener("submit", handleBastSubmit);
-    document.getElementById("fbastSm")?.addEventListener("submit", handleBastSmSubmit);
+    document.getElementById("form-spk")?.addEventListener("submit", handleSpkSubmit);
+    document.getElementById("form-bast")?.addEventListener("submit", handleBastSubmit);
+    document.getElementById("form-bast-sm")?.addEventListener("submit", handleBastSmSubmit);
   }
 
   async function handleSpkSubmit(e) {
     e.preventDefault();
     const petugasId   = document.getElementById("spk-petugas-id")?.value;
     const petugasNama = document.getElementById("spk-petugas-nama")?.value;
-    const petugasTipe = document.getElementById("spk-petugas-tipe")?.value;
+    const petugasTipe = document.getElementById("spk-petugas-tipe")?.value || "mitra";
     const noSpk       = document.getElementById("spk-no-spk")?.value.trim();
     const tglSpk      = document.getElementById("spk-tgl-spk")?.value;
     const noKepka     = document.getElementById("spk-nomor-kepka")?.value.trim();
@@ -1858,16 +1990,19 @@
     const ppk         = document.getElementById("spk-sel-ppk")?.value;
     const judul       = document.getElementById("spk-judul")?.value.trim();
 
-    if (!petugasId)  { showToast("Pilih petugas terlebih dahulu!", "warning"); return; }
-    if (_spkMappingRows.length === 0) { showToast("Petugas belum punya mapping dari KATIM!", "warning"); return; }
-    if (!noSpk)   { showToast("Isi Nomor SPK!", "warning"); return; }
-    if (!tglSpk)  { showToast("Isi Tanggal SPK!", "warning"); return; }
-    if (!noKepka) { showToast("Isi Nomor Kepka!", "warning"); return; }
-    if (!tglKepka){ showToast("Isi Tanggal Kepka!", "warning"); return; }
-    if (!ppk)     { showToast("Pilih PPK!", "warning"); return; }
-    if (!judul)   { showToast("Isi Judul Pekerjaan!", "warning"); return; }
+    if (!petugasId) { showToast("Pilih petugas yang akan dibuatkan SPK!", "warning"); return; }
+    if (!noSpk)      { showToast("Isi Nomor SPK!", "warning"); return; }
+    if (!tglSpk)     { showToast("Isi Tanggal SPK!", "warning"); return; }
+    if (!ppk)        { showToast("Pilih PPK penandatangan!", "warning"); return; }
+    if (!judul)      { showToast("Isi Uraian Pekerjaan / Judul Dokumen!", "warning"); return; }
+    if (_spkMappingRows.length === 0) {
+      showToast("Petugas ini belum memiliki penugasan/mapping kegiatan dari KATIM!", "warning");
+      return;
+    }
 
-    // Compute dates from mapping
+    const dup = checkDocNumberDuplicate("spk", noSpk, _isEditMode ? _editDocId : null);
+    if (dup) { showToast(`Nomor SPK sudah digunakan: ${dup.label}`, "danger"); return; }
+
     const tglList   = _spkMappingRows.filter(m => m.Tanggal_Mulai).map(m => new Date(m.Tanggal_Mulai));
     const tglSList  = _spkMappingRows.filter(m => m.Tanggal_Selesai).map(m => new Date(m.Tanggal_Selesai));
     const batasList = _spkMappingRows.filter(m => m.Batas_Terlambat).map(m => new Date(m.Batas_Terlambat));
@@ -1885,17 +2020,16 @@
     _spkMappingRows.forEach(m => {
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
       const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
+      const sat = m.Satuan || keg?.Satuan || "Dokumen";
       const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
       const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
       totalHonor += subtotal;
     });
 
-    // Resolve PML dan Ketua Tim dari mapping & kegiatan
     let resolvedPml = "";
     let resolvedKetua = "";
     const firstM = _spkMappingRows[0] || {};
     const firstKeg = _allKegiatan.find(k => getKegiatanId(k) === firstM.ID_Kegiatan);
-
     resolvedKetua = firstKeg?.Nama_Tim_Teknis || firstKeg?.Nama_Ketua_Tim || firstKeg?.Ketua_Tim || firstM.Nama_Tim_Teknis || "";
 
     const isAllPml = _spkMappingRows.every(m => String(m.Peran || "").toLowerCase() === "pml");
@@ -1912,6 +2046,14 @@
         resolvedPml = foundPml ? (foundPml.Nama_Petugas || foundPml.ID_Mitra_atau_NIP || "") : "";
       }
     }
+
+    const docTipePeriode = firstM.Tipe_Periode || firstM.tipePeriode || "";
+    const docBulan    = firstM.Bulan !== undefined && firstM.Bulan !== "" ? firstM.Bulan : (docTipePeriode === "bulan" || !docTipePeriode ? meta.bulan : "");
+    const docTriwulan = firstM.Triwulan !== undefined && firstM.Triwulan !== "" ? firstM.Triwulan : "";
+    const docTahap    = firstM.Tahap !== undefined && firstM.Tahap !== "" ? firstM.Tahap : "";
+    const docSubround = firstM.Subround !== undefined && firstM.Subround !== "" ? firstM.Subround : "";
+    const docSemester = firstM.Semester !== undefined && firstM.Semester !== "" ? firstM.Semester : "";
+    const docTahun    = firstM.Tahun || meta.tahun || tahun;
 
     const docId = (_isEditMode && _editDocId) ? _editDocId : generateId("SPK");
     const record = {
@@ -1941,11 +2083,13 @@
       Total_Honor:             totalHonor,
       Terbilang:               terbilang(totalHonor) + " Rupiah",
       Status_Generate_SPK:     "Belum",
-      Bulan:                   meta.bulan,
-      Triwulan:                meta.triwulan,
-      Tahap:                   "",
-      Subround:                meta.subround,
-      Tahun:                   meta.tahun,
+      Bulan:                   docBulan,
+      Triwulan:                docTriwulan,
+      Tahap:                   docTahap,
+      Subround:                docSubround,
+      Semester:                docSemester,
+      Tahun:                   docTahun,
+      Tipe_Periode:            docTipePeriode || (docBulan ? "bulan" : ""),
       Jenis_Dokumen:           "SPK",
       Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
     };
@@ -1968,11 +2112,13 @@
           ID_Kegiatan:      m.ID_Kegiatan,
           Fungsi:           keg?.Fungsi || keg?.Nama_Tim_Teknis || "",
           Uraian_Tugas:     m.Uraian_Kegiatan || keg?.Uraian_Tugas || "",
-          Bulan:            m.Bulan || meta.bulan,
-          Triwulan:         m.Triwulan || meta.triwulan,
-          Tahap:            m.Tahap || "",
-          Subround:         m.Subround || meta.subround,
-          Tahun:            m.Tahun || meta.tahun,
+          Bulan:            m.Bulan || docBulan,
+          Triwulan:         m.Triwulan || docTriwulan,
+          Tahap:            m.Tahap || docTahap,
+          Subround:         m.Subround || docSubround,
+          Semester:         m.Semester || docSemester,
+          Tahun:            m.Tahun || docTahun,
+          Tipe_Periode:     m.Tipe_Periode || docTipePeriode,
           Buku_Pedoman:     keg?.Buku_Pedoman || "",
           Jangka_Waktu:     formatJangkaWaktuDetail(m.Tanggal_Mulai, m.Tanggal_Selesai),
           Volume:           vol,
@@ -1987,7 +2133,6 @@
 
       if (_isEditMode && _editDocId) {
         await updateInSheet("spkBast", "ID_Dokumen", _editDocId, record);
-        // Hapus detail lama jika ada
         try {
           const allDetails = await getDetailPekerjaan().catch(() => []);
           const oldDetails = allDetails.filter(d => String(d.ID_Dokumen) === String(_editDocId));
@@ -2005,7 +2150,7 @@
 
       clearCache("spkBast");
       clearCache("detailPekerjaan");
-      showToast(_isEditMode ? `✅ Perubahan SPK berhasil disimpan! Status verifikasi di-reset ke Menunggu PPK.` : `✅ SPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
+      showToast(_isEditMode ? `✅ Perubahan SPK berhasil disimpan!` : `✅ SPK berhasil disimpan!`, "success", 5000);
       setTimeout(() => window.location.href = `preview.html?id=${encodeURIComponent(docId)}`, 800);
     } catch (err) {
       showToast("Gagal simpan SPK: " + err.message, "danger");
@@ -2018,15 +2163,13 @@
   async function handleBastSubmit(e) {
     e.preventDefault();
     const petugasId   = document.getElementById("bast-petugas-id")?.value;
-    const petugasNama = document.getElementById("bast-petugas-nama")?.value;
-    const petugasTipe = document.getElementById("bast-petugas-tipe")?.value || "mitra";
     const spkId       = document.getElementById("bast-spk-id")?.value;
     const kegId       = document.getElementById("bast-selected-keg-id")?.value;
     const kegNama     = document.getElementById("bast-selected-keg-nama")?.value;
     const peran       = document.getElementById("bast-selected-peran")?.value || "ppl";
 
     if (!petugasId) { showToast("Pilih petugas!", "warning"); return; }
-    if (!kegId)     { showToast("Pilih kegiatan yang mau dibuatkan BAST!", "warning"); return; }
+    if (!kegId)     { showToast("Pilih kegiatan!", "warning"); return; }
 
     let noBastPplPml = "", tglBastPplPml = "";
     let noBastPplSm  = "", tglBastPplSm  = "";
@@ -2050,10 +2193,6 @@
       if (!tglBastPplPml) { showToast("Isi Tanggal BAST PPL → PML!", "warning"); return; }
       if (!noBastPplSm)   { showToast("Isi Nomor BAST PPL → SM!", "warning"); return; }
       if (!tglBastPplSm)  { showToast("Isi Tanggal BAST PPL → SM!", "warning"); return; }
-      if (noBastPplPml.toLowerCase() === noBastPplSm.toLowerCase()) {
-        showToast("Nomor BAST PPL→PML dan BAST PPL→SM tidak boleh sama!", "danger");
-        return;
-      }
       const dupPml = checkDocNumberDuplicate("bast_ppl_pml", noBastPplPml);
       if (dupPml) { showToast(`Nomor BAST PPL→PML sudah digunakan: ${dupPml.label}`, "danger"); return; }
       const dupSm = checkDocNumberDuplicate("bast_ppl_sm", noBastPplSm);
@@ -2061,10 +2200,11 @@
       primaryTgl = tglBastPplSm || tglBastPplPml;
     }
 
-    const mappingItem = _bastMappingRows.find(m => m.ID_Kegiatan === kegId && m.Peran === peran) || {};
+    const mappingItem = _bastMappingRows.find(m => (m.ID_Kegiatan === kegId || m.Uraian_Kegiatan === kegNama) && (!peran || m.Peran === peran)) || _bastMappingRows[0] || {};
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    const bulan  = months[new Date(primaryTgl).getMonth()] || "";
-    const tahun  = new Date(primaryTgl).getFullYear();
+    const dPrim  = primaryTgl ? new Date(primaryTgl) : new Date();
+    const bulan  = !isNaN(dPrim) ? months[dPrim.getMonth()] : "";
+    const tahun  = !isNaN(dPrim) ? dPrim.getFullYear() : new Date().getFullYear();
     const meta   = getPeriodMeta(primaryTgl, bulan, tahun);
 
     const keg = _allKegiatan.find(k => getKegiatanId(k) === kegId);
@@ -2072,18 +2212,12 @@
     const hrg = Number(mappingItem.Harga_Satuan !== undefined && mappingItem.Harga_Satuan !== "" ? mappingItem.Harga_Satuan : (keg?.Harga_Satuan || 0));
     const harga = Number(mappingItem.Total_Honor || (vol * hrg));
 
-    // Cari PML dari mapping
     let pmlNama = mappingItem.PML || mappingItem.Nama_PML || "";
     if (!pmlNama) {
-      const pmlItem = _allMapping.find(mx =>
-        mx.ID_Kegiatan === kegId &&
-        String(mx.Peran || "").toLowerCase() === "pml" &&
-        String(mx.ID_Mitra_atau_NIP) !== String(petugasId)
-      );
+      const pmlItem = _allMapping.find(mx => mx.ID_Kegiatan === kegId && String(mx.Peran || "").toLowerCase() === "pml");
       pmlNama = pmlItem ? (pmlItem.Nama_Petugas || pmlItem.ID_Mitra_atau_NIP || "") : "";
     }
 
-    // Ambil Ketua Tim & PPK dari input form (fallback ke master kegiatan/SPK)
     const ketuaInput = document.getElementById("bast-sel-ketua")?.value;
     const ppkInput   = document.getElementById("bast-sel-ppk")?.value;
     const targetKetua = ketuaInput || keg?.Nama_Tim_Teknis || keg?.Nama_Ketua_Tim || keg?.Ketua_Tim || mappingItem.Nama_Tim_Teknis || "";
@@ -2092,64 +2226,70 @@
     const finalKetua = targetKetua || spkRecord.Ketua_Tim || "";
     const finalPpk   = ppkInput || spkRecord.PPK || "";
 
-    const docId = generateId("BAST");
+    const docTipe = mappingItem.Tipe_Periode || mappingItem.tipePeriode || spkRecord.Tipe_Periode || "";
+    const docBln  = mappingItem.Bulan || spkRecord.Bulan || meta.bulan;
+    const docTri  = mappingItem.Triwulan || spkRecord.Triwulan || "";
+    const docThp  = mappingItem.Tahap || spkRecord.Tahap || "";
+    const docSub  = mappingItem.Subround || spkRecord.Subround || "";
+    const docSem  = mappingItem.Semester || spkRecord.Semester || "";
+    const docThn  = mappingItem.Tahun || spkRecord.Tahun || meta.tahun;
+
+    const docId = spkId || generateId("BAST");
     const record = {
       ID_Dokumen:              docId,
       Nomor_SPK:               spkRecord.Nomor_SPK || spkRecord.No_SPK || "",
       "Tanggal SPK":           spkRecord["Tanggal SPK"] || spkRecord.Tanggal_SPK || "",
       Tanggal_SPK:             spkRecord["Tanggal SPK"] || spkRecord.Tanggal_SPK || "",
-      Jenis_Petugas:           petugasTipe === "mitra" ? "Mitra" : "Pegawai",
+      Jenis_Petugas:           spkRecord.Jenis_Petugas || "Mitra",
       ID_Mitra:                petugasId,
       PML:                     pmlNama || spkRecord.PML || "",
       Ketua_Tim:               finalKetua,
       PPK:                     finalPpk,
-      Nomor_Kepka:             mappingItem.Nomor_Kepka || spkRecord.Nomor_Kepka || "",
-      Tanggal_Kepka:           mappingItem.Tanggal_Kepka || spkRecord.Tanggal_Kepka || "",
       No_BAST_PPL_PML:         noBastPplPml,
       Tanggal_BAST_PPL_PML:    tglBastPplPml,
       No_BAST_PPL_SM:          noBastPplSm,
       Tanggal_BAST_PPL_SM:     tglBastPplSm,
       No_BAST_PML_SM:          noBastPmlSm,
-      Tanggal_BAST_PML_SM:     tglBastPmlSm,
-      No_BAST_SM_PPK:          "",
-      Tanggal_BAST_SM_PPK:     "",
-      Judul_Pekerjaan_Dokumen: kegNama || "",
-      Tanggal_Mulai:           mappingItem?.Tanggal_Mulai || "",
-      Tanggal_Selesai:         mappingItem?.Tanggal_Selesai || "",
-      Batas_Penyerahan:        mappingItem?.Batas_Terlambar || mappingItem?.Batas_Terlambat || "",
-      Total_Honor:             harga,
-      Terbilang:               terbilang(harga) + " Rupiah",
-      Status_Generate_SPK:     "Sudah",
-      Bulan:                   meta.bulan,
-      Triwulan:                meta.triwulan,
-      Tahap:                   "",
-      Subround:                meta.subround,
-      Tahun:                   meta.tahun,
-      Jenis_Dokumen:           "BAST",
-      Status_Verifikasi_PPK:   "Tidak_Perlu",
+      Tanggal_BAST_PML_SM:     tglBastPplSm,
+      Judul_Pekerjaan_Dokumen: kegNama || spkRecord.Judul_Pekerjaan_Dokumen || "",
+      Tanggal_Mulai:           mappingItem?.Tanggal_Mulai || spkRecord.Tanggal_Mulai || "",
+      Tanggal_Selesai:         mappingItem?.Tanggal_Selesai || spkRecord.Tanggal_Selesai || "",
+      Batas_Penyerahan:        mappingItem?.Batas_Terlambar || mappingItem?.Batas_Terlambat || spkRecord.Batas_Penyerahan || "",
+      Total_Honor:             harga || spkRecord.Total_Honor || 0,
+      Terbilang:               terbilang(harga || spkRecord.Total_Honor || 0) + " Rupiah",
+      Status_Generate_SPK:     spkRecord.Status_Generate_SPK || "Sudah",
+      Bulan:                   docBln,
+      Triwulan:                docTri,
+      Tahap:                   docThp,
+      Subround:                docSub,
+      Semester:                docSem,
+      Tahun:                   docThn,
+      Tipe_Periode:            docTipe,
+      Jenis_Dokumen:           spkId ? "SPK_BAST" : "BAST",
+      Status_Verifikasi_PPK:   spkRecord.Status_Verifikasi_PPK || "Tidak_Perlu",
     };
 
-    setLoading(true, "Menyimpan nomor & data BAST ke database...");
+    setLoading(true, "Menyimpan data BAST ke database...");
     try {
       if (spkId) {
-        // UPDATE baris SPK yang sudah ada di database (Satu baris SPK & BAST menyatu)
         const updatedFields = {
           No_BAST_PPL_PML:      noBastPplPml,
           Tanggal_BAST_PPL_PML: tglBastPplPml,
           No_BAST_PPL_SM:       noBastPplSm,
           Tanggal_BAST_PPL_SM:  tglBastPplSm,
           No_BAST_PML_SM:       noBastPmlSm,
-          Tanggal_BAST_PML_SM:  tglBastPmlSm,
+          Tanggal_BAST_PML_SM:  tglBastPplSm,
           PML:                  pmlNama || spkRecord.PML || "",
           Ketua_Tim:            finalKetua,
           PPK:                  finalPpk,
-          Status_Generate_SPK:  "Sudah",
+          Jenis_Dokumen:        "SPK_BAST",
         };
         await updateInSheet("spkBast", "ID_Dokumen", spkId, updatedFields);
-        showToast(`✅ BAST berhasil diperbarui pada dokumen SPK!`, "success", 4000);
+        clearCache("spkBast");
+        showToast(`✅ BAST berhasil diperbarui!`, "success", 4000);
       } else {
-        // Fallback jika tanpa SPK
         await appendToSheet("spkBast", record);
+        clearCache("spkBast");
         showToast(`✅ BAST berhasil disimpan!`, "success", 4000);
       }
       setTimeout(() => window.location.href = "dokumen.html", 800);
@@ -2164,26 +2304,23 @@
     e.preventDefault();
     const kegSelect = document.getElementById("sm-sel-kegiatan");
     let judul = (document.getElementById("sm-judul")?.value || "").trim();
-    if (!judul && kegSelect) {
-      judul = kegSelect.value !== "__custom__" ? kegSelect.value : "";
-    }
+    if (!judul && kegSelect) judul = kegSelect.value !== "__custom__" ? kegSelect.value : "";
     const bulan   = document.getElementById("sm-sel-bulan")?.value;
     const tahun   = document.getElementById("sm-input-tahun")?.value;
     const ketua   = document.getElementById("sm-sel-ketua")?.value;
     const noBast  = document.getElementById("sm-no-bast")?.value.trim();
     const tglBast = document.getElementById("sm-tgl-bast")?.value;
 
-    if (!judul)   { showToast("Pilih atau isi 1. Nama Kegiatan!", "warning"); return; }
-    if (!bulan)   { showToast("Pilih 2. Bulan Pelaksanaan!", "warning"); return; }
+    if (!judul)   { showToast("Pilih/isi Nama Kegiatan!", "warning"); return; }
+    if (!bulan)   { showToast("Pilih Bulan Pelaksanaan!", "warning"); return; }
     if (!tahun)   { showToast("Isi Tahun Pelaksanaan!", "warning"); return; }
-    if (!ketua)   { showToast("Pilih 3. Nama SM (Ketua Tim)!", "warning"); return; }
-    if (!noBast)  { showToast("Isi 4. Nomor BAST SM→PPK!", "warning"); return; }
-    if (!tglBast) { showToast("Isi 5. Tanggal BAST SM→PPK!", "warning"); return; }
+    if (!ketua)   { showToast("Pilih Nama SM!", "warning"); return; }
+    if (!noBast)  { showToast("Isi Nomor BAST SM→PPK!", "warning"); return; }
+    if (!tglBast) { showToast("Isi Tanggal BAST SM→PPK!", "warning"); return; }
 
-    const dup = checkDocNumberDuplicate("bast_sm", noBast);
+    const dup = checkDocNumberDuplicate("bast_sm", noBast, _isEditMode ? _editDocId : null);
     if (dup) { showToast(`Nomor BAST SM→PPK sudah digunakan: ${dup.label}`, "danger"); return; }
 
-    // Auto resolve PPK
     let ppk = document.getElementById("sm-sel-ppk")?.value;
     if (!ppk) {
       const ppkPegawai = _allPegawai.find(p => String(p.Jabatan || "").toLowerCase().includes("ppk") || String(p.Peran || "").toLowerCase().includes("ppk") || String(p.NIP || p.nip || "").startsWith("19920317"));
@@ -2194,7 +2331,7 @@
     const meta     = getPeriodMeta(tglBast, bulan, parseInt(tahun));
     const tBAST    = tanggalTerbilang(tglBast);
 
-    const docId = generateId("BSM");
+    const docId = (_isEditMode && _editDocId) ? _editDocId : generateId("BSM");
     const record = {
       ID_BAST_SM_PPK:              docId,
       Hari:                        tBAST.hari,
@@ -2207,23 +2344,29 @@
       No_BAST_SM_PPK:              noBast,
       Judul_Pekerjaan_Dokumen:     judul,
       Status_Generate_BAST_SM_PPK: "Belum",
-      Link_GDocs_BAST_SM_PPK:      "",
-      Link_PDF_BAST_SM_PPK:        "",
-      Triwulan:                    meta.triwulan,
+      Triwulan:                    "",
       Tahap:                       "",
-      Subround:                    meta.subround,
+      Subround:                    "",
+      Semester:                    "",
+      Tipe_Periode:                "bulan",
       Tanggal_BAST_SM_PPK:         tglBast,
       Total_Honor:                 honorVal,
       Terbilang:                   terbilang(honorVal) + " Rupiah",
       Status_Verifikasi_PPK:       "Menunggu_Verifikasi",
     };
 
-    setLoading(true);
+    setLoading(true, _isEditMode ? "Menyimpan perubahan BAST SM→PPK..." : "Menyimpan BAST SM→PPK ke database...");
     try {
-      await appendToSheet("bastSmPpk", record);
-      clearCache("bastSmPpk");
-      showToast(`✅ BAST SM→PPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
-      setTimeout(() => window.location.href = "dokumen.html", 1800);
+      if (_isEditMode && _editDocId) {
+        await updateInSheet("bastSmPpk", "ID_BAST_SM_PPK", _editDocId, record);
+        clearCache("bastSmPpk");
+        showToast(`✅ Perubahan BAST SM→PPK berhasil disimpan!`, "success", 5000);
+      } else {
+        await appendToSheet("bastSmPpk", record);
+        clearCache("bastSmPpk");
+        showToast(`✅ BAST SM→PPK berhasil disimpan!`, "success", 5000);
+      }
+      setTimeout(() => window.location.href = "dokumen.html", 1000);
     } catch (err) {
       showToast("Gagal simpan BAST SM→PPK: " + err.message, "danger");
     } finally {
@@ -2231,53 +2374,6 @@
     }
   }
 
-  function getPeriodMeta(dateStr, defaultMonth, defaultYear) {
-    const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    let mIdx = -1;
-    let yr = defaultYear || new Date().getFullYear();
-    if (dateStr) {
-      const d = new Date(dateStr);
-      if (!isNaN(d)) {
-        mIdx = d.getMonth();
-        yr = d.getFullYear();
-      }
-    }
-    if (mIdx === -1 && defaultMonth) {
-      mIdx = months.indexOf(defaultMonth);
-    }
-    if (mIdx === -1) mIdx = new Date().getMonth();
-
-    const bulan = months[mIdx];
-    const triwulan = Math.floor(mIdx / 3) + 1;
-    const subround = mIdx < 4 ? 1 : (mIdx < 8 ? 2 : 3);
-    return { bulan, tahun: yr, triwulan, subround, tahap: "" };
-  }
-
-  function generateId(prefix) {
-    return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2,4).toUpperCase()}`;
-  }
-
-  // ─── Helper: Format jangka waktu ISO ke range Indonesia ──────
-  function formatJangkaWaktuDetail(tglMulai, tglSelesai) {
-    const bulanList = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    const parseDate = str => {
-      if (!str) return null;
-      const s = String(str).includes("T") ? str.split("T")[0] : str;
-      const p = s.split("-").map(Number);
-      return p.length === 3 ? { y: p[0], m: p[1], d: p[2] } : null;
-    };
-    const a = parseDate(tglMulai);
-    const b = parseDate(tglSelesai);
-    if (!a) return tglSelesai ? String(tglSelesai).split("T")[0] : "—";
-    if (!b) return `${a.d} ${bulanList[a.m] || a.m} ${a.y}`;
-    if (a.m === b.m && a.y === b.y) {
-      return `${a.d} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
-    }
-    const aSuffix = a.y === b.y ? `` : ` ${a.y}`;
-    return `${a.d} ${bulanList[a.m] || a.m}${aSuffix} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
-  }
-
-  // ─── Helper: format date for HTML input ───────────────────────
   function formatDateForInput(str) {
     if (!str) return "";
     if (typeof str !== "string") str = String(str);
@@ -2287,13 +2383,11 @@
     return str;
   }
 
-  // ─── Edit mode (dari dokumen.html) ───────────────────────────
   async function loadEditMode(docId) {
     if (!docId) return;
     _editDocId = docId;
     _isEditMode = true;
 
-    // Cari dari data yang sudah di-load di cache / Sheets
     let rec = (_allSpkBast || []).find(r => String(r.ID_Dokumen) === String(docId));
     let isSmPpk = false;
     if (!rec && _allBastSmPpk) {
@@ -2301,20 +2395,14 @@
       if (rec) isSmPpk = true;
     }
     if (!rec) {
-      const [spkList, smList] = await Promise.all([
-        getSpkBast().catch(() => []),
-        getBastSmPpk().catch(() => [])
-      ]);
+      const [spkList, smList] = await Promise.all([getSpkBast().catch(() => []), getBastSmPpk().catch(() => [])]);
       rec = (spkList || []).find(r => String(r.ID_Dokumen) === String(docId));
       if (!rec && smList) {
         rec = smList.find(r => String(r.ID_BAST_SM_PPK || r.ID_Dokumen) === String(docId));
         if (rec) isSmPpk = true;
       }
     }
-    if (!rec) {
-      console.warn("Dokumen untuk diedit tidak ditemukan:", docId);
-      return;
-    }
+    if (!rec) return;
 
     if (isSmPpk || rec.Jenis_Dokumen === "BAST_SM" || rec.ID_BAST_SM_PPK) {
       selectMode("bast_sm");
@@ -2323,26 +2411,23 @@
         selKeg.value = rec.Judul_Pekerjaan_Dokumen || rec.Uraian_Tugas || "";
         onSmKegiatanSelect(selKeg.value);
       }
-      const selBln = document.getElementById("sm-sel-bulan");
-      if (selBln) selBln.value = rec.Bulan || "";
-      const inpThn = document.getElementById("sm-input-tahun");
-      if (inpThn) inpThn.value = rec.Tahun || new Date().getFullYear();
-      const selKetua = document.getElementById("sm-sel-ketua");
-      if (selKetua) selKetua.value = rec.Ketua_Tim || "";
-      const selPpk = document.getElementById("sm-sel-ppk");
-      if (selPpk) selPpk.value = rec.PPK || "";
-      const inpNo = document.getElementById("sm-no-bast");
-      if (inpNo) inpNo.value = rec.No_BAST_SM_PPK || "";
+      document.getElementById("sm-sel-bulan")?.value = rec.Bulan || "";
+      document.getElementById("sm-input-tahun")?.value = rec.Tahun || new Date().getFullYear();
+      document.getElementById("sm-sel-ketua")?.value = rec.Ketua_Tim || "";
+      document.getElementById("sm-sel-ppk")?.value = rec.PPK || "";
+      document.getElementById("sm-no-bast")?.value = rec.No_BAST_SM_PPK || "";
       const inpTgl = document.getElementById("sm-tgl-bast");
       if (inpTgl) {
         inpTgl.value = formatDateForInput(rec.Tanggal_BAST_SM_PPK || rec.Tanggal);
         updateDateDisplay("sm-tgl-bast", "sm-tgl-display");
       }
+      const btnSubmit = document.getElementById("btn-simpan-sm");
+      if (btnSubmit) btnSubmit.textContent = "💾 Simpan Perubahan BAST SM→PPK →";
       validateDocNumberInput("bast_sm");
       return;
     }
 
-    if (rec.Jenis_Dokumen === "BAST") {
+    if (rec.Jenis_Dokumen === "BAST" || rec.Jenis_Dokumen === "SPK_BAST") {
       selectMode("bast");
       const petugasId = rec.ID_Mitra;
       const petugasTipe = (rec.Jenis_Petugas || "").toLowerCase() === "pegawai" ? "pegawai" : "mitra";
@@ -2355,7 +2440,6 @@
         petugasNama = p ? getPegawaiName(p) : petugasId;
       }
       selectPetugas("bast", petugasId, petugasNama, petugasTipe);
-      
       const inpPmlPml = document.getElementById("bast-no-ppl-pml");
       if (inpPmlPml) inpPmlPml.value = rec.No_BAST_PPL_PML || "";
       const inpTglPml = document.getElementById("bast-tgl-ppl-pml");
@@ -2363,7 +2447,6 @@
         inpTglPml.value = formatDateForInput(rec.Tanggal_BAST_PPL_PML);
         updateDateDisplay("bast-tgl-ppl-pml", "bast-tgl-ppl-pml-display");
       }
-
       const inpPplSm = document.getElementById("bast-no-ppl-sm");
       if (inpPplSm) inpPplSm.value = rec.No_BAST_PPL_SM || "";
       const inpTglSm = document.getElementById("bast-tgl-ppl-sm");
@@ -2371,7 +2454,6 @@
         inpTglSm.value = formatDateForInput(rec.Tanggal_BAST_PPL_SM);
         updateDateDisplay("bast-tgl-ppl-sm", "bast-tgl-ppl-sm-display");
       }
-
       const inpPmlSm = document.getElementById("bast-no-pml-sm");
       if (inpPmlSm) inpPmlSm.value = rec.No_BAST_PML_SM || "";
       const inpTglPmlSm = document.getElementById("bast-tgl-pml-sm");
@@ -2382,7 +2464,6 @@
       return;
     }
 
-    // Default: SPK Mode
     selectMode("spk");
     const petugasId = rec.ID_Mitra;
     const petugasTipe = (rec.Jenis_Petugas || "").toLowerCase() === "pegawai" ? "pegawai" : "mitra";
