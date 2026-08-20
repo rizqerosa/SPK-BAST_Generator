@@ -944,25 +944,29 @@
 
   // ─── Manual Refresh dari Google Sheets ───────────────────────
   async function refreshDokumenManual() {
-    setLoading(true);
+    setLoading(true, "Memuat data terbaru dari Google Sheets...");
     try {
       clearCache("spkBast");
       clearCache("bastSmPpk");
       clearCache("mitra");
       clearCache("pegawai");
+      clearCache("detailPekerjaan");
       const [spkBastData, bastSmData, mitraData, pegawaiData] = await Promise.all([
         getSpkBast(),
         getBastSmPpk(),
         getMitra(),
         getPegawai(),
       ]);
-      _allDocs = spkBastData || [];
-      _allBastSmDocs = bastSmData || [];
-      _allMitra = mitraData || [];
-      _allPegawai = pegawaiData || [];
+      const cleanSpk = (arr) => (arr || []).filter(r => r && (r.Nomor_SPK || r.ID_Mitra || r.Judul_Pekerjaan_Dokumen) && r.Status_Verifikasi_PPK !== 'DELETED');
+      const cleanSm  = (arr) => (arr || []).filter(r => r && (r.No_BAST_SM_PPK || r.Uraian_Tugas || r.Ketua_Tim) && r.Status_Verifikasi_PPK !== 'DELETED');
+
+      _allDocs = cleanSpk(spkBastData);
+      _allBastSmDocs = cleanSm(bastSmData);
+      if (Array.isArray(mitraData) && mitraData.length) _allMitra = mitraData;
+      if (Array.isArray(pegawaiData) && pegawaiData.length) _allPegawai = pegawaiData;
       updateStats();
       applyFilters();
-      showToast("✅ Data dokumen berhasil diperbarui", "success");
+      showToast("✅ Data dokumen berhasil diperbarui dari Google Sheets", "success");
     } catch (err) {
       showToast("Gagal memperbarui data: " + err.message, "danger");
     } finally {

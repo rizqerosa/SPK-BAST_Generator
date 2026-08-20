@@ -1553,6 +1553,16 @@
     if (!str) return null;
     const s = String(str).trim();
     if (!s) return null;
+    const mNomor = s.match(/(?:Nomor|No\.?)\s*(\d+)/i);
+    if (mNomor) {
+      const n = parseInt(mNomor[1], 10);
+      if (n !== yr && n > 0 && n < 2000) return n;
+    }
+    const mSlash = s.match(/^(\d+)\//);
+    if (mSlash) {
+      const n = parseInt(mSlash[1], 10);
+      if (n !== yr && n > 0 && n < 2000) return n;
+    }
     const matches = s.match(/\d+/g);
     if (!matches) return null;
     for (const m of matches) {
@@ -1568,7 +1578,7 @@
 
   function getMaxDocSeq(docType, targetYear) {
     const yr = parseInt(targetYear, 10) || new Date().getFullYear();
-    let maxSeq = 0;
+    const foundSeqs = [];
 
     if (docType === "spk") {
       (_allSpkBast || []).forEach(r => {
@@ -1583,7 +1593,7 @@
           const vals = [r.Nomor_SPK, r.No_SPK, r["Nomor SPK"], r["No SPK"]];
           vals.forEach(v => {
             const seq = extractDocSeq(v, yr);
-            if (seq && seq > maxSeq) maxSeq = seq;
+            if (seq && !foundSeqs.includes(seq)) foundSeqs.push(seq);
           });
         }
       });
@@ -1610,13 +1620,24 @@
           ];
           vals.forEach(v => {
             const seq = extractDocSeq(v, yr);
-            if (seq && seq > maxSeq) maxSeq = seq;
+            if (seq && !foundSeqs.includes(seq)) foundSeqs.push(seq);
           });
         }
       });
     }
 
-    return maxSeq;
+    if (foundSeqs.length === 0) return 0;
+    foundSeqs.sort((a, b) => a - b);
+
+    // Ambil nomor urut tertinggi yang berkesinambungan (mengabaikan anomali test loncat > 20)
+    let validMax = 0;
+    for (let i = 0; i < foundSeqs.length; i++) {
+      const s = foundSeqs[i];
+      if (validMax === 0 || s <= validMax + 15) {
+        validMax = s;
+      }
+    }
+    return validMax;
   }
 
   function generateSuggestedDocNumber(docType, targetYear) {
