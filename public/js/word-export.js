@@ -33,8 +33,16 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
   // 2. Load zip struktur .docx
   const zip = await JSZip.loadAsync(arrayBuffer);
 
-  // 3. Proses seluruh file XML di dalam zip
-  const xmlFiles = Object.keys(zip.files).filter(name => name.endsWith(".xml"));
+  // 3. Proses hanya file XML isi dokumen (hindari merusak styles/settings/themes internal Word)
+  const xmlFiles = Object.keys(zip.files).filter(name =>
+    name.startsWith("word/") &&
+    name.endsWith(".xml") &&
+    !name.includes("styles") &&
+    !name.includes("settings") &&
+    !name.includes("fontTable") &&
+    !name.includes("webSettings") &&
+    !name.includes("theme")
+  );
 
   for (const filename of xmlFiles) {
     let xmlStr = await zip.files[filename].async("string");
@@ -72,7 +80,7 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
           }
           return trRow;
         });
-        xmlStr = xmlStr.replace(templateTr, newTrs.join(""));
+        xmlStr = xmlStr.replace(templateTr, () => newTrs.join(""));
       }
     }
 
@@ -80,9 +88,9 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
     for (const [k, v] of Object.entries(dataDict)) {
       const escVal = _docxXmlEscape(v);
       const cleanKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      xmlStr = xmlStr.replace(new RegExp('&lt;&lt;\\s*' + cleanKey + '\\s*&gt;&gt;', 'gi'), escVal);
-      xmlStr = xmlStr.replace(new RegExp('<<\\s*' + cleanKey + '\\s*>>', 'gi'), escVal);
-      xmlStr = xmlStr.replace(new RegExp('«\\s*' + cleanKey + '\\s*»', 'gi'), escVal);
+      xmlStr = xmlStr.replace(new RegExp('&lt;&lt;\\s*' + cleanKey + '\\s*&gt;&gt;', 'gi'), () => escVal);
+      xmlStr = xmlStr.replace(new RegExp('<<\\s*' + cleanKey + '\\s*>>', 'gi'), () => escVal);
+      xmlStr = xmlStr.replace(new RegExp('«\\s*' + cleanKey + '\\s*»', 'gi'), () => escVal);
     }
 
     // C. Bersihkan jika ada duplikasi kata "NOMOR Nomor" atau "Nomor Nomor" akibat template/input
