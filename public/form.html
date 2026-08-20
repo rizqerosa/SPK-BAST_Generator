@@ -896,8 +896,16 @@
       if (editId) {
         loadEditMode(editId);
       } else {
-        applyAutoDocNumber(_currentMode === "bast_sm" ? "bast_sm" : (_currentMode === "bast" ? "bast" : "spk"), false);
-        validateDocNumberInput("spk");
+        const yr = new Date().getFullYear();
+        const inputSpk = document.getElementById("spk-no-spk");
+        if (inputSpk && (!inputSpk.value || inputSpk.value === `Nomor 1 Tahun ${yr}`)) {
+          applyAutoDocNumber("spk", true);
+        } else {
+          validateDocNumberInput("spk");
+        }
+        if (_currentMode === "bast_sm") {
+          applyAutoDocNumber("bast_sm", false);
+        }
       }
     }).catch(err => {
       console.warn("[form.html] bg sync error:", err);

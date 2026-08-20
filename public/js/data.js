@@ -110,11 +110,12 @@ async function _fetchFromNetwork(sheetKey) {
         throw new Error(`HTTP ${res.status}`);
       }
       const json = await res.json();
-      if (json.status !== "ok") {
+      if (json && json.status === "error") {
         if (json.message && json.message.toLowerCase().includes("not found")) continue;
         throw new Error(json.message || "Error dari Apps Script");
       }
-      const normalized = (json.data || []).map(row => normalizeRow(row, sheetKey));
+      const rawRows = Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : []);
+      const normalized = rawRows.map(row => normalizeRow(row, sheetKey));
       return normalized;
     } catch (err) {
       clearTimeout(timeoutId);
