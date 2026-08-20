@@ -1360,41 +1360,7 @@
     }
   }
 
-    _bastMappingRows = mappingItems;
-    const container = document.getElementById("bast-keg-selector");
-
-    if (mappingItems.length === 0) {
-      container.innerHTML = `<div class="empty-mapping-notice">
-        Tidak ada kegiatan yang ter-mapping untuk petugas ini. Hubungi KATIM.
-      </div>`;
-      return;
-    }
-
-    const formatTgl = str => {
-      if (!str) return "—";
-      const d = new Date(str);
-      return isNaN(d) ? str : d.toLocaleDateString("id-ID", {day:"2-digit", month:"short"});
-    };
-
-    container.innerHTML = mappingItems.map((m, i) => `
-      <div class="bast-keg-option ${i === 0 ? 'selected' : ''}" id="bko-${i}" onclick="selectBastKegiatan(${i})">
-        <div class="bko-check" id="bkc-${i}">✓</div>
-        <div class="bko-info">
-          <div class="bko-name">${escapeHtml(m.Uraian_Kegiatan || m.ID_Kegiatan || "—")}</div>
-          <div class="bko-meta">
-            <span class="mki-badge mki-${m.Peran||'ppl'}">${(m.Peran||'ppl').toUpperCase()}</span>
-            📅 ${formatTgl(m.Tanggal_Mulai)} – ${formatTgl(m.Tanggal_Selesai)}
-          </div>
-        </div>
-      </div>
-    `).join("");
-
-    if (mappingItems.length > 0) {
-      selectBastKegiatan(0);
-    }
-  }
-
-  function selectBastKegiatan(idx) {
+    function selectBastKegiatan(idx) {
     document.querySelectorAll(".bast-keg-option").forEach(el => el.classList.remove("selected"));
     document.getElementById(`bko-${idx}`)?.classList.add("selected");
 
@@ -1791,20 +1757,6 @@
     }
   }
 
-  function setupDocNumberListeners() {
-    ["spk", "bast_ppl_pml", "bast_ppl_sm", "bast_pml_sm", "bast_sm"].forEach(type => {
-      const { input: inputId } = getDocInputIds(type);
-      const inputEl = document.getElementById(inputId);
-      if (inputEl) {
-        inputEl.addEventListener("input", () => {
-          validateDocNumberInput(type);
-          if (type === "bast_ppl_pml") validateDocNumberInput("bast_ppl_sm");
-          if (type === "bast_ppl_sm") validateDocNumberInput("bast_ppl_pml");
-        });
-        inputEl.addEventListener("blur", () => {
-          validateDocNumberInput(type);
-          if (type === "bast_ppl_pml") validateDocNumberInput("bast_ppl_sm");
-          if (type === "bast_ppl_sm") validateDocNumberInput("bast_ppl_pml");
   function populateSmKegiatanDropdown() {
     const kegSel = document.getElementById("sm-sel-kegiatan");
     if (!kegSel) return;
@@ -2411,11 +2363,16 @@
         selKeg.value = rec.Judul_Pekerjaan_Dokumen || rec.Uraian_Tugas || "";
         onSmKegiatanSelect(selKeg.value);
       }
-      document.getElementById("sm-sel-bulan")?.value = rec.Bulan || "";
-      document.getElementById("sm-input-tahun")?.value = rec.Tahun || new Date().getFullYear();
-      document.getElementById("sm-sel-ketua")?.value = rec.Ketua_Tim || "";
-      document.getElementById("sm-sel-ppk")?.value = rec.PPK || "";
-      document.getElementById("sm-no-bast")?.value = rec.No_BAST_SM_PPK || "";
+      const elSmBulan = document.getElementById("sm-sel-bulan");
+      if (elSmBulan) elSmBulan.value = rec.Bulan || "";
+      const elSmTahun = document.getElementById("sm-input-tahun");
+      if (elSmTahun) elSmTahun.value = rec.Tahun || new Date().getFullYear();
+      const elSmKetua = document.getElementById("sm-sel-ketua");
+      if (elSmKetua) elSmKetua.value = rec.Ketua_Tim || "";
+      const elSmPpk = document.getElementById("sm-sel-ppk");
+      if (elSmPpk) elSmPpk.value = rec.PPK || "";
+      const elSmNoBast = document.getElementById("sm-no-bast");
+      if (elSmNoBast) elSmNoBast.value = rec.No_BAST_SM_PPK || "";
       const inpTgl = document.getElementById("sm-tgl-bast");
       if (inpTgl) {
         inpTgl.value = formatDateForInput(rec.Tanggal_BAST_SM_PPK || rec.Tanggal);
