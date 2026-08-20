@@ -93,7 +93,7 @@
           <span id="zoom-level">100%</span>
           <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
         </div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="window.print()" title="Cetak halaman langsung">
+        <button type="button" id="topbar-btn-print" class="btn btn-outline btn-sm" onclick="handlePrintDoc()" title="Cetak halaman langsung">
           🖨️ Cetak / Print
         </button>
         <a href="form.html" id="topbar-btn-edit" class="btn btn-outline btn-sm">&#9999;&#65039; Edit Isian</a>
@@ -117,8 +117,12 @@
           </div>
           <div class="export-section">
             <h3>📥 Export &amp; Cetak</h3>
-            <button class="btn btn-primary w-full" onclick="exportCurrentWord()" style="margin-bottom:8px;">⬇ Download Word (.docx)</button>
-            <button class="btn btn-outline w-full" onclick="window.print()" style="background:#fff;">🖨️ Cetak Dokumen (Print)</button>
+            <button id="btn-export-word" class="btn btn-primary w-full" onclick="exportCurrentWord()" style="margin-bottom:8px;">⬇ Download Word (.docx)</button>
+            <button id="btn-print-doc" class="btn btn-outline w-full" onclick="handlePrintDoc()" style="background:#fff;">🖨️ Cetak Dokumen (Print)</button>
+            <div id="export-locked-notice" style="display:none; margin-top:10px; padding:10px 12px; border-radius:var(--radius-sm); background:#fef2f2; border:1px solid #fecaca; color:#991b1b; font-size:.76rem; line-height:1.4;">
+              🔒 <strong>Dokumen Belum Di-ACC PPK</strong><br>
+              Pengunduhan file resmi (.docx) dan pencetakan hanya dapat dilakukan setelah dokumen disetujui oleh PPK.
+            </div>
             <p class="text-xs text-muted mt-8">Format resmi Microsoft Word (.docx) &amp; standar cetak BPS.</p>
           </div>
         </div>
@@ -360,6 +364,31 @@
     renderPpkStatusBanner(_previewRecord);
     buildTypeChips(_previewRecord, _isPmlMitra);
 
+    const isApproved = isDocApproved(_previewRecord);
+    const btnExportWord = document.getElementById("btn-export-word");
+    const exportNotice = document.getElementById("export-locked-notice");
+    if (btnExportWord) {
+      if (!isApproved) {
+        btnExportWord.disabled = true;
+        btnExportWord.classList.remove("btn-primary");
+        btnExportWord.classList.add("btn-secondary");
+        btnExportWord.style.opacity = "0.6";
+        btnExportWord.style.cursor = "not-allowed";
+        btnExportWord.title = "Dokumen belum disetujui (ACC) oleh PPK";
+        btnExportWord.innerHTML = "🔒 Download Word (Menunggu ACC PPK)";
+        if (exportNotice) exportNotice.style.display = "block";
+      } else {
+        btnExportWord.disabled = false;
+        btnExportWord.classList.remove("btn-secondary");
+        btnExportWord.classList.add("btn-primary");
+        btnExportWord.style.opacity = "1";
+        btnExportWord.style.cursor = "pointer";
+        btnExportWord.title = "Download Dokumen Word (.docx)";
+        btnExportWord.innerHTML = "⬇ Download Word (.docx)";
+        if (exportNotice) exportNotice.style.display = "none";
+      }
+    }
+
     const isStandaloneBast = (_previewRecord.Jenis_Dokumen === "BAST");
     const hasBast = Boolean(
       _previewRecord.No_BAST_PPL_PML ||
@@ -541,7 +570,27 @@
     }
   }
 
+  function isDocApproved(record) {
+    if (!record) return false;
+    const raw = record.Status_Generate_SPK || record.Status_Generate_BAST_SM_PPK || record.Status_Verifikasi_PPK || "Belum";
+    const v = String(raw).toLowerCase().trim();
+    return (v === "disetujui" || v === "approved" || v === "sudah");
+  }
+
+  function handlePrintDoc() {
+    if (!isDocApproved(_previewRecord)) {
+      showToast("🔒 Dokumen belum disetujui (ACC) oleh PPK! Pencetakan dokumen resmi hanya dapat dilakukan setelah disetujui PPK.", "warning", 6000);
+      return;
+    }
+    window.print();
+  }
+
   async function exportCurrentWord() {
+    if (!isDocApproved(_previewRecord)) {
+      showToast("🔒 Dokumen belum disetujui (ACC) oleh PPK! Dokumen hanya dapat diunduh setelah diverifikasi dan disetujui oleh PPK.", "warning", 6000);
+      return;
+    }
+
     // Cek library docx, tunggu maksimal 5 detik jika sedang loading
     if (typeof docx === "undefined") {
       setLoading(true);
