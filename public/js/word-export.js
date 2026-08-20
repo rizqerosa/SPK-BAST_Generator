@@ -39,6 +39,12 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
   for (const filename of xmlFiles) {
     let xmlStr = await zip.files[filename].async("string");
 
+    // Normalisasi tag placeholder yang terpecah oleh formatting run Word (<w:r><w:t>...</w:t></w:r>)
+    xmlStr = xmlStr.replace(/(&lt;&lt;|<<|«)([\s\S]*?)(&gt;&gt;|>>|»)/g, (match, open, inner, close) => {
+      const cleanInner = inner.replace(/<[^>]+>/g, '').trim();
+      return `&lt;&lt;${cleanInner}&gt;&gt;`;
+    });
+
     // A. Jika di word/document.xml dan ada rincian pekerjaan: duplikasi baris tabel lampiran
     if (filename === "word/document.xml" && detailsList && detailsList.length > 0) {
       const trRegex = /<w:tr(?:(?!<w:tr).)*?URAIAN_TUGAS.*?<\/w:tr>/s;

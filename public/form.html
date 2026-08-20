@@ -2096,10 +2096,26 @@
 
     const tglList   = _spkMappingRows.filter(m => m.Tanggal_Mulai).map(m => new Date(m.Tanggal_Mulai));
     const tglSList  = _spkMappingRows.filter(m => m.Tanggal_Selesai).map(m => new Date(m.Tanggal_Selesai));
-    const batasList = _spkMappingRows.filter(m => m.Batas_Terlambat).map(m => new Date(m.Batas_Terlambat));
+    const batasList = _spkMappingRows.filter(m => m.Batas_Terlambat || m.Batas_Terlambar || m.Batas_Penyerahan).map(m => new Date(m.Batas_Terlambat || m.Batas_Terlambar || m.Batas_Penyerahan));
     const tglMulai   = tglList.length  ? new Date(Math.min(...tglList)).toISOString().split("T")[0]  : "";
     const tglSelesai = tglSList.length ? new Date(Math.max(...tglSList)).toISOString().split("T")[0] : "";
-    const batasTerlambat = batasList.length ? new Date(Math.max(...batasList)).toISOString().split("T")[0] : "";
+    let batasTerlambat = batasList.length ? new Date(Math.max(...batasList)).toISOString().split("T")[0] : "";
+
+    if (!batasTerlambat && tglSelesai) {
+      try {
+        const parts = tglSelesai.split("-");
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          if (!isNaN(d.getTime())) {
+            d.setDate(d.getDate() + 5);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            batasTerlambat = `${y}-${m}-${day}`;
+          }
+        }
+      } catch (e) {}
+    }
 
     const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
     const dSpk   = tglSpk ? new Date(tglSpk) : new Date();
@@ -2335,6 +2351,24 @@
     const docSem  = mappingItem.Semester || spkRecord.Semester || "";
     const docThn  = mappingItem.Tahun || spkRecord.Tahun || meta.tahun;
 
+    const rawTglSelesai = mappingItem?.Tanggal_Selesai || spkRecord.Tanggal_Selesai || "";
+    let rawBatasBast = mappingItem?.Batas_Terlambar || mappingItem?.Batas_Terlambat || spkRecord.Batas_Penyerahan || "";
+    if (!rawBatasBast && rawTglSelesai) {
+      try {
+        const parts = String(rawTglSelesai).split("T")[0].split("-");
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          if (!isNaN(d.getTime())) {
+            d.setDate(d.getDate() + 5);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            rawBatasBast = `${y}-${m}-${day}`;
+          }
+        }
+      } catch (e) {}
+    }
+
     const docId = spkId || generateId("BAST");
     const record = {
       ID_Dokumen:              docId,
@@ -2354,8 +2388,8 @@
       Tanggal_BAST_PML_SM:     tglBastPplSm,
       Judul_Pekerjaan_Dokumen: kegNama || spkRecord.Judul_Pekerjaan_Dokumen || "",
       Tanggal_Mulai:           mappingItem?.Tanggal_Mulai || spkRecord.Tanggal_Mulai || "",
-      Tanggal_Selesai:         mappingItem?.Tanggal_Selesai || spkRecord.Tanggal_Selesai || "",
-      Batas_Penyerahan:        mappingItem?.Batas_Terlambar || mappingItem?.Batas_Terlambat || spkRecord.Batas_Penyerahan || "",
+      Tanggal_Selesai:         rawTglSelesai,
+      Batas_Penyerahan:        rawBatasBast,
       Total_Honor:             harga || spkRecord.Total_Honor || 0,
       Terbilang:               terbilang(harga || spkRecord.Total_Honor || 0) + " Rupiah",
       Status_Generate_SPK:     spkRecord.Status_Generate_SPK || "Sudah",

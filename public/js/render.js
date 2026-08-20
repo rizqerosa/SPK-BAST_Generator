@@ -347,12 +347,35 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   };
   const spkDateParts = _parseDateComponents(tSPK);
 
-  // === Helper: Jabatan petugas di lapangan (organik override) ===
-  // Untuk petugas organik di BAST, jabatan = jabatan lapangan, bukan jabatan database
-  const peranPetugas = (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) ? "pml" : "ppl";
-  let jabatanPetugasLapangan = mitra.Posisi || "Mitra Pendataan";
-  if (isPegawai || mitra._isOrganik) {
-    jabatanPetugasLapangan = peranPetugas === "pml" ? "Petugas Pengawas Lapangan" : "Petugas Pencacah Lapangan";
+  // === Helper: Jabatan petugas di lapangan (BAST & SPK) ===
+  // Standar BPS:
+  // - Petugas Pendataan Lapangan (untuk peran PPL)
+  // - Petugas Pengawas Lapangan (untuk peran PML)
+  const isPmlRole = Boolean(
+    (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) ||
+    (record.Peran && String(record.Peran).toLowerCase() === "pml") ||
+    (record.Jenis_Petugas && String(record.Jenis_Petugas).toLowerCase().includes("pml"))
+  );
+  const jabatanPetugasLapangan = isPmlRole ? "Petugas Pengawas Lapangan" : "Petugas Pendataan Lapangan";
+  const jabatanPmlBast = "Petugas Pengawas Lapangan";
+
+  // === Helper: Hitung H+5 Batas Penyerahan jika kosong ===
+  let rawBatasPenyerahan = record.Batas_Penyerahan || record.Batas_Penyerahan_Telat || record.Batas_Terlambat || record.Batas_Terlambar || "";
+  if (!rawBatasPenyerahan && record.Tanggal_Selesai) {
+    try {
+      const raw = String(record.Tanggal_Selesai).includes("T") ? record.Tanggal_Selesai.split("T")[0] : String(record.Tanggal_Selesai);
+      const parts = raw.split("-");
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        if (!isNaN(d.getTime())) {
+          d.setDate(d.getDate() + 5);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          rawBatasPenyerahan = `${y}-${m}-${day}`;
+        }
+      }
+    } catch (e) {}
   }
 
   // SPK context (tanggal SPK dipakai)
@@ -398,7 +421,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
 
     // === Tanggal selesai & batas ===
     TANGGAL_SELESAI:    formatTanggal(record.Tanggal_Selesai),
-    BATAS_PENYERAHAN:   formatTanggal(record.Batas_Penyerahan || record.Batas_Penyerahan_Telat),
+    BATAS_PENYERAHAN:   formatTanggal(rawBatasPenyerahan),
 
     // === Tabel lampiran SPK ===
     TABEL_LAMPIRAN_ROWS: tabelRows,
@@ -416,8 +439,6 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   // isPmlMitra = true  → PML adalah Mitra Lapangan → template-bast-ppl-pml-mitra.html
   // isPmlMitra = false → PML adalah Pegawai Organik → template-bast-ppl-pml-organik.html
   const bastPplPmlDateParts = _parseDateComponents(tBAST_PPL_PML);
-  // Jabatan PML di BAST: organik → "Petugas Pengawas Lapangan", mitra → dari database
-  const jabatanPmlBast = isPmlMitra ? (pml.Jabatan || "Mitra Pemeriksa Lapangan") : "Petugas Pengawas Lapangan";
   const bastPplPmlCtx = {
     ...spkCtx,
     NO_BAST_PPL_PML:          record.No_BAST_PPL_PML || "",
@@ -432,10 +453,10 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TANGGAL_ANGKA:            bastPplPmlDateParts.angka,
     BULAN_NAMA:               bastPplPmlDateParts.bulanNama,
     TAHUN_ANGKA:              bastPplPmlDateParts.tahunAngka,
-    // BAST PPL-PML: Pihak Pertama = Mitra/PPL, Pihak Kedua = PML
+    // BAST PPL-PML: Pihak Pertama = PPL (Petugas Pendataan Lapangan), Pihak Kedua = PML (Petugas Pengawas Lapangan)
     NAMA_PIHAK_PERTAMA:       mitra.Nama_Mitra || "",
     NIK_PIHAK_PERTAMA:        mitra.NIK || "",
-    JABATAN_PIHAK_PERTAMA:    jabatanPetugasLapangan,
+    JABATAN_PIHAK_PERTAMA:    "Petugas Pendataan Lapangan",
     NAMA_PIHAK_KEDUA:         pml.Nama_Pegawai || "",
     NIP_PIHAK_KEDUA:          isPmlMitra ? "" : (pml.NIP || ""),
     NIK_PIHAK_KEDUA:          pml.NIK || pml.NIP || "",
@@ -464,10 +485,10 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TANGGAL_ANGKA:            bastPplSmDateParts.angka,
     BULAN_NAMA:               bastPplSmDateParts.bulanNama,
     TAHUN_ANGKA:              bastPplSmDateParts.tahunAngka,
-    // Pihak Pertama = Mitra/PPL
+    // Pihak Pertama = PPL (Petugas Pendataan Lapangan)
     NAMA_PIHAK_PERTAMA:       mitra.Nama_Mitra || "",
     NIK_PIHAK_PERTAMA:        mitra.NIK || "",
-    JABATAN_PIHAK_PERTAMA:    jabatanPetugasLapangan,
+    JABATAN_PIHAK_PERTAMA:    "Petugas Pendataan Lapangan",
     // Pihak Kedua = Ketua Tim/SM
     NAMA_KETUA_TIM:           ketuaTim.Nama_Pegawai || "",
     NIP_KETUA_TIM:            ketuaTim.NIP || "",
@@ -497,11 +518,11 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TANGGAL_ANGKA:            bastPmlSmDateParts.angka,
     BULAN_NAMA:               bastPmlSmDateParts.bulanNama,
     TAHUN_ANGKA:              bastPmlSmDateParts.tahunAngka,
-    // Pihak Pertama = PML
+    // Pihak Pertama = PML (Petugas Pengawas Lapangan)
     NAMA_PIHAK_PERTAMA:       pml.Nama_Pegawai || "",
     NIK_PIHAK_PERTAMA:        pml.NIK || pml.NIP || "",
     NIP_PIHAK_PERTAMA:        isPmlMitra ? "" : (pml.NIP || ""),
-    JABATAN_PIHAK_PERTAMA:    jabatanPmlBast,
+    JABATAN_PIHAK_PERTAMA:    "Petugas Pengawas Lapangan",
     IS_PML_MITRA:             isPmlMitra,
   };
 
