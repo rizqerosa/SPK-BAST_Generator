@@ -400,9 +400,9 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     BULAN_TERBILANG:  tSPK.bulan,
     TAHUN_TERBILANG:  tSPK.tahun,
     TANGGAL_BAST:     tSPK.tanggalFormat,
-    TANGGAL:          tSPK.tanggalFormat,
-    BULAN:            tSPK.bulan,
-    TAHUN:            String(record.Tahun || ""),
+    TANGGAL:          spkDateParts.angka,
+    BULAN:            spkDateParts.bulanNama,
+    TAHUN:            spkDateParts.tahunAngka,
     // Komponen tanggal terpisah (untuk BAST: "tanggal xx, bulan yy, tahun zzzz")
     TANGGAL_ANGKA:    spkDateParts.angka,
     BULAN_NAMA:       spkDateParts.bulanNama,
