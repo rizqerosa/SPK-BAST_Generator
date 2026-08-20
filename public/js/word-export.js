@@ -20,8 +20,9 @@ function _docxXmlEscape(str) {
  * Isi placeholder pada file .docx template asli menggunakan JSZip
  */
 async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
-  if (typeof JSZip === "undefined") {
-    throw new Error("Library JSZip belum dimuat. Pastikan koneksi internet aktif.");
+  const ZipLib = (typeof JSZip !== "undefined" ? JSZip : (typeof PizZip !== "undefined" ? PizZip : null));
+  if (!ZipLib) {
+    throw new Error("Library Zip (JSZip/PizZip) belum dimuat. Pastikan koneksi internet aktif.");
   }
 
   // 1. Fetch file .docx template asli (selalu ambil file fresh tanpa cache browser)
@@ -31,8 +32,8 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
   }
   const arrayBuffer = await response.arrayBuffer();
 
-  // 2. Load zip struktur .docx
-  const zip = await JSZip.loadAsync(arrayBuffer);
+  // 2. Load zip struktur .docx (dukung JSZip loadAsync & PizZip constructor)
+  const zip = ZipLib.loadAsync ? await ZipLib.loadAsync(arrayBuffer) : new ZipLib(arrayBuffer);
 
   // 3. Proses hanya file XML isi dokumen (hindari merusak styles/settings/themes internal Word)
   const xmlFiles = Object.keys(zip.files).filter(name =>
@@ -119,11 +120,18 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
   }
 
   // 4. Generate Blob file Word .docx asli dengan kompresi DEFLATE standar Word
-  return await zip.generateAsync({
+  if (zip.generateAsync) {
+    return await zip.generateAsync({
+      type: "blob",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 }
+    });
+  }
+  return zip.generate({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    compression: "DEFLATE",
-    compressionOptions: { level: 6 }
+    compression: "DEFLATE"
   });
 }
 
