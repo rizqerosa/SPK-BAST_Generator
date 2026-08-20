@@ -376,7 +376,6 @@
 <div id="toast-container"></div>
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/pizzip.js"></script>
 <script src="js/jszip.min.js"></script>
 <script src="js/docx.umd.js"></script>
 <script src="js/config.js?v=4.6"></script>
@@ -863,14 +862,13 @@
 
     closeExportModal();
 
-    // Cek library Word (JSZip/PizZip), tunggu jika sedang loading
-    if (typeof JSZip === "undefined" && typeof PizZip === "undefined") {
+    if (typeof JSZip === "undefined") {
       setLoading(true);
       let waited = 0;
       await new Promise(resolve => {
         const check = setInterval(() => {
           waited += 200;
-          if (typeof JSZip !== "undefined" || typeof PizZip !== "undefined" || waited >= 3000) {
+          if (typeof JSZip !== "undefined" || waited >= 4000) {
             clearInterval(check);
             resolve();
           }
@@ -879,8 +877,8 @@
       setLoading(false);
     }
 
-    if (typeof generateAndDownloadWord === "undefined") {
-      showToast("❌ Fungsi export belum siap. Refresh halaman.", "danger", 6000);
+    if (typeof JSZip === "undefined" || typeof generateAndDownloadWord === "undefined") {
+      showToast("❌ Library Word (JSZip) gagal dimuat. Refresh halaman.", "danger", 6000);
       return;
     }
 
