@@ -486,21 +486,31 @@
     const content = document.getElementById("preview-doc-content");
     try {
       if (tabKey === "sm-ppk") {
-        let bastArr = AppState.bastSmPpk || [];
-        if (!bastArr || bastArr.length === 0) {
-          bastArr = (typeof lsGet === "function" ? lsGet("bastSmPpk")?.data : null) || _DB.bastSmPpk || [];
-        }
-        let bastRec = bastArr.find(b => String(b.Bulan) === String(_previewRecord.Bulan) && String(b.Tahun) === String(_previewRecord.Tahun));
-        if (!bastRec) {
-          bastRec = {
-            Judul_Pekerjaan_Dokumen: _previewRecord.Judul_Pekerjaan_Dokumen,
-            No_BAST_SM_PPK:  _previewRecord.No_BAST_SM_PPK || ("BAST-SM-PPK/" + (_previewRecord.No_SPK || _previewRecord.ID_Dokumen)),
-            Uraian_Tugas:    _previewRecord.Judul_Pekerjaan_Dokumen,
-            PPK:             _previewRecord.PPK,
-            Ketua_Tim:       _previewRecord.Ketua_Tim,
-            Tanggal_BAST_SM_PPK: _previewRecord.Tanggal_BAST_SM_PPK || _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai,
-            Total_Honor:     _previewRecord.Total_Honor,
-          };
+        let bastRec = {
+          Judul_Pekerjaan_Dokumen: _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Uraian_Tugas || "",
+          No_BAST_SM_PPK:  _previewRecord.No_BAST_SM_PPK || ("BAST-SM-PPK/" + (_previewRecord.No_SPK || _previewRecord.ID_Dokumen)),
+          Uraian_Tugas:    _previewRecord.Uraian_Tugas || _previewRecord.Judul_Pekerjaan_Dokumen || "",
+          PPK:             _previewRecord.PPK || "",
+          Ketua_Tim:       _previewRecord.Ketua_Tim || "",
+          Tanggal_BAST_SM_PPK: _previewRecord.Tanggal_BAST_SM_PPK || _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai || _previewRecord.Tanggal,
+          Total_Honor:     _previewRecord.Total_Honor,
+          Subround:        _previewRecord.Subround,
+          Semester:        _previewRecord.Semester,
+          Triwulan:        _previewRecord.Triwulan,
+          Tahun:           _previewRecord.Tahun,
+        };
+
+        if (!_previewRecord.No_BAST_SM_PPK && AppState.bastSmPpk) {
+          const matched = AppState.bastSmPpk.find(b =>
+            (b.ID_Dokumen && b.ID_Dokumen === _previewRecord.ID_Dokumen) ||
+            (b.Judul_Pekerjaan_Dokumen === _previewRecord.Judul_Pekerjaan_Dokumen && String(b.Bulan) === String(_previewRecord.Bulan) && String(b.Tahun) === String(_previewRecord.Tahun))
+          );
+          if (matched) {
+            bastRec.No_BAST_SM_PPK = matched.No_BAST_SM_PPK || bastRec.No_BAST_SM_PPK;
+            bastRec.Tanggal_BAST_SM_PPK = matched.Tanggal_BAST_SM_PPK || matched.Tanggal || bastRec.Tanggal_BAST_SM_PPK;
+            if (!bastRec.PPK && matched.PPK) bastRec.PPK = matched.PPK;
+            if (!bastRec.Ketua_Tim && matched.Ketua_Tim) bastRec.Ketua_Tim = matched.Ketua_Tim;
+          }
         }
         const smCtx = buildBastSmPpkContext(bastRec, AppState.pegawai);
         const tpl   = await loadTemplate("template-bast-sm-ppk.html");

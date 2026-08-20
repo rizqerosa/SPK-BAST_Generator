@@ -108,7 +108,8 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
         Nama_Mitra: getPegawaiName(p),
         NIK: getPegawaiNip(p),
         Posisi: p.Jabatan || "Pegawai BPS",
-        Asal: "BPS Kota Subulussalam"
+        Asal: "BPS Kota Subulussalam",
+        _isOrganik: true
       };
     }
   }
@@ -222,12 +223,59 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   // Baris tabel lampiran (untuk SPK)
   const tabelRows = renderTabelLampiran(details);
 
+  // === Helper: Build judul dengan periode ===
+  const rawJudul = record.Judul_Pekerjaan_Dokumen || "";
+  let judulDenganPeriode = rawJudul;
+  const periodeInfoParts = [];
+  if (record.Subround) periodeInfoParts.push(`Subround ${record.Subround}`);
+  else if (record.Semester) periodeInfoParts.push(`Semester ${record.Semester}`);
+  else if (record.Triwulan) periodeInfoParts.push(`Triwulan ${record.Triwulan}`);
+  if (record.Tahun) periodeInfoParts.push(`Tahun ${record.Tahun}`);
+  if (periodeInfoParts.length > 0) {
+    // Hanya append jika belum ada di judul
+    const periodeStr = periodeInfoParts.join(" ");
+    if (!rawJudul.toLowerCase().includes(periodeStr.toLowerCase()) &&
+        !rawJudul.toLowerCase().includes("subround") &&
+        !rawJudul.toLowerCase().includes("semester") &&
+        !rawJudul.toLowerCase().includes("triwulan")) {
+      judulDenganPeriode = (rawJudul + " " + periodeStr).trim();
+    }
+  }
+
+  // === Helper: Clean NO_SPK — strip "Nomor" prefix, uppercase ===
+  let cleanNoSpk = record.Nomor_SPK || record.No_SPK || "";
+  cleanNoSpk = cleanNoSpk.replace(/^\s*nomor\s+/i, "").toUpperCase();
+
+  // === Helper: URAIAN_PEKERJAAN lowercase ===
+  const uraianPekerjaanLower = (record.Judul_Pekerjaan_Dokumen || "").toLowerCase();
+
+  // === Helper: Parse tanggal SPK into components ===
+  const _parseDateComponents = (tglObj) => {
+    // tglObj is from tanggalTerbilang() → { hari, tanggal, bulan, tahun, tanggalFormat: "dd-mm-yyyy" }
+    const fmt = tglObj.tanggalFormat || "";
+    const fParts = fmt.split("-");
+    return {
+      angka: fParts[0] || "-",   // dd
+      bulanNama: tglObj.bulan || "-", // nama bulan
+      tahunAngka: fParts[2] || (fParts.length >= 3 ? fParts[2] : "-"), // yyyy
+    };
+  };
+  const spkDateParts = _parseDateComponents(tSPK);
+
+  // === Helper: Jabatan petugas di lapangan (organik override) ===
+  // Untuk petugas organik di BAST, jabatan = jabatan lapangan, bukan jabatan database
+  const peranPetugas = (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) ? "pml" : "ppl";
+  let jabatanPetugasLapangan = mitra.Posisi || "Mitra Pendataan";
+  if (isPegawai || mitra._isOrganik) {
+    jabatanPetugasLapangan = peranPetugas === "pml" ? "Petugas Pengawas Lapangan" : "Petugas Pencacah Lapangan";
+  }
+
   // SPK context (tanggal SPK dipakai)
   const spkCtx = {
     // === Header & nomor ===
-    JUDUL_PEKERJAAN_DOKUMEN: record.Judul_Pekerjaan_Dokumen || "",
-    NO_SPK:                  record.Nomor_SPK || record.No_SPK || "",
-    URAIAN_PEKERJAAN:        record.Judul_Pekerjaan_Dokumen || "",
+    JUDUL_PEKERJAAN_DOKUMEN: judulDenganPeriode,
+    NO_SPK:                  cleanNoSpk,
+    URAIAN_PEKERJAAN:        uraianPekerjaanLower,
 
     // === Tanggal SPK (terbilang) ===
     HARI_TERBILANG:   tSPK.hari,
@@ -238,6 +286,10 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TANGGAL:          tSPK.tanggalFormat,
     BULAN:            tSPK.bulan,
     TAHUN:            String(record.Tahun || ""),
+    // Komponen tanggal terpisah (untuk BAST: "tanggal xx, bulan yy, tahun zzzz")
+    TANGGAL_ANGKA:    spkDateParts.angka,
+    BULAN_NAMA:       spkDateParts.bulanNama,
+    TAHUN_ANGKA:      spkDateParts.tahunAngka,
 
     // === PPK (Pihak Pertama SPK) ===
     NAMA_PPK:              ppk.Nama_Pegawai || "",
@@ -248,9 +300,9 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NAMA_PETUGAS:      mitra.Nama_Mitra || "",
     NAMA_PIHAK_KEDUA:  mitra.Nama_Mitra || "",
     NIK_PIHAK_PERTAMA: mitra.NIK || "",   // di BAST PPL adalah pihak pertama
-    JABATAN_PETUGAS:   mitra.Posisi || "Mitra Pendataan",
-    JABATAN_PIHAK_KEDUA: `${mitra.Posisi || "Mitra Pendataan"}`,
-    JABATAN_PIHAK_PERTAMA: mitra.Posisi || "Mitra Pendataan",
+    JABATAN_PETUGAS:   jabatanPetugasLapangan,
+    JABATAN_PIHAK_KEDUA: jabatanPetugasLapangan,
+    JABATAN_PIHAK_PERTAMA: jabatanPetugasLapangan,
     NAMA_PIHAK_PERTAMA: ppk.Nama_Pegawai || "",  // SPK: pihak pertama = PPK
     ASAL:              mitra.Asal || "",
 
@@ -261,7 +313,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
 
     // === Tanggal selesai & batas ===
     TANGGAL_SELESAI:    formatTanggal(record.Tanggal_Selesai),
-    BATAS_PENYERAHAN:   formatTanggal(record.Batas_Penyerahan),
+    BATAS_PENYERAHAN:   formatTanggal(record.Batas_Penyerahan || record.Batas_Penyerahan_Telat),
 
     // === Tabel lampiran SPK ===
     TABEL_LAMPIRAN_ROWS: tabelRows,
@@ -278,6 +330,9 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   // BAST PPL-PML context
   // isPmlMitra = true  → PML adalah Mitra Lapangan → template-bast-ppl-pml-mitra.html
   // isPmlMitra = false → PML adalah Pegawai Organik → template-bast-ppl-pml-organik.html
+  const bastPplPmlDateParts = _parseDateComponents(tBAST_PPL_PML);
+  // Jabatan PML di BAST: organik → "Petugas Pengawas Lapangan", mitra → dari database
+  const jabatanPmlBast = isPmlMitra ? (pml.Jabatan || "Mitra Pemeriksa Lapangan") : "Petugas Pengawas Lapangan";
   const bastPplPmlCtx = {
     ...spkCtx,
     NO_BAST_PPL_PML:          record.No_BAST_PPL_PML || "",
@@ -288,24 +343,29 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TAHUN_TERBILANG:          tBAST_PPL_PML.tahun,
     TANGGAL_BAST:             tBAST_PPL_PML.tanggalFormat,
     TANGGAL_BAST_SM_PPK:      tBAST_PPL_PML.tanggalFormat,
+    // Komponen tanggal BAST terpisah
+    TANGGAL_ANGKA:            bastPplPmlDateParts.angka,
+    BULAN_NAMA:               bastPplPmlDateParts.bulanNama,
+    TAHUN_ANGKA:              bastPplPmlDateParts.tahunAngka,
     // BAST PPL-PML: Pihak Pertama = Mitra/PPL, Pihak Kedua = PML
     NAMA_PIHAK_PERTAMA:       mitra.Nama_Mitra || "",
     NIK_PIHAK_PERTAMA:        mitra.NIK || "",
-    JABATAN_PIHAK_PERTAMA:    mitra.Posisi || "Mitra Pendataan",
+    JABATAN_PIHAK_PERTAMA:    jabatanPetugasLapangan,
     NAMA_PIHAK_KEDUA:         pml.Nama_Pegawai || "",
     NIP_PIHAK_KEDUA:          isPmlMitra ? "" : (pml.NIP || ""),
     NIK_PIHAK_KEDUA:          pml.NIK || pml.NIP || "",
-    NIK_NIP_PIHAK_KEDUA:      pml.NIP || "",
-    JABATAN_PIHAK_KEDUA:      pml.Jabatan || "",
+    NIK_NIP_PIHAK_KEDUA:      isPmlMitra ? "" : (pml.NIP || ""),
+    JABATAN_PIHAK_KEDUA:      jabatanPmlBast,
     NOMOR_KEPKA:              record.Nomor_Kepka || "",
     TANGGAL_KEPKA:            tKepka.tanggalFormat,
-    TANGGAL:                  tSPK.tanggalFormat,
-    BULAN:                    tSPK.bulan,
-    TAHUN:                    String(record.Tahun || ""),
+    TANGGAL:                  spkDateParts.angka,
+    BULAN:                    spkDateParts.bulanNama,
+    TAHUN:                    spkDateParts.tahunAngka,
     IS_PML_MITRA:             isPmlMitra,
   };
 
   // BAST PPL-SM context
+  const bastPplSmDateParts = _parseDateComponents(tBAST_PPL_SM);
   const bastPplSmCtx = {
     ...spkCtx,
     NO_BAST_PPL_SM:           record.No_BAST_PPL_SM || "",
@@ -315,10 +375,14 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TAHUN_TERBILANG:          tBAST_PPL_SM.tahun,
     TANGGAL_BAST:             tBAST_PPL_SM.tanggalFormat,
     TANGGAL_BAST_SM_PPK:      tBAST_PPL_SM.tanggalFormat,
+    // Komponen tanggal BAST terpisah
+    TANGGAL_ANGKA:            bastPplSmDateParts.angka,
+    BULAN_NAMA:               bastPplSmDateParts.bulanNama,
+    TAHUN_ANGKA:              bastPplSmDateParts.tahunAngka,
     // Pihak Pertama = Mitra/PPL
     NAMA_PIHAK_PERTAMA:       mitra.Nama_Mitra || "",
     NIK_PIHAK_PERTAMA:        mitra.NIK || "",
-    JABATAN_PIHAK_PERTAMA:    mitra.Posisi || "Mitra Pendataan",
+    JABATAN_PIHAK_PERTAMA:    jabatanPetugasLapangan,
     // Pihak Kedua = Ketua Tim/SM
     NAMA_KETUA_TIM:           ketuaTim.Nama_Pegawai || "",
     NIP_KETUA_TIM:            ketuaTim.NIP || "",
@@ -326,14 +390,15 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     JABATAN_KETUA_TIM:        ketuaTim.Jabatan || "",
     NOMOR_KEPKA:              record.Nomor_Kepka || "",
     TANGGAL_KEPKA:            tKepka.tanggalFormat,
-    TANGGAL:                  tSPK.tanggalFormat,
-    BULAN:                    tSPK.bulan,
-    TAHUN:                    String(record.Tahun || ""),
+    TANGGAL:                  spkDateParts.angka,
+    BULAN:                    spkDateParts.bulanNama,
+    TAHUN:                    spkDateParts.tahunAngka,
   };
 
   // BAST PML-SM context
   // isPmlMitra = true  → PML (Pihak Pertama) adalah Mitra Lapangan → template-bast-pml-sm-mitra.html (pakai NIK)
   // isPmlMitra = false → PML (Pihak Pertama) adalah Pegawai Organik → template-bast-pml-sm-organik.html (pakai NIP)
+  const bastPmlSmDateParts = _parseDateComponents(tBAST_PML_SM);
   const bastPmlSmCtx = {
     ...bastPplSmCtx,
     NO_BAST_PML_SM:           record.No_BAST_PML_SM || "",
@@ -343,11 +408,15 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TAHUN_TERBILANG:          tBAST_PML_SM.tahun,
     TANGGAL_BAST:             tBAST_PML_SM.tanggalFormat,
     TANGGAL_BAST_SM_PPK:      tBAST_PML_SM.tanggalFormat,
+    // Komponen tanggal BAST terpisah
+    TANGGAL_ANGKA:            bastPmlSmDateParts.angka,
+    BULAN_NAMA:               bastPmlSmDateParts.bulanNama,
+    TAHUN_ANGKA:              bastPmlSmDateParts.tahunAngka,
     // Pihak Pertama = PML
     NAMA_PIHAK_PERTAMA:       pml.Nama_Pegawai || "",
     NIK_PIHAK_PERTAMA:        pml.NIK || pml.NIP || "",
     NIP_PIHAK_PERTAMA:        isPmlMitra ? "" : (pml.NIP || ""),
-    JABATAN_PIHAK_PERTAMA:    pml.Jabatan || "",
+    JABATAN_PIHAK_PERTAMA:    jabatanPmlBast,
     IS_PML_MITRA:             isPmlMitra,
   };
 
@@ -365,8 +434,41 @@ function buildBastSmPpkContext(record, pegawaiArr) {
   const tBAST    = tanggalTerbilang(record.Tanggal_BAST_SM_PPK || record.Tanggal || new Date().toISOString().slice(0, 10));
   const totalHonor = record.Total_Honor || 0;
 
+  // Parse date components
+  const fmt = tBAST.tanggalFormat || "";
+  const fParts = fmt.split("-");
+  const smPpkAngka = fParts[0] || "-";
+  const smPpkBulan = tBAST.bulan || "-";
+  const smPpkTahun = fParts[2] || (fParts.length >= 3 ? fParts[2] : "-");
+
+  // Build judul dengan periode
+  const rawJudul = record.Judul_Pekerjaan_Dokumen || "";
+  let judulDenganPeriode = rawJudul;
+  const periodeInfoParts = [];
+  if (record.Subround) periodeInfoParts.push(`Subround ${record.Subround}`);
+  else if (record.Semester) periodeInfoParts.push(`Semester ${record.Semester}`);
+  else if (record.Triwulan) periodeInfoParts.push(`Triwulan ${record.Triwulan}`);
+  if (record.Tahun) periodeInfoParts.push(`Tahun ${record.Tahun}`);
+  if (periodeInfoParts.length > 0) {
+    const periodeStr = periodeInfoParts.join(" ");
+    if (!rawJudul.toLowerCase().includes(periodeStr.toLowerCase()) &&
+        !rawJudul.toLowerCase().includes("subround") &&
+        !rawJudul.toLowerCase().includes("semester") &&
+        !rawJudul.toLowerCase().includes("triwulan")) {
+      judulDenganPeriode = (rawJudul + " " + periodeStr).trim();
+    }
+  }
+
+  // URAIAN_PEKERJAAN lowercase
+  const uraianLower = (record.Uraian_Tugas || record.Judul_Pekerjaan_Dokumen || "").toLowerCase();
+
+  // Clean NO_SPK
+  let cleanNoSpk = record.Nomor_SPK || record.No_SPK || "";
+  cleanNoSpk = cleanNoSpk.replace(/^\s*nomor\s+/i, "").toUpperCase();
+
   return {
-    JUDUL_PEKERJAAN_DOKUMEN:   record.Judul_Pekerjaan_Dokumen || "",
+    JUDUL_PEKERJAAN_DOKUMEN:   judulDenganPeriode,
+    NO_SPK:                    cleanNoSpk,
     NO_BAST_SM_PPK:            record.No_BAST_SM_PPK || "",
     "NO_BAST_SM-PPK":          record.No_BAST_SM_PPK || "",
     HARI_TERBILANG:            tBAST.hari,
@@ -374,7 +476,14 @@ function buildBastSmPpkContext(record, pegawaiArr) {
     BULAN_TERBILANG:           tBAST.bulan,
     TAHUN_TERBILANG:           tBAST.tahun,
     TANGGAL_BAST:              tBAST.tanggalFormat,
-    URAIAN_PEKERJAAN:          record.Uraian_Tugas || record.Judul_Pekerjaan_Dokumen || "",
+    // Komponen tanggal terpisah
+    TANGGAL_ANGKA:             smPpkAngka,
+    BULAN_NAMA:                smPpkBulan,
+    TAHUN_ANGKA:               smPpkTahun,
+    TANGGAL:                   smPpkAngka,
+    BULAN:                     smPpkBulan,
+    TAHUN:                     smPpkTahun,
+    URAIAN_PEKERJAAN:          uraianLower,
     NAMA_KETUA_TIM:            ketuaTim.Nama_Pegawai || "",
     NIP_KETUA_TIM:             ketuaTim.NIP || "",
     "GOLONGAN/PANGKAT_KETUA_TIM": `${ketuaTim.Pangkat || ""} ${ketuaTim.Golongan || ""}`.trim(),

@@ -725,13 +725,21 @@
                 </div>
               </div>
 
-              <!-- 3. Nama SM (Ketua Tim / Supervisor Madya) -->
-              <div class="form-group" style="margin-bottom:18px;">
-                <label class="form-label" for="sm-sel-ketua">3. Nama SM (Ketua Tim / Supervisor Madya) <span class="required">*</span></label>
-                <select class="form-control" id="sm-sel-ketua" required>
-                  <option value="">-- Pilih Nama SM / Pegawai --</option>
-                </select>
-                <div class="format-hint">Otomatis terpilih sesuai Tim Teknis kegiatan, tetap dapat diubah jika perlu.</div>
+              <!-- 3. Nama SM (Ketua Tim / Supervisor Madya) & PPK -->
+              <div class="form-row" style="margin-bottom:18px;">
+                <div class="form-group">
+                  <label class="form-label" for="sm-sel-ketua">3. Nama SM (Ketua Tim) <span class="required">*</span></label>
+                  <select class="form-control" id="sm-sel-ketua" required>
+                    <option value="">-- Pilih Nama SM / Pegawai --</option>
+                  </select>
+                  <div class="format-hint">Otomatis terpilih sesuai Tim Teknis kegiatan, tetap dapat diubah jika perlu.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="sm-sel-ppk">PPK (Pejabat Pembuat Komitmen) <span class="required">*</span></label>
+                  <select class="form-control" id="sm-sel-ppk" required>
+                    <option value="">-- Pilih PPK --</option>
+                  </select>
+                </div>
               </div>
 
               <!-- 4 & 5. Nomor BAST & Tanggal BAST -->
@@ -856,6 +864,7 @@
     if (editId) {
       _editDocId = editId;
       _isEditMode = true;
+      loadEditMode(editId);
     }
 
     // 2. Fetch data terbaru di latar belakang
@@ -883,8 +892,13 @@
       populatePegawaiDropdowns();
       renderMappedOfficerChips();
       populateSmKegiatanDropdown();
-      applyAutoDocNumber(_currentMode === "bast_sm" ? "bast_sm" : (_currentMode === "bast" ? "bast" : "spk"), false);
-      validateDocNumberInput("spk");
+
+      if (editId) {
+        loadEditMode(editId);
+      } else {
+        applyAutoDocNumber(_currentMode === "bast_sm" ? "bast_sm" : (_currentMode === "bast" ? "bast" : "spk"), false);
+        validateDocNumberInput("spk");
+      }
     }).catch(err => {
       console.warn("[form.html] bg sync error:", err);
     });
@@ -1899,7 +1913,7 @@
       }
     }
 
-    const docId = generateId("SPK");
+    const docId = (_isEditMode && _editDocId) ? _editDocId : generateId("SPK");
     const record = {
       ID_Dokumen:              docId,
       Nomor_SPK:               noSpk,
@@ -1936,7 +1950,7 @@
       Status_Verifikasi_PPK:   "Menunggu_Verifikasi",
     };
 
-    setLoading(true, "Menyimpan SPK ke database...");
+    setLoading(true, (_isEditMode ? "Menyimpan perubahan SPK..." : "Menyimpan SPK ke database..."));
     try {
       const detailsToSave = [];
       for (let i = 0; i < _spkMappingRows.length; i++) {
@@ -1971,13 +1985,28 @@
         detailsToSave.push(detail);
       }
 
-      await appendToSheet("spkBast", record);
+      if (_isEditMode && _editDocId) {
+        await updateInSheet("spkBast", "ID_Dokumen", _editDocId, record);
+        // Hapus detail lama jika ada
+        try {
+          const allDetails = await getDetailPekerjaan().catch(() => []);
+          const oldDetails = allDetails.filter(d => String(d.ID_Dokumen) === String(_editDocId));
+          for (const oldD of oldDetails) {
+            if (oldD.ID_Detail) await deleteFromSheet("detailPekerjaan", "ID_Detail", oldD.ID_Detail);
+          }
+        } catch (e) { console.warn("Hapus detail lama error:", e); }
+      } else {
+        await appendToSheet("spkBast", record);
+      }
+
       if (detailsToSave.length > 0) {
         await Promise.all(detailsToSave.map(d => appendToSheet("detailPekerjaan", d)));
       }
 
-      showToast(`✅ SPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
-      setTimeout(() => window.location.href = "dokumen.html", 800);
+      clearCache("spkBast");
+      clearCache("detailPekerjaan");
+      showToast(_isEditMode ? `✅ Perubahan SPK berhasil disimpan! Status verifikasi di-reset ke Menunggu PPK.` : `✅ SPK berhasil disimpan! Menunggu verifikasi PPK.`, "success", 5000);
+      setTimeout(() => window.location.href = `preview.html?id=${encodeURIComponent(docId)}`, 800);
     } catch (err) {
       showToast("Gagal simpan SPK: " + err.message, "danger");
       console.error(err);
@@ -2248,14 +2277,144 @@
     return `${a.d} ${bulanList[a.m] || a.m}${aSuffix} s.d. ${b.d} ${bulanList[b.m] || b.m} ${b.y}`;
   }
 
+  // ─── Helper: format date for HTML input ───────────────────────
+  function formatDateForInput(str) {
+    if (!str) return "";
+    if (typeof str !== "string") str = String(str);
+    if (str.includes("T")) return str.split("T")[0];
+    const m = str.match(/^\d{4}-\d{2}-\d{2}/);
+    if (m) return m[0];
+    return str;
+  }
+
   // ─── Edit mode (dari dokumen.html) ───────────────────────────
   async function loadEditMode(docId) {
-    const allDocs = await getSpkBast().catch(() => []);
-    const rec = allDocs.find(r => String(r.ID_Dokumen) === String(docId));
-    if (!rec) return;
+    if (!docId) return;
+    _editDocId = docId;
+    _isEditMode = true;
 
-    const jenis = String(rec.Jenis_Dokumen || "SPK");
-    selectMode(jenis === "BAST" ? "bast" : jenis === "BAST_SM" ? "bast_sm" : "spk");
+    // Cari dari data yang sudah di-load di cache / Sheets
+    let rec = (_allSpkBast || []).find(r => String(r.ID_Dokumen) === String(docId));
+    let isSmPpk = false;
+    if (!rec && _allBastSmPpk) {
+      rec = _allBastSmPpk.find(r => String(r.ID_BAST_SM_PPK || r.ID_Dokumen) === String(docId));
+      if (rec) isSmPpk = true;
+    }
+    if (!rec) {
+      const [spkList, smList] = await Promise.all([
+        getSpkBast().catch(() => []),
+        getBastSmPpk().catch(() => [])
+      ]);
+      rec = (spkList || []).find(r => String(r.ID_Dokumen) === String(docId));
+      if (!rec && smList) {
+        rec = smList.find(r => String(r.ID_BAST_SM_PPK || r.ID_Dokumen) === String(docId));
+        if (rec) isSmPpk = true;
+      }
+    }
+    if (!rec) {
+      console.warn("Dokumen untuk diedit tidak ditemukan:", docId);
+      return;
+    }
+
+    if (isSmPpk || rec.Jenis_Dokumen === "BAST_SM" || rec.ID_BAST_SM_PPK) {
+      selectMode("bast_sm");
+      const selKeg = document.getElementById("sm-sel-kegiatan");
+      if (selKeg) {
+        selKeg.value = rec.Judul_Pekerjaan_Dokumen || rec.Uraian_Tugas || "";
+        onSmKegiatanSelect(selKeg.value);
+      }
+      const selBln = document.getElementById("sm-sel-bulan");
+      if (selBln) selBln.value = rec.Bulan || "";
+      const inpThn = document.getElementById("sm-input-tahun");
+      if (inpThn) inpThn.value = rec.Tahun || new Date().getFullYear();
+      const selKetua = document.getElementById("sm-sel-ketua");
+      if (selKetua) selKetua.value = rec.Ketua_Tim || "";
+      const selPpk = document.getElementById("sm-sel-ppk");
+      if (selPpk) selPpk.value = rec.PPK || "";
+      const inpNo = document.getElementById("sm-no-bast");
+      if (inpNo) inpNo.value = rec.No_BAST_SM_PPK || "";
+      const inpTgl = document.getElementById("sm-tgl-bast");
+      if (inpTgl) {
+        inpTgl.value = formatDateForInput(rec.Tanggal_BAST_SM_PPK || rec.Tanggal);
+        updateDateDisplay("sm-tgl-bast", "sm-tgl-display");
+      }
+      validateDocNumberInput("bast_sm");
+      return;
+    }
+
+    if (rec.Jenis_Dokumen === "BAST") {
+      selectMode("bast");
+      const petugasId = rec.ID_Mitra;
+      const petugasTipe = (rec.Jenis_Petugas || "").toLowerCase() === "pegawai" ? "pegawai" : "mitra";
+      let petugasNama = "";
+      if (petugasTipe === "mitra") {
+        const m = cariMitra(petugasId, _allMitra);
+        petugasNama = m ? getMitraName(m) : petugasId;
+      } else {
+        const p = cariPegawai(petugasId, _allPegawai);
+        petugasNama = p ? getPegawaiName(p) : petugasId;
+      }
+      selectPetugas("bast", petugasId, petugasNama, petugasTipe);
+      
+      const inpPmlPml = document.getElementById("bast-no-ppl-pml");
+      if (inpPmlPml) inpPmlPml.value = rec.No_BAST_PPL_PML || "";
+      const inpTglPml = document.getElementById("bast-tgl-ppl-pml");
+      if (inpTglPml) {
+        inpTglPml.value = formatDateForInput(rec.Tanggal_BAST_PPL_PML);
+        updateDateDisplay("bast-tgl-ppl-pml", "bast-tgl-ppl-pml-display");
+      }
+
+      const inpPplSm = document.getElementById("bast-no-ppl-sm");
+      if (inpPplSm) inpPplSm.value = rec.No_BAST_PPL_SM || "";
+      const inpTglSm = document.getElementById("bast-tgl-ppl-sm");
+      if (inpTglSm) {
+        inpTglSm.value = formatDateForInput(rec.Tanggal_BAST_PPL_SM);
+        updateDateDisplay("bast-tgl-ppl-sm", "bast-tgl-ppl-sm-display");
+      }
+
+      const inpPmlSm = document.getElementById("bast-no-pml-sm");
+      if (inpPmlSm) inpPmlSm.value = rec.No_BAST_PML_SM || "";
+      const inpTglPmlSm = document.getElementById("bast-tgl-pml-sm");
+      if (inpTglPmlSm) {
+        inpTglPmlSm.value = formatDateForInput(rec.Tanggal_BAST_PML_SM);
+        updateDateDisplay("bast-tgl-pml-sm", "bast-tgl-pml-sm-display");
+      }
+      return;
+    }
+
+    // Default: SPK Mode
+    selectMode("spk");
+    const petugasId = rec.ID_Mitra;
+    const petugasTipe = (rec.Jenis_Petugas || "").toLowerCase() === "pegawai" ? "pegawai" : "mitra";
+    let petugasNama = "";
+    if (petugasTipe === "mitra") {
+      const m = cariMitra(petugasId, _allMitra);
+      petugasNama = m ? getMitraName(m) : petugasId;
+    } else {
+      const p = cariPegawai(petugasId, _allPegawai);
+      petugasNama = p ? getPegawaiName(p) : petugasId;
+    }
+    selectPetugas("spk", petugasId, petugasNama, petugasTipe);
+
+    const inpNoSpk = document.getElementById("spk-no-spk");
+    if (inpNoSpk) inpNoSpk.value = rec.Nomor_SPK || rec.No_SPK || "";
+    const inpTglSpk = document.getElementById("spk-tgl-spk");
+    if (inpTglSpk) {
+      inpTglSpk.value = formatDateForInput(rec["Tanggal SPK"] || rec.Tanggal_SPK || rec.Tanggal_Mulai);
+      updateDateDisplay("spk-tgl-spk", "spk-tgl-spk-display");
+    }
+    const inpNoKepka = document.getElementById("spk-nomor-kepka");
+    if (inpNoKepka) inpNoKepka.value = rec.Nomor_Kepka || "";
+    const inpTglKepka = document.getElementById("spk-tgl-kepka");
+    if (inpTglKepka) inpTglKepka.value = formatDateForInput(rec.Tanggal_Kepka);
+    const selPpk = document.getElementById("spk-sel-ppk");
+    if (selPpk) selPpk.value = rec.PPK || "";
+    const inpJudul = document.getElementById("spk-judul");
+    if (inpJudul) inpJudul.value = rec.Judul_Pekerjaan_Dokumen || "";
+
+    const btnSubmit = document.getElementById("btn-simpan-spk");
+    if (btnSubmit) btnSubmit.textContent = "💾 Simpan Perubahan SPK →";
+    validateDocNumberInput("spk");
   }
 </script>
 </body>

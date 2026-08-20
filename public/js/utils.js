@@ -154,13 +154,26 @@ function getKegiatanId(k) {
 
 // ─── Lookup helpers ───────────────────────────────────────────
 function cariPegawai(nip, pegawaiArray) {
-  if (!nip || !pegawaiArray) return null;
+  if (!nip || !pegawaiArray || !Array.isArray(pegawaiArray)) return null;
   const target = String(nip).trim().toLowerCase();
-  return pegawaiArray.find(p => {
+  const cleanTarget = target.replace(/[^a-z0-9]/g, "");
+
+  // 1. Exact match NIP or Name
+  let found = pegawaiArray.find(p => {
     const pNip  = getPegawaiNip(p).toLowerCase();
     const pName = getPegawaiName(p).toLowerCase();
     return (pNip && pNip === target) || (pName && pName === target);
-  }) || null;
+  });
+  if (found) return found;
+
+  // 2. Clean alphanumeric match (ignoring dots, commas, spaces, titles)
+  found = pegawaiArray.find(p => {
+    const pNipClean  = getPegawaiNip(p).toLowerCase().replace(/[^a-z0-9]/g, "");
+    const pNameClean = getPegawaiName(p).toLowerCase().replace(/[^a-z0-9]/g, "");
+    return (pNipClean && (pNipClean === cleanTarget)) ||
+           (pNameClean && cleanTarget && (pNameClean.includes(cleanTarget) || cleanTarget.includes(pNameClean)));
+  });
+  return found || null;
 }
 
 function cariMitra(idMitra, mitraArray) {
@@ -192,6 +205,18 @@ function formatTanggal(isoStr) {
   let s = String(isoStr).trim();
   if (s.includes("T")) s = s.split("T")[0];
   if (s.includes(" ")) s = s.split(" ")[0];
+
+  // Check dd/mm/yyyy or dd-mm-yyyy where year is 4 digits at end
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(s)) {
+    const sep = s.includes("/") ? "/" : "-";
+    const [dStr, mStr, yStr] = s.split(sep);
+    const d = parseInt(dStr, 10);
+    const m = parseInt(mStr, 10);
+    const y = parseInt(yStr, 10);
+    const _BULAN_INDO = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    if (m >= 1 && m <= 12) return `${d} ${_BULAN_INDO[m]} ${y}`;
+  }
+
   const parts = s.split("-");
   if (parts.length < 3) return s;
   const d = parseInt(parts[2], 10);
