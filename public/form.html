@@ -2181,7 +2181,13 @@
       }
 
       if (detailsToSave.length > 0) {
-        await Promise.all(detailsToSave.map(d => appendToSheet("detailPekerjaan", d)));
+        for (const d of detailsToSave) {
+          try {
+            await appendToSheet("detailPekerjaan", d);
+          } catch (eDet) {
+            console.warn("Gagal append detail pekerjaan:", eDet);
+          }
+        }
       }
 
       showToast(_isEditMode ? `✅ Perubahan SPK berhasil disimpan!` : `✅ SPK berhasil disimpan!`, "success", 5000);

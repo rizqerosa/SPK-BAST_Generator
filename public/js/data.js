@@ -242,8 +242,7 @@ async function postToSheet(sheetKey, action, data, options = {}) {
 
 // ─── Public: Tambah baris baru ────────────────────────────────
 async function appendToSheet(sheetKey, rowData) {
-  const result = await postToSheet(sheetKey, "append", rowData);
-  // Optimistic Cache Insertion
+  // Optimistic Cache Insertion FIRST
   try {
     const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
     if (Array.isArray(cached)) {
@@ -256,6 +255,8 @@ async function appendToSheet(sheetKey, rowData) {
       if (typeof lsSet === "function") lsSet(sheetKey, [rowData]);
     }
   } catch (_) {}
+
+  const result = await postToSheet(sheetKey, "append", rowData);
   return result;
 }
 
