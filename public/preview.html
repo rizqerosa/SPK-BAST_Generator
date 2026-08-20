@@ -336,7 +336,7 @@
     _isPmlMitra = !!(_previewCtx?.bastPplPmlCtx?.IS_PML_MITRA || _previewCtx?.bastPplSmCtx?.IS_PML_MITRA);
 
     const petugasName = _previewCtx?.spkCtx?.mitra_nama || _previewCtx?.bastPplSmCtx?.mitra_nama || _previewRecord?.ID_Mitra || "—";
-    const docTitle = buildJudulDenganPeriode(_previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Nomor_SPK || _previewRecord.ID_Dokumen, _previewRecord, _previewDetails);
+    const docTitle = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Nomor_SPK || _previewRecord.ID_Dokumen || "Dokumen SPK/BAST";
     const t1 = document.getElementById("preview-doc-title");
     const t2 = document.getElementById("preview-doc-title-2");
     const idEl = document.getElementById("preview-doc-id");
@@ -516,11 +516,10 @@
     const content = document.getElementById("preview-doc-content");
     try {
       if (tabKey === "sm-ppk") {
-        const fullTitle = buildJudulDenganPeriode(_previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Uraian_Tugas || "", _previewRecord, _previewDetails);
         let bastRec = {
-          Judul_Pekerjaan_Dokumen: fullTitle,
+          Judul_Pekerjaan_Dokumen: _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Uraian_Tugas || "",
           No_BAST_SM_PPK:  _previewRecord.No_BAST_SM_PPK || ("BAST-SM-PPK/" + (_previewRecord.No_SPK || _previewRecord.ID_Dokumen)),
-          Uraian_Tugas:    fullTitle,
+          Uraian_Tugas:    _previewRecord.Uraian_Tugas || _previewRecord.Judul_Pekerjaan_Dokumen || "",
           PPK:             _previewRecord.PPK || "",
           Ketua_Tim:       _previewRecord.Ketua_Tim || "",
           Tanggal_BAST_SM_PPK: _previewRecord.Tanggal_BAST_SM_PPK || _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai || _previewRecord.Tanggal,

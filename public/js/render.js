@@ -91,78 +91,98 @@ function renderTabelLampiran(detailPekerjaanArray) {
 /**
  * Bangun judul pekerjaan dokumen lengkap dengan periode yang sesuai (Bulan/Triwulan/Tahap/Subround/Semester/Tahun).
  */
-function buildJudulDenganPeriode(firstArg, secondArg, thirdArg) {
-  let rawJudul = "";
-  let record = {};
-  let details = [];
+function buildJudulDenganPeriode(record, details = []) {
+  const d0 = details.length > 0 ? details[0] : {};
+  let rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || d0.Uraian_Tugas || "").trim();
+  if (!rawJudul) return "";
 
-  if (typeof firstArg === "string") {
-    rawJudul = firstArg;
-    record = secondArg || {};
-    details = Array.isArray(thirdArg) ? thirdArg : [];
-  } else if (typeof firstArg === "object" && firstArg !== null) {
-    record = firstArg;
-    details = Array.isArray(secondArg) ? secondArg : [];
-    rawJudul = record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || (details.length > 0 ? details.map(d => d.Uraian_Tugas || "").filter(Boolean).join(", ") : "") || "";
+  // 1. Bersihkan duplikasi kata "bulanan" atau variasi "bulanan bulan" pada rawJudul
+  rawJudul = rawJudul
+    .replace(/\bbulanan\s+bulan\b/gi, "Bulan")
+    .replace(/\bbulan\s+bulanan\b/gi, "Bulan")
+    .replace(/\bbulanan\s+bulanan\b/gi, "Bulanan")
+    .replace(/\bbulanan\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/gi, "Bulan $1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const tipePeriode = String(record.Tipe_Periode || record.tipePeriode || d0.Tipe_Periode || d0.tipePeriode || "").toLowerCase().trim();
+  const subroundVal = record.Subround || d0.Subround || "";
+  const semesterVal = record.Semester || d0.Semester || "";
+  const triwulanVal = record.Triwulan || d0.Triwulan || "";
+  const tahapVal    = record.Tahap    || d0.Tahap    || "";
+  const bulanVal    = record.Bulan    || d0.Bulan    || "";
+  const tahunVal    = record.Tahun    || d0.Tahun    || (record.Tanggal_SPK ? new Date(record.Tanggal_SPK).getFullYear() : (record.Tanggal ? new Date(record.Tanggal).getFullYear() : ""));
+
+  const periodeInfoParts = [];
+
+  if (tipePeriode === "subround" && subroundVal) {
+    periodeInfoParts.push(`Subround ${subroundVal}`);
+  } else if (tipePeriode === "semester" && semesterVal) {
+    periodeInfoParts.push(`Semester ${semesterVal}`);
+  } else if (tipePeriode === "triwulan" && triwulanVal) {
+    periodeInfoParts.push(`Triwulan ${triwulanVal}`);
+  } else if (tipePeriode === "tahap" && tahapVal) {
+    periodeInfoParts.push(`Tahap ${tahapVal}`);
+  } else if (tipePeriode === "bulan" && bulanVal) {
+    periodeInfoParts.push(`Bulan ${bulanVal}`);
+  } else {
+    // Fallback cerdas: jika tidak ada tipePeriode eksplisit
+    const rawLower = rawJudul.toLowerCase();
+    if (tahapVal && (rawLower.includes("tahap") || !bulanVal)) {
+      periodeInfoParts.push(`Tahap ${tahapVal}`);
+    } else if (semesterVal && (rawLower.includes("semester") || !bulanVal)) {
+      periodeInfoParts.push(`Semester ${semesterVal}`);
+    } else if (subroundVal && (rawLower.includes("subround") || rawLower.includes("ksa") || (!bulanVal && !triwulanVal))) {
+      periodeInfoParts.push(`Subround ${subroundVal}`);
+    } else if (triwulanVal && (rawLower.includes("triwulan") || !bulanVal)) {
+      periodeInfoParts.push(`Triwulan ${triwulanVal}`);
+    } else if (bulanVal) {
+      periodeInfoParts.push(`Bulan ${bulanVal}`);
+    } else if (subroundVal && !triwulanVal) {
+      periodeInfoParts.push(`Subround ${subroundVal}`);
+    } else if (triwulanVal) {
+      periodeInfoParts.push(`Triwulan ${triwulanVal}`);
+    }
   }
 
-  let title = (rawJudul || "").trim();
-  if (!title) return "";
-
-  const rec = record || {};
-  const firstDetail = (Array.isArray(details) && details.length > 0) ? (details[0] || {}) : {};
-
-  const detailPeriodeVal = rec.detailPeriode || rec.Detail_Periode || firstDetail.detailPeriode || "";
-  const bulanVal         = rec.Bulan || rec.bulan || firstDetail.Bulan || "";
-  const subroundVal      = rec.Subround || rec.subround || firstDetail.Subround || "";
-  const semesterVal      = rec.Semester || rec.semester || firstDetail.Semester || "";
-  const triwulanVal      = rec.Triwulan || rec.triwulan || firstDetail.Triwulan || "";
-  const tahapVal         = rec.Tahap || rec.tahap || firstDetail.Tahap || "";
-
-  let dMulai = rec.Tanggal_SPK || rec.Tanggal_BAST_SM_PPK || rec.Tanggal_Mulai || rec.Tanggal || rec.tglMulai;
-  if (!dMulai && firstDetail.Tanggal_Mulai) dMulai = firstDetail.Tanggal_Mulai;
-  let defaultYear = "";
-  if (dMulai) {
-    const dStr = String(dMulai).split("T")[0];
-    const dObj = new Date(dStr);
-    if (!isNaN(dObj.getFullYear())) defaultYear = String(dObj.getFullYear());
-  }
-  const tahunVal = String(rec.Tahun || rec.tahun || rec.tahunPeriode || firstDetail.Tahun || defaultYear || "").trim();
-
-  let periodStr = "";
-  if (detailPeriodeVal) {
-    periodStr = String(detailPeriodeVal).trim();
-  } else if (bulanVal) {
-    periodStr = String(bulanVal).trim();
-  } else if (subroundVal) {
-    const s = String(subroundVal).trim();
-    periodStr = s.toLowerCase().startsWith("subround") ? s : `Subround ${s}`;
-  } else if (semesterVal) {
-    const s = String(semesterVal).trim();
-    periodStr = s.toLowerCase().startsWith("semester") ? s : `Semester ${s}`;
-  } else if (triwulanVal) {
-    const s = String(triwulanVal).trim();
-    periodStr = s.toLowerCase().startsWith("triwulan") ? s : `Triwulan ${s}`;
-  } else if (tahapVal) {
-    const s = String(tahapVal).trim();
-    periodStr = s.toLowerCase().startsWith("tahap") ? s : `Tahap ${s}`;
+  if (tahunVal) {
+    periodeInfoParts.push(`Tahun ${tahunVal}`);
   }
 
-  const titleLower = title.toLowerCase();
-  const hasPeriod = periodStr && titleLower.includes(periodStr.toLowerCase());
-  const hasYear = tahunVal && titleLower.includes(tahunVal.toLowerCase());
+  let judulFinal = rawJudul;
+  if (periodeInfoParts.length > 0) {
+    const periodeStr = periodeInfoParts.join(" ");
+    const rawLower = rawJudul.toLowerCase();
 
-  let result = title;
-  if (!hasPeriod && !hasYear) {
-    const suffix = [periodStr, tahunVal].filter(Boolean).join(" ");
-    if (suffix) result = `${result} ${suffix}`;
-  } else if (!hasPeriod && periodStr) {
-    result = `${result} ${periodStr}`;
-  } else if (!hasYear && tahunVal) {
-    result = `${result} ${tahunVal}`;
+    // Jangan duplikasi jika rawJudul sudah menyebutkan nama bulan/periode terkait
+    const hasPeriodeAlready =
+      rawLower.includes(periodeStr.toLowerCase()) ||
+      (subroundVal && rawLower.includes(`subround ${String(subroundVal).toLowerCase()}`)) ||
+      (semesterVal && rawLower.includes(`semester ${String(semesterVal).toLowerCase()}`)) ||
+      (triwulanVal && rawLower.includes(`triwulan ${String(triwulanVal).toLowerCase()}`)) ||
+      (tahapVal && rawLower.includes(`tahap ${String(tahapVal).toLowerCase()}`)) ||
+      (bulanVal && rawLower.includes(String(bulanVal).toLowerCase()));
+
+    if (!hasPeriodeAlready) {
+      // Jika rawJudul berakhiran kata "BULANAN" dan akan menambahkan "Bulan ...",
+      // hilangkan kata "BULANAN" di akhir agar tidak menjadi "... BULANAN BULAN AGUSTUS"
+      if (bulanVal && /\bbulanan\s*$/i.test(rawJudul)) {
+        rawJudul = rawJudul.replace(/\s*\bbulanan\s*$/i, "").trim();
+      }
+      judulFinal = (rawJudul + " " + periodeStr).trim();
+    }
   }
 
-  return result.trim();
+  // Bersihkan kembali sisa duplikasi kata seperti "BULANAN BULAN" menjadi "BULAN"
+  judulFinal = judulFinal
+    .replace(/\bbulanan\s+bulan\b/gi, "Bulan")
+    .replace(/\bbulan\s+bulanan\b/gi, "Bulan")
+    .replace(/\bbulanan\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/gi, "Bulan $1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Kembalikan dalam format UPPERCASE
+  return judulFinal.toUpperCase();
 }
 
 /**
@@ -310,8 +330,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   const tabelRows = renderTabelLampiran(details);
 
   // === Helper: Build judul & uraian pekerjaan dengan periode ===
-  const rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || "").trim();
-  const judulDenganPeriode = buildJudulDenganPeriode(rawJudul, record, details);
+  const judulDenganPeriode = buildJudulDenganPeriode(record, details);
 
   // === Helper: Clean NO_SPK — strip "Nomor" prefix, uppercase ===
   let cleanNoSpk = record.Nomor_SPK || record.No_SPK || "";
@@ -452,7 +471,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NIK_PIHAK_KEDUA:          pml.NIK || pml.NIP || "",
     NIK_NIP_PIHAK_KEDUA:      isPmlMitra ? "" : (pml.NIP || ""),
     JABATAN_PIHAK_KEDUA:      jabatanPmlBast,
-    NOMOR_KEPKA:              (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
+    NOMOR_KEPKA:              record.Nomor_Kepka || "",
     TANGGAL_KEPKA:            tKepka.tanggalFormat,
     TANGGAL:                  spkDateParts.angka,
     BULAN:                    spkDateParts.bulanNama,
@@ -484,7 +503,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NIP_KETUA_TIM:            ketuaTim.NIP || "",
     "GOLONGAN/PANGKAT_KETUA_TIM": `${ketuaTim.Pangkat || ""} ${ketuaTim.Golongan || ""}`.trim(),
     JABATAN_KETUA_TIM:        ketuaTim.Jabatan || "",
-    NOMOR_KEPKA:              (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
+    NOMOR_KEPKA:              record.Nomor_Kepka || "",
     TANGGAL_KEPKA:            tKepka.tanggalFormat,
     TANGGAL:                  spkDateParts.angka,
     BULAN:                    spkDateParts.bulanNama,
@@ -548,8 +567,7 @@ function buildBastSmPpkContext(record, pegawaiArr) {
   const smPpkTahun = fParts[2] || (fParts.length >= 3 ? fParts[2] : "-");
 
   // Build judul dengan periode
-  const rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || "").trim();
-  const judulDenganPeriode = buildJudulDenganPeriode(rawJudul, record);
+  const judulDenganPeriode = buildJudulDenganPeriode(record);
 
   // URAIAN_PEKERJAAN lowercase (bersihkan 'hasil ' jika ada)
   let cleanUraian = judulDenganPeriode;
