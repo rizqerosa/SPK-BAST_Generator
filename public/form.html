@@ -410,13 +410,13 @@
                   <label class="form-label" for="spk-no-spk">Nomor SPK <span class="required">*</span></label>
                   <div style="display:flex; gap:8px;">
                     <input type="text" class="form-control" id="spk-no-spk"
-                           name="no_spk" placeholder="Nomor xx Tahun xxxx" required>
+                           name="no_spk" placeholder="10 TAHUN 2026" required>
                     <button type="button" class="btn btn-outline btn-sm" onclick="applyAutoDocNumber('spk', true)"
                             style="white-space:nowrap; padding:0 14px; font-weight:600;" title="Generate nomor urut berikutnya dari database">
                       ⚡ Auto
                     </button>
                   </div>
-                  <div id="spk-no-status" class="format-hint">Format: Nomor xx Tahun xxxx</div>
+                  <div id="spk-no-status" class="format-hint">Format: 10 TAHUN 2026</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="spk-tgl-spk">Tanggal SPK <span class="required">*</span></label>
@@ -1659,7 +1659,7 @@
     const yr = targetYear || getDocYear(docType);
     if (docType === "spk") {
       const maxSeq = getMaxDocSeq("spk", yr);
-      return `Nomor ${maxSeq + 1} Tahun ${yr}`;
+      return `${maxSeq + 1} TAHUN ${yr}`;
     }
     const maxSeq = getMaxDocSeq("bast", yr);
     return formatBastNumber(maxSeq + 1, yr);
@@ -1745,7 +1745,7 @@
 
     const val = inputEl.value.trim();
     if (!val) {
-      statusEl.innerHTML = `Format: Nomor xxx Tahun xxxx`;
+      statusEl.innerHTML = docType === "spk" ? `Format: 10 TAHUN 2026` : `Format: Nomor xxx Tahun xxxx`;
       return;
     }
 
@@ -1772,7 +1772,8 @@
 
     if (currentSeq !== null) {
       if (currentSeq > expectedSeq) {
-        statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Nomor melompati urutan! Terakhir di database adalah no. ${maxSeq || 0} (seharusnya Nomor ${String(expectedSeq).padStart(isBast ? 3 : 1, "0")} Tahun ${yr})</span>`;
+        const expectedFormat = isBast ? `Nomor ${String(expectedSeq).padStart(3, "0")} Tahun ${yr}` : `${expectedSeq} TAHUN ${yr}`;
+        statusEl.innerHTML = `<span style="color:#d97706; font-weight:600;">⚠️ Nomor melompati urutan! Terakhir di database adalah no. ${maxSeq || 0} (seharusnya ${expectedFormat})</span>`;
         return;
       } else if (currentSeq < expectedSeq) {
         statusEl.innerHTML = `<span style="color:#0284c7; font-weight:600;">ℹ️ Nomor urut lampau (${currentSeq} dari max ${maxSeq}) — Tersedia</span>`;
