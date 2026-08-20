@@ -1159,6 +1159,48 @@
     clearSpkPetugas();
   }
 
+  function findKegiatanHonor(m, allKegiatan) {
+    if (!m) return 0;
+    if (m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" && Number(m.Harga_Satuan) > 0) return Number(m.Harga_Satuan);
+    if (m.Total_Honor !== undefined && m.Total_Honor !== "" && Number(m.Total_Honor) > 0) {
+      const vol = Number(m.Volume || m.volume || 1);
+      return Number(m.Total_Honor) / (vol > 0 ? vol : 1);
+    }
+
+    const kegById = (allKegiatan || []).find(k => getKegiatanId(k) && getKegiatanId(k) === m.ID_Kegiatan);
+    if (kegById && Number(kegById.Harga_Satuan) > 0) return Number(kegById.Harga_Satuan);
+
+    const rawNama = String(m.Uraian_Kegiatan || m.ID_Kegiatan || "").trim().toLowerCase();
+    const kegByName = (allKegiatan || []).find(k => {
+      const kNama = String(k.Uraian_Tugas || k.Judul_Pekerjaan_Dokumen || "").trim().toLowerCase();
+      return kNama && (kNama === rawNama || rawNama.includes(kNama) || kNama.includes(rawNama));
+    });
+    if (kegByName && Number(kegByName.Harga_Satuan) > 0) return Number(kegByName.Harga_Satuan);
+
+    const pendataanNama = rawNama
+      .replace(/^pemeriksaan\s+/i, "pendataan ")
+      .replace(/^pengawasan\s+/i, "pendataan ")
+      .trim();
+    const pairedKeg = (allKegiatan || []).find(k => {
+      const kNama = String(k.Uraian_Tugas || k.Judul_Pekerjaan_Dokumen || "").trim().toLowerCase();
+      return kNama && (kNama.includes(pendataanNama) || pendataanNama.includes(kNama));
+    });
+    if (pairedKeg && Number(pairedKeg.Harga_Satuan) > 0) return Number(pairedKeg.Harga_Satuan);
+
+    const keywords = ["shpb", "shp", "hpt", "hpj", "vhts", "shkk", "ksa", "ubinan", "sktnp", "sakernas", "susenas", "seruti"];
+    for (const kw of keywords) {
+      if (rawNama.includes(kw)) {
+        const matchKw = (allKegiatan || []).find(k => {
+          const kNama = String(k.Uraian_Tugas || "").toLowerCase();
+          return kNama.includes(kw) && Number(k.Harga_Satuan) > 0;
+        });
+        if (matchKw && Number(matchKw.Harga_Satuan) > 0) return Number(matchKw.Harga_Satuan);
+      }
+    }
+
+    return 0;
+  }
+
   // ─── Load kegiatan dari mapping KATIM (SPK) ──────────────────
   async function loadSpkMappingKegiatan(petugasId, tipe) {
     const cleanId = String(petugasId || "").trim();
@@ -1230,8 +1272,10 @@
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
       const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
       const sat = m.Satuan || keg?.Satuan || "Dokumen";
-      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
-      const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+      const hrg = findKegiatanHonor(m, _allKegiatan);
+      const subtotal = (m.Total_Honor !== undefined && m.Total_Honor !== "" && Number(m.Total_Honor) > 0)
+        ? Number(m.Total_Honor)
+        : (vol * hrg);
       totalHonor += subtotal;
 
       let pmlNama = m.PML || m.Nama_PML || "";
@@ -2009,8 +2053,10 @@
       const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
       const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
       const sat = m.Satuan || keg?.Satuan || "Dokumen";
-      const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
-      const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+      const hrg = findKegiatanHonor(m, _allKegiatan);
+      const subtotal = (m.Total_Honor !== undefined && m.Total_Honor !== "" && Number(m.Total_Honor) > 0)
+        ? Number(m.Total_Honor)
+        : (vol * hrg);
       totalHonor += subtotal;
     });
 
@@ -2090,8 +2136,10 @@
         const keg = _allKegiatan.find(k => getKegiatanId(k) === m.ID_Kegiatan);
         const vol = Number(m.Volume !== undefined && m.Volume !== "" ? m.Volume : (m.volume !== undefined && m.volume !== "" ? m.volume : (m.Target_Pekerjaan || 1)));
         const sat = m.Satuan || keg?.Satuan || "Dokumen";
-        const hrg = Number(m.Harga_Satuan !== undefined && m.Harga_Satuan !== "" ? m.Harga_Satuan : (keg?.Harga_Satuan || 0));
-        const subtotal = Number(m.Total_Honor !== undefined && m.Total_Honor !== "" ? m.Total_Honor : (vol * hrg));
+        const hrg = findKegiatanHonor(m, _allKegiatan);
+        const subtotal = (m.Total_Honor !== undefined && m.Total_Honor !== "" && Number(m.Total_Honor) > 0)
+          ? Number(m.Total_Honor)
+          : (vol * hrg);
 
         const detail = {
           ID_Detail:        generateId("DET"),
@@ -2195,8 +2243,10 @@
 
     const keg = _allKegiatan.find(k => getKegiatanId(k) === kegId);
     const vol = Number(mappingItem.Volume !== undefined && mappingItem.Volume !== "" ? mappingItem.Volume : (mappingItem.volume || 1));
-    const hrg = Number(mappingItem.Harga_Satuan !== undefined && mappingItem.Harga_Satuan !== "" ? mappingItem.Harga_Satuan : (keg?.Harga_Satuan || 0));
-    const harga = Number(mappingItem.Total_Honor || (vol * hrg));
+    const hrg = findKegiatanHonor(mappingItem, _allKegiatan);
+    const harga = (mappingItem.Total_Honor !== undefined && mappingItem.Total_Honor !== "" && Number(mappingItem.Total_Honor) > 0)
+      ? Number(mappingItem.Total_Honor)
+      : (vol * hrg);
 
     let pmlNama = mappingItem.PML || mappingItem.Nama_PML || "";
     if (!pmlNama) {
