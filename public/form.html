@@ -766,7 +766,6 @@
               <!-- Hidden metadata inputs -->
               <input type="hidden" id="sm-selected-keg-id">
               <input type="hidden" id="sm-selected-keg-honor" value="0">
-              <input type="hidden" id="sm-sel-ppk">
 
             </div>
           </div>
@@ -966,9 +965,25 @@
     }).join("");
     const opts = buildOpts(_allPegawai);
 
-    ["spk-sel-ppk","bast-sel-ppk","bast-sel-ketua","sm-sel-ppk","sm-sel-ketua"].forEach(id => {
+    const ppkObj = _allPegawai.find(p => 
+      /ppk|pejabat\s*pembuat\s*komitmen/i.test(p.Jabatan || "") || 
+      /ppk/i.test(p.Peran || "") ||
+      /arma\s*juwita/i.test(p.Nama_Pegawai || p.Nama || "") ||
+      String(p.NIP || p.nip || "").startsWith("19960220")
+    );
+    const ppkNip = ppkObj ? (ppkObj.NIP || ppkObj.nip || "") : "";
+
+    ["spk-sel-ppk","bast-sel-ppk","sm-sel-ppk"].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = `<option value="">-- Pilih Pegawai --</option>` + opts;
+      if (el) {
+        el.innerHTML = `<option value="">-- Pilih PPK --</option>` + opts;
+        if (ppkNip) el.value = ppkNip;
+      }
+    });
+
+    ["bast-sel-ketua","sm-sel-ketua"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<option value="">-- Pilih Nama SM / Pegawai --</option>` + opts;
     });
   }
 
@@ -2474,7 +2489,12 @@
 
     let ppk = document.getElementById("sm-sel-ppk")?.value;
     if (!ppk) {
-      const ppkPegawai = _allPegawai.find(p => String(p.Jabatan || "").toLowerCase().includes("ppk") || String(p.Peran || "").toLowerCase().includes("ppk") || String(p.NIP || p.nip || "").startsWith("19920317"));
+      const ppkPegawai = _allPegawai.find(p => 
+        /ppk|pejabat\s*pembuat\s*komitmen/i.test(p.Jabatan || "") || 
+        /ppk/i.test(p.Peran || "") || 
+        /arma\s*juwita/i.test(p.Nama_Pegawai || p.Nama || "") || 
+        String(p.NIP || p.nip || "").startsWith("19960220")
+      );
       ppk = ppkPegawai ? (ppkPegawai.NIP || ppkPegawai.nip || ppkPegawai.Nama_Pegawai) : (_allPegawai[0] ? (_allPegawai[0].NIP || _allPegawai[0].nip || _allPegawai[0].Nama_Pegawai) : "PPK BPS");
     }
 

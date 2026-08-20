@@ -1125,6 +1125,15 @@ function populatePegawaiDropdowns() {
       opt.textContent = `${name} — ${p.Jabatan || "Pegawai BPS"} (NIP: ${nip})`;
       sel.appendChild(opt);
     });
+    if (id === "sel-ppk") {
+      const ppkObj = (AppState.pegawai || []).find(p =>
+        /ppk|pejabat\s*pembuat\s*komitmen/i.test(p.Jabatan || "") ||
+        /ppk/i.test(p.Peran || "") ||
+        /arma\s*juwita/i.test(p.Nama_Pegawai || p.Nama || "") ||
+        String(p.NIP || p.nip || "").startsWith("19960220")
+      );
+      if (ppkObj) sel.value = getPegawaiNip(ppkObj);
+    }
   });
 
   // Opsi PML gabungan: Pegawai BPS + Mitra Lapangan

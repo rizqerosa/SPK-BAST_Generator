@@ -212,7 +212,16 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   }
   mitra = mitra || {};
 
-  const ppk      = cariPegawai(record.PPK,        pegawaiArr) || {};
+  let ppk = cariPegawai(record.PPK, pegawaiArr);
+  if (!ppk && Array.isArray(pegawaiArr)) {
+    ppk = pegawaiArr.find(p =>
+      /ppk|pejabat\s*pembuat\s*komitmen/i.test(p.Jabatan || "") ||
+      /ppk/i.test(p.Peran || "") ||
+      /arma\s*juwita/i.test(p.Nama_Pegawai || p.Nama || "") ||
+      String(p.NIP || p.nip || "").startsWith("19960220")
+    ) || null;
+  }
+  ppk = ppk || {};
 
   // Cek apakah PML dipilih dari Mitra atau Pegawai Organik
   let isPmlMitra = false;
@@ -535,7 +544,17 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
  * Bangun context untuk BAST SM-PPK (dari record bastSmPpk{}, bukan spkBast)
  */
 function buildBastSmPpkContext(record, pegawaiArr) {
-  const ppk      = cariPegawai(record.PPK,       pegawaiArr) || {};
+  let ppk = cariPegawai(record.PPK, pegawaiArr);
+  if (!ppk && Array.isArray(pegawaiArr)) {
+    ppk = pegawaiArr.find(p =>
+      /ppk|pejabat\s*pembuat\s*komitmen/i.test(p.Jabatan || "") ||
+      /ppk/i.test(p.Peran || "") ||
+      /arma\s*juwita/i.test(p.Nama_Pegawai || p.Nama || "") ||
+      String(p.NIP || p.nip || "").startsWith("19960220")
+    ) || null;
+  }
+  ppk = ppk || {};
+
   const ketuaTim = cariPegawai(record.Ketua_Tim, pegawaiArr) || {};
   const tBAST    = tanggalTerbilang(record.Tanggal_BAST_SM_PPK || record.Tanggal || new Date().toISOString().slice(0, 10));
   const totalHonor = record.Total_Honor || 0;
@@ -561,11 +580,15 @@ function buildBastSmPpkContext(record, pegawaiArr) {
   let cleanNoSpk = record.Nomor_SPK || record.No_SPK || "";
   cleanNoSpk = cleanNoSpk.replace(/^\s*nomor\s+/i, "").toUpperCase();
 
+  // Clean No_BAST_SM_PPK (bersihkan jika ada duplikasi 'Nomor Nomor' atau 'NOMOR Nomor')
+  let cleanNoBast = String(record.No_BAST_SM_PPK || record["No_BAST_SM-PPK"] || "").trim();
+  cleanNoBast = cleanNoBast.replace(/^nomor\s+nomor\s+/i, "Nomor ").replace(/^nomor\s+/i, "Nomor ");
+
   return {
     JUDUL_PEKERJAAN_DOKUMEN:   judulDenganPeriode,
     NO_SPK:                    cleanNoSpk,
-    NO_BAST_SM_PPK:            record.No_BAST_SM_PPK || "",
-    "NO_BAST_SM-PPK":          record.No_BAST_SM_PPK || "",
+    NO_BAST_SM_PPK:            cleanNoBast,
+    "NO_BAST_SM-PPK":          cleanNoBast,
     HARI_TERBILANG:            tBAST.hari,
     TANGGAL_TERBILANG:         tBAST.tanggal,
     BULAN_TERBILANG:           tBAST.bulan,

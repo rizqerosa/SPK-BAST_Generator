@@ -85,6 +85,9 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
       xmlStr = xmlStr.replace(new RegExp('«\\s*' + cleanKey + '\\s*»', 'gi'), escVal);
     }
 
+    // C. Bersihkan jika ada duplikasi kata "NOMOR Nomor" atau "Nomor Nomor" akibat template/input
+    xmlStr = xmlStr.replace(/\b(nomor|NOMOR)\s+(nomor|NOMOR)\b/g, '$1');
+
     zip.file(filename, xmlStr);
   }
 
