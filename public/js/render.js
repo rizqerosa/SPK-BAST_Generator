@@ -93,8 +93,17 @@ function renderTabelLampiran(detailPekerjaanArray) {
  */
 function buildJudulDenganPeriode(record, details = []) {
   const d0 = details.length > 0 ? details[0] : {};
-  const rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || d0.Uraian_Tugas || "").trim();
+  let rawJudul = (record.Judul_Pekerjaan_Dokumen || record.Uraian_Tugas || d0.Uraian_Tugas || "").trim();
   if (!rawJudul) return "";
+
+  // 1. Bersihkan duplikasi kata "bulanan" atau variasi "bulanan bulan" pada rawJudul
+  rawJudul = rawJudul
+    .replace(/\bbulanan\s+bulan\b/gi, "Bulan")
+    .replace(/\bbulan\s+bulanan\b/gi, "Bulan")
+    .replace(/\bbulanan\s+bulanan\b/gi, "Bulanan")
+    .replace(/\bbulanan\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/gi, "Bulan $1")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const tipePeriode = String(record.Tipe_Periode || record.tipePeriode || d0.Tipe_Periode || d0.tipePeriode || "").toLowerCase().trim();
   const subroundVal = record.Subround || d0.Subround || "";
@@ -145,21 +154,35 @@ function buildJudulDenganPeriode(record, details = []) {
     const periodeStr = periodeInfoParts.join(" ");
     const rawLower = rawJudul.toLowerCase();
 
-    // Jangan duplikasi jika rawJudul sudah menyebutkan periode terkait
+    // Jangan duplikasi jika rawJudul sudah menyebutkan nama bulan/periode terkait
     const hasPeriodeAlready =
       rawLower.includes(periodeStr.toLowerCase()) ||
-      rawLower.includes("subround") ||
-      rawLower.includes("semester") ||
-      rawLower.includes("triwulan") ||
-      rawLower.includes("tahap") ||
+      (subroundVal && rawLower.includes(`subround ${String(subroundVal).toLowerCase()}`)) ||
+      (semesterVal && rawLower.includes(`semester ${String(semesterVal).toLowerCase()}`)) ||
+      (triwulanVal && rawLower.includes(`triwulan ${String(triwulanVal).toLowerCase()}`)) ||
+      (tahapVal && rawLower.includes(`tahap ${String(tahapVal).toLowerCase()}`)) ||
       (bulanVal && rawLower.includes(String(bulanVal).toLowerCase()));
 
     if (!hasPeriodeAlready) {
+      // Jika rawJudul berakhiran kata "BULANAN" dan akan menambahkan "Bulan ...",
+      // hilangkan kata "BULANAN" di akhir agar tidak menjadi "... BULANAN BULAN AGUSTUS"
+      if (bulanVal && /\bbulanan\s*$/i.test(rawJudul)) {
+        rawJudul = rawJudul.replace(/\s*\bbulanan\s*$/i, "").trim();
+      }
       judulFinal = (rawJudul + " " + periodeStr).trim();
     }
   }
 
-  return judulFinal;
+  // Bersihkan kembali sisa duplikasi kata seperti "BULANAN BULAN" menjadi "BULAN"
+  judulFinal = judulFinal
+    .replace(/\bbulanan\s+bulan\b/gi, "Bulan")
+    .replace(/\bbulan\s+bulanan\b/gi, "Bulan")
+    .replace(/\bbulanan\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/gi, "Bulan $1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Kembalikan dalam format UPPERCASE
+  return judulFinal.toUpperCase();
 }
 
 /**
