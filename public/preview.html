@@ -591,14 +591,14 @@
       return;
     }
 
-    // Cek library JSZip, tunggu maksimal 5 detik jika sedang loading
-    if (typeof JSZip === "undefined") {
+    // Cek library docx, tunggu maksimal 5 detik jika sedang loading
+    if (typeof docx === "undefined") {
       setLoading(true);
       let waited = 0;
       await new Promise(resolve => {
         const check = setInterval(() => {
           waited += 300;
-          if (typeof JSZip !== "undefined" || waited >= 5000) {
+          if (typeof docx !== "undefined" || waited >= 5000) {
             clearInterval(check);
             resolve();
           }
@@ -607,8 +607,8 @@
       setLoading(false);
     }
 
-    if (typeof JSZip === "undefined") {
-      showToast("❌ Library Word (JSZip) gagal dimuat. Periksa koneksi internet, lalu refresh halaman.", "danger", 6000);
+    if (typeof docx === "undefined") {
+      showToast("❌ Library Word (docx.js) gagal dimuat. Periksa koneksi internet, lalu refresh halaman.", "danger", 6000);
       return;
     }
     if (typeof generateAndDownloadWord === "undefined") {
