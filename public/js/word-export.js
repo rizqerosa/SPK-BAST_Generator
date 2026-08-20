@@ -23,8 +23,8 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
     throw new Error("Library JSZip belum dimuat. Pastikan koneksi internet aktif.");
   }
 
-  // 1. Fetch file .docx template asli
-  const response = await fetch(templatePath);
+  // 1. Fetch file .docx template asli (selalu ambil file fresh tanpa cache browser)
+  const response = await fetch(`${templatePath}?_t=${Date.now()}`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error(`Gagal memuat file template Word: ${templatePath} (Status: ${response.status})`);
   }
