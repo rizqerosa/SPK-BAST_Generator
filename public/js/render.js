@@ -335,7 +335,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     BEBAN_ANGGARAN: details.length > 0 ? details[0].Beban_Anggaran : "",
 
     // === Nomor Kepka & Tanggal ===
-    NOMOR_KEPKA:  record.Nomor_Kepka || "",
+    NOMOR_KEPKA:  (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
     TANGGAL_KEPKA: tKepka.tanggalFormat,
   };
 
