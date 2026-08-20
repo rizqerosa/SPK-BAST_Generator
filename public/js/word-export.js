@@ -181,10 +181,6 @@ async function generateAndDownloadWord(tabKey, dataCtx, docRecord, options = {})
       }];
     }
   }
-      Nilai_Perjanjian: Number(docRecord.Total_Honor) || 0,
-      Beban_Anggaran: docRecord.Beban_Anggaran || "BPS Kota Subulussalam"
-    }];
-  }
 
   let templatePath = "";
   let dataDict = {};
