@@ -2258,21 +2258,37 @@
           No_BAST_PPL_SM:       noBastPplSm,
           Tanggal_BAST_PPL_SM:  tglBastPplSm,
           No_BAST_PML_SM:       noBastPmlSm,
-          Tanggal_BAST_PML_SM:  tglBastPplSm,
+          Tanggal_BAST_PML_SM:  tglBastPmlSm,
           PML:                  pmlNama || spkRecord.PML || "",
           Ketua_Tim:            finalKetua,
           PPK:                  finalPpk,
           Jenis_Dokumen:        "SPK_BAST",
         };
-        await updateInSheet("spkBast", "ID_Dokumen", spkId, updatedFields);
-        clearCache("spkBast");
+        const res = await updateInSheet("spkBast", "ID_Dokumen", spkId, updatedFields);
+        if (res && res.status === "not_found") {
+          await appendToSheet("spkBast", record);
+        }
         showToast(`✅ BAST berhasil diperbarui!`, "success", 4000);
       } else {
         await appendToSheet("spkBast", record);
-        clearCache("spkBast");
+        const detailRecord = {
+          ID_Detail:        generateId("DET"),
+          ID_Dokumen:       docId,
+          No_Urut:          1,
+          ID_Kegiatan:      kegId,
+          Uraian_Tugas:     kegNama,
+          Buku_Pedoman:     "Ada",
+          Jangka_Waktu:     `${mappingItem?.Tanggal_Mulai || ''} s.d. ${mappingItem?.Tanggal_Selesai || ''}`,
+          Volume:           vol,
+          Satuan:           mappingItem?.Satuan || keg?.Satuan || "Dokumen",
+          Harga_Satuan:     hrg,
+          Nilai_Perjanjian: harga,
+          Beban_Anggaran:   keg?.Beban_Anggaran || "BPS",
+        };
+        await appendToSheet("detailPekerjaan", detailRecord).catch(() => {});
         showToast(`✅ BAST berhasil disimpan!`, "success", 4000);
       }
-      setTimeout(() => window.location.href = "dokumen.html", 800);
+      setTimeout(() => window.location.href = "dokumen.html", 1000);
     } catch (err) {
       showToast("Gagal simpan BAST: " + err.message, "danger");
     } finally {

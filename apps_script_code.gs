@@ -116,11 +116,16 @@ function doPost(e) {
       
       var updateData = body.data || {};
       var updated = false;
+      var cleanTargetKey = String(keyValue).trim().toLowerCase();
       
       for (var r = 1; r < values.length; r++) {
-        if (String(values[r][colIdx]).trim() === String(keyValue).trim()) {
+        var cellVal = String(values[r][colIdx]).trim().toLowerCase();
+        if (cellVal === cleanTargetKey) {
           for (var field in updateData) {
             var fIdx = headers.indexOf(field);
+            if (fIdx === -1) {
+              fIdx = headers.findIndex(function(h) { return String(h).trim().toLowerCase() === String(field).trim().toLowerCase(); });
+            }
             if (fIdx !== -1) {
               sheet.getRange(r + 1, fIdx + 1).setValue(updateData[field]);
             }
