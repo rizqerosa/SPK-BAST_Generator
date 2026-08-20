@@ -291,4 +291,46 @@ function toTitleCase(str) {
   return String(str).toLowerCase().replace(/(?:^|\s|-)\S/g, a => a.toUpperCase());
 }
 
+/**
+ * Format rentang tanggal jangka waktu pekerjaan untuk detail SPK
+ */
+function formatJangkaWaktuDetail(tglMulai, tglSelesai) {
+  if (!tglMulai && !tglSelesai) return "—";
+  if (tglMulai && !tglSelesai) return formatTanggal(tglMulai);
+  if (!tglMulai && tglSelesai) return formatTanggal(tglSelesai);
+
+  const months = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+  const parse = (str) => {
+    if (!str) return null;
+    let s = String(str).trim();
+    if (s.includes("T")) s = s.split("T")[0];
+    const parts = s.split("-").map(Number);
+    if (parts.length === 3 && !parts.some(isNaN)) {
+      return { y: parts[0], m: parts[1], d: parts[2] };
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() };
+    }
+    return null;
+  };
+
+  const pMulai = parse(tglMulai);
+  const pSelesai = parse(tglSelesai);
+
+  if (!pMulai || !pSelesai) {
+    return `${tglMulai} s.d. ${tglSelesai}`;
+  }
+
+  if (pMulai.y === pSelesai.y) {
+    if (pMulai.m === pSelesai.m) {
+      return `${pMulai.d} s.d. ${pSelesai.d} ${months[pSelesai.m]} ${pSelesai.y}`;
+    }
+    return `${pMulai.d} ${months[pMulai.m]} s.d. ${pSelesai.d} ${months[pSelesai.m]} ${pSelesai.y}`;
+  }
+
+  return `${pMulai.d} ${months[pMulai.m]} ${pMulai.y} s.d. ${pSelesai.d} ${months[pSelesai.m]} ${pSelesai.y}`;
+}
+
 
