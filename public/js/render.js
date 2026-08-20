@@ -441,7 +441,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
 
     // === Nomor Kepka & Tanggal ===
     NOMOR_KEPKA:  (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
-    TANGGAL_KEPKA: tKepka.tanggalFormat,
+    TANGGAL_KEPKA: formatTanggal(record.Tanggal_Kepka),
   };
 
   // BAST PPL-PML context
@@ -471,8 +471,8 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NIK_PIHAK_KEDUA:          pml.NIK || pml.NIP || "",
     NIK_NIP_PIHAK_KEDUA:      isPmlMitra ? "" : (pml.NIP || ""),
     JABATAN_PIHAK_KEDUA:      jabatanPmlBast,
-    NOMOR_KEPKA:              record.Nomor_Kepka || "",
-    TANGGAL_KEPKA:            tKepka.tanggalFormat,
+    NOMOR_KEPKA:              (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
+    TANGGAL_KEPKA:            formatTanggal(record.Tanggal_Kepka),
     TANGGAL:                  spkDateParts.angka,
     BULAN:                    spkDateParts.bulanNama,
     TAHUN:                    spkDateParts.tahunAngka,
@@ -503,8 +503,8 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     NIP_KETUA_TIM:            ketuaTim.NIP || "",
     "GOLONGAN/PANGKAT_KETUA_TIM": `${ketuaTim.Pangkat || ""} ${ketuaTim.Golongan || ""}`.trim(),
     JABATAN_KETUA_TIM:        ketuaTim.Jabatan || "",
-    NOMOR_KEPKA:              record.Nomor_Kepka || "",
-    TANGGAL_KEPKA:            tKepka.tanggalFormat,
+    NOMOR_KEPKA:              (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
+    TANGGAL_KEPKA:            formatTanggal(record.Tanggal_Kepka),
     TANGGAL:                  spkDateParts.angka,
     BULAN:                    spkDateParts.bulanNama,
     TAHUN:                    spkDateParts.tahunAngka,
