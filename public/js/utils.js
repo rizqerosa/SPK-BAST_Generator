@@ -130,6 +130,14 @@ function getPeriodMeta(dateStr, bulanName, tahunNum) {
 }
 
 /**
+ * Generate Unique Document / Detail ID
+ */
+function generateId(prefix = "DOC") {
+  const p = (prefix || "DOC").toUpperCase();
+  return `${p}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+}
+
+/**
  * Format angka ke format mata uang Indonesia (1.234.567)
  */
 function formatRupiah(angka) {
