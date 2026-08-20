@@ -70,12 +70,13 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
       }
     }
 
-    // B. Replace seluruh placeholder di XML dokumen
+    // B. Replace seluruh placeholder di XML dokumen (dukung case-insensitive dan spasi dalam tag)
     for (const [k, v] of Object.entries(dataDict)) {
       const escVal = _docxXmlEscape(v);
-      xmlStr = xmlStr.split(`&lt;&lt;${k}&gt;&gt;`).join(escVal);
-      xmlStr = xmlStr.split(`<<${k}>>`).join(escVal);
-      xmlStr = xmlStr.split(`«${k}»`).join(escVal);
+      const cleanKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      xmlStr = xmlStr.replace(new RegExp('&lt;&lt;\\s*' + cleanKey + '\\s*&gt;&gt;', 'gi'), escVal);
+      xmlStr = xmlStr.replace(new RegExp('<<\\s*' + cleanKey + '\\s*>>', 'gi'), escVal);
+      xmlStr = xmlStr.replace(new RegExp('«\\s*' + cleanKey + '\\s*»', 'gi'), escVal);
     }
 
     zip.file(filename, xmlStr);
