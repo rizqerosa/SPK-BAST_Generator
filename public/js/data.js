@@ -260,12 +260,13 @@ async function appendToSheet(sheetKey, rowData) {
 
 // ─── Public: Update baris berdasar key (Instan 0 ms) ────────
 async function updateInSheet(sheetKey, keyField, keyValue, newData) {
+  const cleanKeyVal = String(keyValue).trim().toLowerCase();
   // Optimistic Cache Update
   try {
     const cached = (typeof lsGet === "function" ? lsGet(sheetKey)?.data : null) || _DB[sheetKey];
     if (Array.isArray(cached)) {
       const updated = cached.map(item => {
-        if (String(item[keyField]) === String(keyValue)) {
+        if (String(item[keyField] || "").trim().toLowerCase() === cleanKeyVal) {
           return { ...item, ...newData };
         }
         return item;

@@ -2128,8 +2128,6 @@
         await Promise.all(detailsToSave.map(d => appendToSheet("detailPekerjaan", d)));
       }
 
-      clearCache("spkBast");
-      clearCache("detailPekerjaan");
       showToast(_isEditMode ? `✅ Perubahan SPK berhasil disimpan!` : `✅ SPK berhasil disimpan!`, "success", 5000);
       setTimeout(() => window.location.href = `preview.html?id=${encodeURIComponent(docId)}`, 800);
     } catch (err) {
@@ -2144,12 +2142,12 @@
     e.preventDefault();
     const petugasId   = document.getElementById("bast-petugas-id")?.value;
     const spkId       = document.getElementById("bast-spk-id")?.value;
-    const kegId       = document.getElementById("bast-selected-keg-id")?.value;
-    const kegNama     = document.getElementById("bast-selected-keg-nama")?.value;
+    const kegId       = document.getElementById("bast-selected-keg-id")?.value || document.getElementById("bast-selected-keg-nama")?.value;
+    const kegNama     = document.getElementById("bast-selected-keg-nama")?.value || document.getElementById("bast-selected-keg-id")?.value;
     const peran       = document.getElementById("bast-selected-peran")?.value || "ppl";
 
-    if (!petugasId) { showToast("Pilih petugas!", "warning"); return; }
-    if (!kegId)     { showToast("Pilih kegiatan!", "warning"); return; }
+    if (!petugasId) { showToast("Pilih petugas terlebih dahulu!", "warning"); return; }
+    if (!kegNama && !kegId) { showToast("Pilih kegiatan yang akan dibuatkan BAST!", "warning"); return; }
 
     let noBastPplPml = "", tglBastPplPml = "";
     let noBastPplSm  = "", tglBastPplSm  = "";
@@ -2355,11 +2353,9 @@
     try {
       if (_isEditMode && _editDocId) {
         await updateInSheet("bastSmPpk", "ID_BAST_SM_PPK", _editDocId, record);
-        clearCache("bastSmPpk");
         showToast(`✅ Perubahan BAST SM→PPK berhasil disimpan!`, "success", 5000);
       } else {
         await appendToSheet("bastSmPpk", record);
-        clearCache("bastSmPpk");
         showToast(`✅ BAST SM→PPK berhasil disimpan!`, "success", 5000);
       }
       setTimeout(() => window.location.href = "dokumen.html", 1000);
