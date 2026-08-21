@@ -30,7 +30,7 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
   }
   const arrayBuffer = await response.arrayBuffer();
 
-  // 2. Load zip struktur .docx
+    // 2. Load zip struktur .docx
   const zip = await JSZip.loadAsync(arrayBuffer);
 
   // 3. Proses hanya file XML isi dokumen (hindari merusak styles/settings/themes internal Word)
@@ -55,7 +55,7 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
 
     // A. Jika di word/document.xml dan ada rincian pekerjaan: duplikasi baris tabel lampiran
     if (filename === "word/document.xml" && detailsList && detailsList.length > 0) {
-      const trRegex = /<w:tr(?:(?!<w:tr).)*?URAIAN_TUGAS.*?<\/w:tr>/s;
+      const trRegex = /<w:tr\b(?:(?!<w:tr\b).)*?URAIAN_TUGAS.*?<\/w:tr>/s;
       const trMatch = xmlStr.match(trRegex);
       if (trMatch) {
         const templateTr = trMatch[0];
