@@ -169,14 +169,31 @@ function buildJudulDenganPeriode(record, details = []) {
       if (bulanVal && /\bbulanan\s*$/i.test(rawJudul)) {
         rawJudul = rawJudul.replace(/\s*\bbulanan\s*$/i, "").trim();
       }
+      if (triwulanVal && /\btriwulan\s*$/i.test(rawJudul)) {
+        rawJudul = rawJudul.replace(/\s*\btriwulan\s*$/i, "").trim();
+      }
+      if (semesterVal && /\bsemester\s*$/i.test(rawJudul)) {
+        rawJudul = rawJudul.replace(/\s*\bsemester\s*$/i, "").trim();
+      }
+      if (subroundVal && /\bsubround\s*$/i.test(rawJudul)) {
+        rawJudul = rawJudul.replace(/\s*\bsubround\s*$/i, "").trim();
+      }
+      if (tahapVal && /\btahap\s*$/i.test(rawJudul)) {
+        rawJudul = rawJudul.replace(/\s*\btahap\s*$/i, "").trim();
+      }
       judulFinal = (rawJudul + " " + periodeStr).trim();
     }
   }
 
-  // Bersihkan kembali sisa duplikasi kata seperti "BULANAN BULAN" menjadi "BULAN"
+  // Bersihkan kembali sisa duplikasi kata
   judulFinal = judulFinal
+    .replace(/\btriwulan\s+triwulan\b/gi, "Triwulan")
+    .replace(/\bsemester\s+semester\b/gi, "Semester")
+    .replace(/\bsubround\s+subround\b/gi, "Subround")
+    .replace(/\btahap\s+tahap\b/gi, "Tahap")
     .replace(/\bbulanan\s+bulan\b/gi, "Bulan")
     .replace(/\bbulan\s+bulanan\b/gi, "Bulan")
+    .replace(/\bbulanan\s+bulanan\b/gi, "Bulanan")
     .replace(/\bbulanan\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/gi, "Bulan $1")
     .replace(/\s+/g, " ")
     .trim();
