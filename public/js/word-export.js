@@ -44,6 +44,13 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
     !name.includes("theme")
   );
 
+  // Buat canonical map dari dataDict (abaikan spasi, underscore, strip, slash, dan case)
+  const canonicalMap = {};
+  for (const [k, v] of Object.entries(dataDict)) {
+    const normK = k.toUpperCase().replace(/[\s\-_/]+/g, '');
+    canonicalMap[normK] = v;
+  }
+
   for (const filename of xmlFiles) {
     let xmlStr = await zip.files[filename].async("string");
 
@@ -74,9 +81,11 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
           };
           for (const [rk, rv] of Object.entries(rowDict)) {
             const escVal = _docxXmlEscape(rv);
-            trRow = trRow.split(`&lt;&lt;${rk}&gt;&gt;`).join(escVal);
-            trRow = trRow.split(`<<${rk}>>`).join(escVal);
-            trRow = trRow.split(`«${rk}»`).join(escVal);
+            const rkNorm = rk.toUpperCase().replace(/[\s\-_/]+/g, '');
+            trRow = trRow.replace(/(&lt;&lt;|<<|«)([\s\S]*?)(&gt;&gt;|>>|»)/g, (m, o, innerTag) => {
+              const tagNorm = innerTag.replace(/<[^>]+>/g, '').toUpperCase().replace(/[\s\-_/]+/g, '');
+              return tagNorm === rkNorm ? escVal : m;
+            });
           }
           return trRow;
         });
@@ -84,14 +93,15 @@ async function fillDocxTemplate(templatePath, dataDict, detailsList = []) {
       }
     }
 
-    // B. Replace seluruh placeholder di XML dokumen (dukung case-insensitive dan spasi dalam tag)
-    for (const [k, v] of Object.entries(dataDict)) {
-      const escVal = _docxXmlEscape(v);
-      const cleanKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      xmlStr = xmlStr.replace(new RegExp('&lt;&lt;\\s*' + cleanKey + '\\s*&gt;&gt;', 'gi'), () => escVal);
-      xmlStr = xmlStr.replace(new RegExp('<<\\s*' + cleanKey + '\\s*>>', 'gi'), () => escVal);
-      xmlStr = xmlStr.replace(new RegExp('«\\s*' + cleanKey + '\\s*»', 'gi'), () => escVal);
-    }
+    // B. Replace seluruh placeholder di XML dokumen menggunakan Canonical Mapping (kebal terhadap spasi/strip/case terpecah)
+    xmlStr = xmlStr.replace(/(&lt;&lt;|<<|«)([\s\S]*?)(&gt;&gt;|>>|»)/g, (match, open, inner) => {
+      const cleanTag = inner.replace(/<[^>]+>/g, '').trim();
+      const normTag = cleanTag.toUpperCase().replace(/[\s\-_/]+/g, '');
+      if (canonicalMap[normTag] !== undefined) {
+        return _docxXmlEscape(canonicalMap[normTag]);
+      }
+      return match;
+    });
 
     // C. Bersihkan jika ada duplikasi kata "NOMOR Nomor" atau "Nomor Nomor" akibat template/input
     xmlStr = xmlStr.replace(/\b(nomor|NOMOR)\s+(nomor|NOMOR)\b/g, '$1');

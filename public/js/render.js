@@ -344,9 +344,20 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     cleanNoSpk = rawNoSpk;
   }
 
-  // === Helper: URAIAN_PEKERJAAN lowercase (bersihkan awalan 'hasil ' jika ada, dan sertakan periode) ===
+  // === Helper: URAIAN_PEKERJAAN (dukung single maupun multi-kegiatan) ===
+  const validDetailTasks = (details || [])
+    .map(d => (d.Uraian_Tugas || "").trim())
+    .filter(Boolean);
+  const uniqueDetailTasks = [...new Set(validDetailTasks)];
+
   let cleanUraian = judulDenganPeriode;
-  if (cleanUraian.toLowerCase().startsWith("hasil ")) {
+  if (uniqueDetailTasks.length > 1) {
+    cleanUraian = uniqueDetailTasks.map((t, i) => {
+      let ct = t;
+      if (ct.toLowerCase().startsWith("hasil ")) ct = ct.substring(6).trim();
+      return `${i + 1}. ${ct}`;
+    }).join("; ");
+  } else if (cleanUraian.toLowerCase().startsWith("hasil ")) {
     cleanUraian = cleanUraian.substring(6).trim();
   }
   const uraianPekerjaanLower = cleanUraian.toLowerCase();
@@ -523,9 +534,31 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   // isPmlMitra = true  → PML (Pihak Pertama) adalah Mitra Lapangan → template-bast-pml-sm-mitra.html (pakai NIK)
   // isPmlMitra = false → PML (Pihak Pertama) adalah Pegawai Organik → template-bast-pml-sm-organik.html (pakai NIP)
   const bastPmlSmDateParts = _parseDateComponents(tBAST_PML_SM);
+
+  // Jika record ini adalah dokumen PPL, cari apakah PML memiliki record SPK tersendiri
+  let pmlNoSpk = cleanNoSpk;
+  let pmlSpkParts = spkDateParts;
+  if (record.PML && String(record.PML).trim() !== String(record.ID_Mitra).trim() && typeof AppState !== "undefined" && Array.isArray(AppState.spkBast)) {
+    const rawPml = String(record.PML).trim();
+    const pmlDoc = AppState.spkBast.find(d =>
+      (d.ID_Mitra === rawPml || d.Nama_Mitra === rawPml || d.PML === rawPml) &&
+      (d.Peran === "pml" || (d.No_BAST_PML_SM && !d.No_BAST_PPL_PML)) &&
+      (d.Tahun === record.Tahun || d.Bulan === record.Bulan)
+    );
+    if (pmlDoc && (pmlDoc.Nomor_SPK || pmlDoc.No_SPK)) {
+      const rawDocSpk = (pmlDoc.Nomor_SPK || pmlDoc.No_SPK || "").trim();
+      pmlNoSpk = rawDocSpk.replace(/^nomor\s+/i, "").trim();
+      const pmlDocDate = tanggalTerbilang(pmlDoc["Tanggal SPK"] || pmlDoc.Tanggal_SPK || pmlDoc.Tanggal_Mulai);
+      pmlSpkParts = _parseDateComponents(pmlDocDate);
+    }
+  }
+
   const bastPmlSmCtx = {
     ...bastPplSmCtx,
     NO_BAST_PML_SM:           record.No_BAST_PML_SM || "",
+    "NO_BAST_PML-SM":         record.No_BAST_PML_SM || "",
+    "NO_BAST_P M L_SM":       record.No_BAST_PML_SM || "",
+    NO_SPK:                   pmlNoSpk,
     HARI_TERBILANG:           tBAST_PML_SM.hari,
     TANGGAL_TERBILANG:        tBAST_PML_SM.tanggal,
     BULAN_TERBILANG:          tBAST_PML_SM.bulan,
@@ -536,6 +569,10 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     TANGGAL_ANGKA:            bastPmlSmDateParts.angka,
     BULAN_NAMA:               bastPmlSmDateParts.bulanNama,
     TAHUN_ANGKA:              bastPmlSmDateParts.tahunAngka,
+    // Komponen tanggal SPK untuk narasi BAST
+    TANGGAL:                  pmlSpkParts.angka,
+    BULAN:                    pmlSpkParts.bulanNama,
+    TAHUN:                    pmlSpkParts.tahunAngka,
     // Pihak Pertama = PML (Petugas Pengawas Lapangan)
     NAMA_PIHAK_PERTAMA:       pml.Nama_Pegawai || "",
     NIK_PIHAK_PERTAMA:        pml.NIK || pml.NIP || "",
