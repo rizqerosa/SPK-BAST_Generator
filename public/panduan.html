@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -14,13 +14,13 @@
     .hero-panduan {
       background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
       border-radius: var(--radius-xl);
-      padding: 28px 32px;
+      padding: 22px 28px;
       color: #fff;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 24px;
+      gap: 20px;
       position: relative;
       overflow: hidden;
       box-shadow: 0 10px 32px rgba(30, 58, 138, 0.28);
@@ -46,39 +46,39 @@
     .hero-left {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 18px;
       position: relative;
       z-index: 1;
     }
     .hero-icon {
-      font-size: 3rem;
+      font-size: 2.8rem;
       line-height: 1;
       filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
     }
     .hero-panduan h1 {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 800;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       letter-spacing: -0.01em;
     }
     .hero-panduan p {
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       opacity: 0.9;
       max-width: 650px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
     .hero-badges {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 8px;
       flex-wrap: wrap;
     }
     .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 3px 10px;
+      padding: 2px 10px;
       border-radius: 20px;
       font-size: 0.72rem;
       font-weight: 700;
@@ -94,56 +94,6 @@
       z-index: 1;
     }
 
-    /* Grid Ringkasan Fitur */
-    .overview-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    .overview-card {
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: transform var(--transition), box-shadow var(--transition);
-      box-shadow: var(--shadow-sm);
-    }
-    .overview-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-      border-color: #93c5fd;
-    }
-    .overview-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .overview-icon-badge {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      flex-shrink: 0;
-    }
-    .overview-title {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--gray-800);
-    }
-    .overview-desc {
-      font-size: 0.78rem;
-      color: var(--gray-600);
-      line-height: 1.45;
-    }
-
     /* Card Viewer PDF */
     .viewer-card {
       background: #fff;
@@ -153,10 +103,10 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
     .viewer-header {
-      padding: 14px 20px;
+      padding: 12px 20px;
       border-bottom: 1px solid var(--gray-200);
       background: #f8fafc;
       display: flex;
@@ -171,7 +121,7 @@
       gap: 8px;
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--gray-800);
     }
     .viewer-header-actions {
@@ -183,8 +133,8 @@
     .viewer-body {
       position: relative;
       background: #334155;
-      min-height: 820px;
-      height: 80vh;
+      min-height: 750px;
+      height: calc(100vh - 250px);
       width: 100%;
     }
     .viewer-frame {
@@ -217,7 +167,7 @@
     }
     .viewer-card.is-fullscreen .viewer-body {
       flex: 1;
-      height: calc(100vh - 60px);
+      height: calc(100vh - 56px);
       min-height: 0;
     }
 
@@ -269,15 +219,14 @@
 
     <div class="page-body">
 
-      <!-- Hero Banner -->
+      <!-- Hero Banner Dokumen Panduan -->
       <div class="hero-panduan">
         <div class="hero-left">
           <div class="hero-icon">📖</div>
           <div>
             <h1>Buku Panduan Aplikasi WEBPADKU</h1>
             <p>
-              Pedoman resmi alur kerja pembuatan SPK &amp; BAST, penugasan petugas mitra oleh Ketua Tim,
-              verifikasi dokumen oleh Pejabat Pembuat Komitmen (PPK), serta tata kelola data master sistem BPS Kota Subulussalam.
+              Dokumen petunjuk teknis dan panduan operasional penggunaan sistem generate SPK &amp; BAST BPS Kota Subulussalam.
             </p>
             <div class="hero-badges">
               <span class="hero-badge">📄 Format: PDF Dokumen</span>
@@ -293,55 +242,12 @@
         </div>
       </div>
 
-      <!-- Quick Feature Cards / Ringkasan Modul -->
-      <div class="overview-grid">
-        <div class="overview-card">
-          <div class="overview-header">
-            <div class="overview-icon-badge" style="background:#dbeafe; color:#1e40af;">📝</div>
-            <div class="overview-title">Generate Dokumen</div>
-          </div>
-          <div class="overview-desc">
-            Alur pengisian formulir SPK &amp; BAST otomatis, pemilihan nomor surat, tanggal dinas, serta preview dokumen sebelum pengajuan.
-          </div>
-        </div>
-
-        <div class="overview-card">
-          <div class="overview-header">
-            <div class="overview-icon-badge" style="background:#fef3c7; color:#92400e;">🗺️</div>
-            <div class="overview-title">Ketua Tim (Katim)</div>
-          </div>
-          <div class="overview-desc">
-            Petunjuk penugasan mitra survei ke dalam master kegiatan, manajemen alokasi beban kerja, dan koordinasi tim teknis lapangan.
-          </div>
-        </div>
-
-        <div class="overview-card">
-          <div class="overview-header">
-            <div class="overview-icon-badge" style="background:#dcfce7; color:#166534;">✅</div>
-            <div class="overview-title">Verifikasi PPK</div>
-          </div>
-          <div class="overview-desc">
-            Mekanisme persetujuan (approval) atau revisi dokumen SPK/BAST oleh PPK secara transparan dengan riwayat catatan perbaikan.
-          </div>
-        </div>
-
-        <div class="overview-card">
-          <div class="overview-header">
-            <div class="overview-icon-badge" style="background:#ede9fe; color:#5b21b6;">👥</div>
-            <div class="overview-title">Tata Kelola Master</div>
-          </div>
-          <div class="overview-desc">
-            Panduan administrasi akun pengguna, role kewenangan, sinkronisasi master kegiatan, pegawai, dan database mitra statistik.
-          </div>
-        </div>
-      </div>
-
       <!-- PDF Viewer Card -->
       <div class="viewer-card" id="pdf-viewer-card">
         <div class="viewer-header">
           <div class="viewer-header-title">
             <span>📑</span>
-            <span>Pratinjau Dokumen Buku Panduan</span>
+            <span>Dokumen Buku Panduan</span>
             <span style="font-size: 0.72rem; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 12px; font-weight: 700; margin-left: 4px;">PDF</span>
           </div>
           <div class="viewer-header-actions">
@@ -370,7 +276,7 @@
             <div style="font-size: 2.4rem; margin-bottom: 12px;">📄</div>
             <h3 style="font-size: 1.1rem; margin-bottom: 6px;">Pratinjau PDF di Browser</h3>
             <p style="font-size: 0.85rem; color: #94a3b8; max-width: 480px; margin: 0 auto 16px;">
-              Jika pratinjau tidak muncul di perangkat Anda, Anda dapat membuka file secara langsung di peramban atau mengunduh salinan dokumen.
+              Jika pratinjau tidak muncul secara otomatis di perangkat Anda, klik tombol di bawah untuk membuka atau mengunduh salinan dokumen PDF.
             </p>
             <div style="display:flex; justify-content:center; gap:10px;">
               <a href="panduan.pdf" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:rgba(255,255,255,0.3);">
@@ -428,7 +334,6 @@
   window.addEventListener("DOMContentLoaded", function() {
     const iframe = document.getElementById("pdf-frame");
     if (!iframe) return;
-    // On touch mobile devices without inline pdf plugin, keep both iframe and direct action buttons available
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
       const fallback = document.getElementById("viewer-fallback");
       if (fallback) fallback.classList.add("active");
