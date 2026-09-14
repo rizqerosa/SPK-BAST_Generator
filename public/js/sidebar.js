@@ -40,6 +40,8 @@
     { icon: "📋", label: "Daftar Dokumen",  href: "dokumen.html" },
     { section: "Akun" },
     { icon: "👤", label: "Profil Saya",     href: "profil.html"  },
+    { section: "Panduan" },
+    { icon: "📖", label: "Buku Panduan",    href: "panduan.html" },
   ];
 
   function buildSidebar() {

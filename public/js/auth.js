@@ -281,8 +281,8 @@ function checkPageAuth() {
     window.location.replace("dokumen.html"); return;
   }
 
-  // Profile & preview: semua boleh
-  if (page === "profil.html" || page === "preview.html") return;
+  // Profile, preview, & panduan: semua boleh
+  if (page === "profil.html" || page === "preview.html" || page === "panduan.html") return;
 
   // index.html (dashboard pengguna): ADMIN & PPK diarahkan ke halaman masing-masing
   if (page === "index.html") {

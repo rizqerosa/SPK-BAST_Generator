@@ -240,12 +240,46 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   }
   ppk = ppk || {};
 
+  // Cek apakah peran petugas pada record ini adalah PML
+  const isPmlRole = Boolean(
+    (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) ||
+    (record.Peran && String(record.Peran).toLowerCase() === "pml") ||
+    (record.Jenis_Petugas && String(record.Jenis_Petugas).toLowerCase().includes("pml"))
+  );
+
   // Cek apakah PML dipilih dari Mitra atau Pegawai Organik
   let isPmlMitra = false;
   let pmlObj     = null;
 
-  // Opsi A: Jika record.PML diisi & beda dari ID_Mitra
-  if (record.PML && String(record.PML).trim() !== "" && String(record.PML).trim() !== String(record.ID_Mitra).trim()) {
+  // Jika record ini milik PML (misal BAST PML-SM), PML adalah petugas pemilik dokumen ini sendiri (record.ID_Mitra)
+  if (isPmlRole) {
+    if (isPegawai) {
+      const p = cariPegawai(record.ID_Mitra, pegawaiArr);
+      if (p) {
+        isPmlMitra = false;
+        pmlObj = {
+          Nama_Pegawai: getPegawaiName(p),
+          NIP:          getPegawaiNip(p),
+          NIK:          getPegawaiNip(p),
+          Jabatan:      p.Jabatan || "Pegawai BPS",
+        };
+      }
+    } else {
+      const m = cariMitra(record.ID_Mitra, mitraArr);
+      if (m) {
+        isPmlMitra = true;
+        pmlObj = {
+          Nama_Pegawai: getMitraName(m),
+          NIP:          "",
+          NIK:          m.NIK || getMitraId(m),
+          Jabatan:      getMitraPosisi(m) || "Mitra Pemeriksa Lapangan",
+        };
+      }
+    }
+  }
+
+  // Jika bukan dokumen PML (misal dokumen PPL), cari PML dari record.PML
+  if (!pmlObj && record.PML && String(record.PML).trim() !== "" && String(record.PML).trim() !== String(record.ID_Mitra).trim()) {
     const rawPml = String(record.PML).trim();
     const p = cariPegawai(rawPml, pegawaiArr);
     if (p) {
@@ -279,8 +313,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     }
   }
 
-  // Opsi B: Jika record.PML kosong (misalnya dokumen ini adalah dokumen PML itu sendiri),
-  // atau record.PML == record.ID_Mitra
+  // Fallback jika pmlObj belum didapatkan
   if (!pmlObj) {
     if (isPegawai) {
       const p = cariPegawai(record.ID_Mitra, pegawaiArr);
