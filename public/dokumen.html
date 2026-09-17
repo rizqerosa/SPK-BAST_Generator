@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -8,6 +8,9 @@
   <script>
     (function(){try{var s=localStorage.getItem("spkbast_user_session")||sessionStorage.getItem("spkbast_user_session");if(!s){window.location.replace("login.html");}}catch(e){}})();
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/style.css?v=4.2">
   <style>
     .hero-banner {
@@ -377,7 +380,6 @@
 <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
 
 <script src="js/jszip.min.js"></script>
-<script src="js/docx.umd.js"></script>
 <script src="js/config.js?v=4.6"></script>
 <script src="js/data.js?v=4.6"></script>
 <script src="js/auth.js?v=5.1"></script>
@@ -1027,7 +1029,7 @@
     updateStats();
     applyFilters();
 
-    document.getElementById("search-input")?.addEventListener("input", applyFilters);
+    document.getElementById("search-input")?.addEventListener("input", (typeof debounce === "function" ? debounce(applyFilters, 150) : applyFilters));
     document.querySelectorAll("[data-filter]").forEach(btn => {
       btn.addEventListener("click", function() {
         document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));

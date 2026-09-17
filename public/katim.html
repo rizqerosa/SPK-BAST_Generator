@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -8,6 +8,9 @@
   <script>
     (function(){try{var s=localStorage.getItem("spkbast_user_session")||sessionStorage.getItem("spkbast_user_session");if(!s){window.location.replace("login.html");}}catch(e){}})();
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/style.css?v=4.3">
   <style>
     /* ── Hero Banner ── */
@@ -940,7 +943,7 @@
     });
 
     // Search filter listener (Daftar Penugasan)
-    document.getElementById("search-mapping")?.addEventListener("input", renderMappingList);
+    document.getElementById("search-mapping")?.addEventListener("input", (typeof debounce === "function" ? debounce(renderMappingList, 150) : renderMappingList));
 
     // Kegiatan live search listener (Langkah 1)
     const searchKegEl = document.getElementById("wiz-search-kegiatan");

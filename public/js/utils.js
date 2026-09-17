@@ -333,4 +333,21 @@ function formatJangkaWaktuDetail(tglMulai, tglSelesai) {
   return `${pMulai.d} ${months[pMulai.m]} ${pMulai.y} s.d. ${pSelesai.d} ${months[pSelesai.m]} ${pSelesai.y}`;
 }
 
+/**
+ * Debounce helper untuk mengoptimalkan input search & filter real-time
+ * @param {Function} fn - fungsi yang akan dieksekusi
+ * @param {number} delay - waktu debounce dalam milidetik (default 150ms)
+ * @returns {Function}
+ */
+function debounce(fn, delay = 150) {
+  let timer = null;
+  return function(...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+      timer = null;
+    }, delay);
+  };
+}
+
 

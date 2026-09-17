@@ -202,6 +202,7 @@ async function fetchSheet(sheetKey, forceRefresh = false) {
 
 // ─── Normalisasi tipe data per sheet ─────────────────────────
 function normalizeRow(row, sheetKey) {
+  if (!row || typeof row !== "object") return {};
   const r = { ...row };
   const angkaFields = {
     spkBast:          ["Tahun", "Total_Honor", "Triwulan", "Subround"],
@@ -218,7 +219,7 @@ function normalizeRow(row, sheetKey) {
   };
   const fields = angkaFields[sheetKey] || [];
   fields.forEach(f => {
-    if (r[f] !== undefined && r[f] !== "") r[f] = Number(r[f]) || 0;
+    if (r[f] !== undefined && r[f] !== null && r[f] !== "") r[f] = Number(r[f]) || 0;
   });
   return r;
 }
@@ -304,10 +305,16 @@ function clearCache(sheetKey) {
   if (sheetKey) {
     _DB[sheetKey] = null;
     lsDel(sheetKey);
+    const resolved = resolveSheetName(sheetKey);
+    if (resolved && resolved !== sheetKey) {
+      _DB[resolved] = null;
+      lsDel(resolved);
+    }
   } else {
     Object.keys(_DB).forEach(k => { _DB[k] = null; lsDel(k); });
   }
 }
+const invalidateCache = clearCache;
 
 // ─── Public: Force Sync All Data dari Google Sheets ──────────
 async function forceSyncAllData() {
