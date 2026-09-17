@@ -906,6 +906,13 @@
         }
         if (_currentMode === "bast_sm") {
           applyAutoDocNumber("bast_sm", false);
+        } else if (_currentMode === "bast") {
+          const peran = document.getElementById("bast-selected-peran")?.value || "ppl";
+          if (peran === "pml") applyAutoDocNumber("bast_pml_sm", false);
+          else {
+            applyAutoDocNumber("bast_ppl_pml", false);
+            applyAutoDocNumber("bast_ppl_sm", false);
+          }
         }
       }
     }).catch(err => {
@@ -1606,16 +1613,20 @@
           if (!isNaN(d)) rYear = d.getFullYear();
         }
         if (!rYear) rYear = yr;
-        if (rYear === yr) {
-          const vals = [r.Nomor_SPK, r.No_SPK, r["Nomor SPK"], r["No SPK"]];
-          vals.forEach(v => {
+        const vals = [r.Nomor_SPK, r.No_SPK, r["Nomor SPK"], r["No SPK"]];
+        vals.forEach(v => {
+          if (!v) return;
+          let docYear = rYear;
+          const mYr = String(v).match(/Tahun\s*(\d{4})/i);
+          if (mYr) docYear = parseInt(mYr[1], 10);
+          if (docYear === yr) {
             const seq = extractDocSeq(v, yr);
             if (seq && !foundSeqs.includes(seq)) foundSeqs.push(seq);
-          });
-        }
+          }
+        });
       });
     } else {
-      // Seluruh jenis BAST (PPL→PML, PPL→SM, PML→SM, SM→PPK) berbagi SATU URUTAN YANG SAMA
+      // Seluruh jenis BAST (PPL→PML, PPL→SM, PML→SM, Entri→SM, SM→PPK) berbagi SATU URUTAN YANG SAMA
       const allDocs = [...(_allSpkBast || []), ...(_allBastSmPpk || [])];
       allDocs.forEach(r => {
         if (_editDocId && String(r.ID_Dokumen || r.ID_BAST_SM_PPK) === String(_editDocId)) return;
@@ -1628,33 +1639,32 @@
           }
         }
         if (!rYear) rYear = yr;
-        if (rYear === yr) {
-          const vals = [
-            r.No_BAST_PPL_PML, r.Nomor_BAST_PPL_PML, r["No BAST PPL PML"], r["No_BAST_PPL-PML"], r["NOMOR BAST PPL-PML"],
-            r.No_BAST_PPL_SM,  r.Nomor_BAST_PPL_SM,  r["No BAST PPL SM"],  r["No_BAST_PPL-SM"],  r["NOMOR BAST PPL-SM"],
-            r.No_BAST_PML_SM,  r.Nomor_BAST_PML_SM,  r["No BAST PML SM"],  r["No_BAST_PML-SM"],  r["NOMOR BAST PML-SM"],
-            r.No_BAST_SM_PPK,  r.Nomor_BAST_SM_PPK,  r["No BAST SM PPK"],  r["No_BAST_SM-PPK"],  r["NOMOR BAST SM-PPK"]
-          ];
-          vals.forEach(v => {
+
+        const vals = [
+          r.No_BAST_PPL_PML, r.Nomor_BAST_PPL_PML, r["No BAST PPL PML"], r["No_BAST_PPL-PML"], r["NOMOR BAST PPL-PML"],
+          r.No_BAST_PPL_SM,  r.Nomor_BAST_PPL_SM,  r["No BAST PPL SM"],  r["No_BAST_PPL-SM"],  r["NOMOR BAST PPL-SM"],
+          r.No_BAST_PML_SM,  r.Nomor_BAST_PML_SM,  r["No BAST PML SM"],  r["No_BAST_PML-SM"],  r["NOMOR BAST PML-SM"],
+          r.No_BAST_ENTRI_SM, r.Nomor_BAST_ENTRI_SM, r["No BAST ENTRI SM"], r["No_BAST_ENTRI-SM"], r["NOMOR BAST ENTRI-SM"],
+          r.No_BAST_SM_PPK,  r.Nomor_BAST_SM_PPK,  r["No BAST SM PPK"],  r["No_BAST_SM-PPK"],  r["NOMOR BAST SM-PPK"],
+          r.No_BAST, r.Nomor_BAST, r["No BAST"], r["Nomor BAST"]
+        ];
+
+        vals.forEach(v => {
+          if (!v) return;
+          let docYear = rYear;
+          const mYr = String(v).match(/Tahun\s*(\d{4})/i);
+          if (mYr) docYear = parseInt(mYr[1], 10);
+
+          if (docYear === yr) {
             const seq = extractDocSeq(v, yr);
             if (seq && !foundSeqs.includes(seq)) foundSeqs.push(seq);
-          });
-        }
+          }
+        });
       });
     }
 
     if (foundSeqs.length === 0) return 0;
-    foundSeqs.sort((a, b) => a - b);
-
-    // Ambil nomor urut tertinggi yang berkesinambungan (mengabaikan anomali test loncat > 20)
-    let validMax = 0;
-    for (let i = 0; i < foundSeqs.length; i++) {
-      const s = foundSeqs[i];
-      if (validMax === 0 || s <= validMax + 15) {
-        validMax = s;
-      }
-    }
-    return validMax;
+    return Math.max(...foundSeqs);
   }
 
   function generateSuggestedDocNumber(docType, targetYear) {
@@ -1706,18 +1716,36 @@
         { val: r.Nomor_BAST_PPL_PML, label: `BAST PPL→PML (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r["No BAST PPL PML"], label: `BAST PPL→PML (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r["No_BAST_PPL-PML"], label: `BAST PPL→PML (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["NOMOR BAST PPL-PML"], label: `BAST PPL→PML (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+
         { val: r.No_BAST_PPL_SM, label: `BAST PPL→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r.Nomor_BAST_PPL_SM, label: `BAST PPL→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r["No BAST PPL SM"], label: `BAST PPL→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r["No_BAST_PPL-SM"], label: `BAST PPL→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["NOMOR BAST PPL-SM"], label: `BAST PPL→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+
         { val: r.No_BAST_PML_SM, label: `BAST PML→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r.Nomor_BAST_PML_SM, label: `BAST PML→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r["No BAST PML SM"], label: `BAST PML→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
         { val: r["No_BAST_PML-SM"], label: `BAST PML→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["NOMOR BAST PML-SM"], label: `BAST PML→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+
+        { val: r.No_BAST_ENTRI_SM, label: `BAST Entri→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r.Nomor_BAST_ENTRI_SM, label: `BAST Entri→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["No BAST ENTRI SM"], label: `BAST Entri→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["No_BAST_ENTRI-SM"], label: `BAST Entri→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["NOMOR BAST ENTRI-SM"], label: `BAST Entri→SM (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+
         { val: r.No_BAST_SM_PPK, label: `BAST SM→PPK (${r.Judul_Pekerjaan_Dokumen || r.Uraian_Tugas || r.ID_BAST_SM_PPK || "di Database"})` },
         { val: r.Nomor_BAST_SM_PPK, label: `BAST SM→PPK (${r.Judul_Pekerjaan_Dokumen || r.Uraian_Tugas || r.ID_BAST_SM_PPK || "di Database"})` },
         { val: r["No BAST SM PPK"], label: `BAST SM→PPK (${r.Judul_Pekerjaan_Dokumen || r.Uraian_Tugas || r.ID_BAST_SM_PPK || "di Database"})` },
-        { val: r["No_BAST_SM-PPK"], label: `BAST SM→PPK (${r.Judul_Pekerjaan_Dokumen || r.Uraian_Tugas || r.ID_BAST_SM_PPK || "di Database"})` }
+        { val: r["No_BAST_SM-PPK"], label: `BAST SM→PPK (${r.Judul_Pekerjaan_Dokumen || r.Uraian_Tugas || r.ID_BAST_SM_PPK || "di Database"})` },
+        { val: r["NOMOR BAST SM-PPK"], label: `BAST SM→PPK (${r.Judul_Pekerjaan_Dokumen || r.Uraian_Tugas || r.ID_BAST_SM_PPK || "di Database"})` },
+
+        { val: r.No_BAST, label: `BAST (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r.Nomor_BAST, label: `BAST (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["No BAST"], label: `BAST (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` },
+        { val: r["Nomor BAST"], label: `BAST (${r.Judul_Pekerjaan_Dokumen || r.ID_Dokumen || "di Database"})` }
       ];
       for (const item of bastList) {
         if (item.val && String(item.val).trim().toLowerCase() === target) {
@@ -1767,7 +1795,7 @@
     if (docType === "bast_ppl_sm") {
       const inputPml = document.getElementById("bast-no-ppl-pml");
       const pmlSeq = inputPml ? extractDocSeq(inputPml.value, yr) : null;
-      if (pmlSeq && pmlSeq >= maxSeq + 1) {
+      if (pmlSeq && pmlSeq >= maxSeq) {
         expectedSeq = pmlSeq + 1;
       }
     }
@@ -1783,7 +1811,7 @@
       }
     }
 
-    statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor berurutan &amp; tersedia (Nomor urut ${expectedSeq})</span>`;
+    statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">✅ Nomor berurutan &amp; tersedia (Nomor urut ${currentSeq || expectedSeq})</span>`;
   }
 
   function applyAutoDocNumber(docType, force = false) {
@@ -1811,13 +1839,12 @@
         } else {
           pmlSeq = extractDocSeq(inputPml.value, yr) || (baseMax + 1);
         }
-        // Otomatis buat BAST PPL->SM urutan berikutnya (tidak boleh sama & berurutan)
+        // Otomatis buat BAST PPL->SM urutan berikutnya (n + 2 berlanjut terus)
         if (inputSm) {
           const curSmVal = inputSm.value.trim();
           const curSmSeq = extractDocSeq(curSmVal, yr);
-          if (force || !curSmVal || curSmSeq === pmlSeq) {
+          if (force || !curSmVal || curSmSeq === pmlSeq || curSmSeq <= pmlSeq) {
             inputSm.value = formatBastNumber(pmlSeq + 1, yr);
-            validateDocNumberInput("bast_ppl_sm");
           }
         }
         validateDocNumberInput("bast_ppl_pml");
@@ -1827,7 +1854,18 @@
 
       if (docType === "bast_ppl_sm") {
         const pmlSeq = inputPml ? extractDocSeq(inputPml.value, yr) : null;
-        let targetSeq = (pmlSeq && pmlSeq >= baseMax) ? (pmlSeq + 1) : (baseMax + 1);
+        let targetSeq;
+        if (pmlSeq) {
+          targetSeq = Math.max(baseMax + 1, pmlSeq + 1);
+        } else {
+          // Jika BAST PPL-PML masih kosong, isi PPL-PML juga secara berurutan
+          if (inputPml) {
+            inputPml.value = formatBastNumber(baseMax + 1, yr);
+            validateDocNumberInput("bast_ppl_pml");
+          }
+          targetSeq = baseMax + 2;
+        }
+
         if (force || !inputSm.value.trim()) {
           inputSm.value = formatBastNumber(targetSeq, yr);
         }
@@ -1837,7 +1875,7 @@
       }
     }
 
-    // BAST PML->SM atau BAST SM->PPK
+    // BAST PML->SM atau BAST SM->PPK (dari list penomoran BAST yang sama)
     const { input: inputId } = getDocInputIds(docType);
     const inputEl = document.getElementById(inputId);
     if (!inputEl) return;
