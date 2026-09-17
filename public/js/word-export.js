@@ -181,6 +181,13 @@ async function generateAndDownloadWord(tabKey, dataCtx, docRecord, options = {})
     dataDict = { ...ctx };
     filename = `BAST_PML_SM_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
 
+  } else if (tabKey === "entri-sm") {
+    const ctx = dataCtx.bastEntriSmCtx || dataCtx;
+    if (options.noSurat) ctx.NO_BAST_ENTRI_SM = options.noSurat;
+    templatePath = "template_docx/TEMPLATE_BAST_ENTRI-SM (mitra).docx";
+    dataDict = { ...ctx };
+    filename = `BAST_ENTRI_SM_${ctx.NAMA_PIHAK_PERTAMA || docRecord.ID_Dokumen}.docx`;
+
   } else if (tabKey === "sm-ppk") {
     const pegawaiArr = options.pegawaiArr || (typeof AppState !== "undefined" ? AppState.pegawai : []);
     const ctx = (typeof buildBastSmPpkContext === "function")

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -27,6 +27,7 @@
     .chip-organik { background:rgba(167,243,208,.25); color:#d1fae5; border:1px solid rgba(167,243,208,.4); }
     .chip-ppl     { background:rgba(147,197,253,.25); color:#dbeafe; border:1px solid rgba(147,197,253,.4); }
     .chip-pml     { background:rgba(196,181,253,.25); color:#ede9fe; border:1px solid rgba(196,181,253,.4); }
+    .chip-entri   { background:rgba(254,243,199,.25); color:#fef3c7; border:1px solid rgba(251,191,36,.4); }
     .chip-sm      { background:rgba(252,165,165,.25); color:#fee2e2; border:1px solid rgba(252,165,165,.4); }
     .tab-panel { background:#fff; border-radius:var(--radius-lg); border:1px solid var(--gray-100); box-shadow:var(--shadow-sm); overflow:hidden; }
     .tab-panel-header { background:var(--gray-50); padding:12px 16px; font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--gray-200); }
@@ -162,10 +163,14 @@
     if (!record) return "ppl";
     if ((record.No_BAST_SM_PPK || record.ID_BAST_SM_PPK) && !record.ID_Mitra) return "sm_ppk";
     if (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) return "pml";
+    if (record.Peran && String(record.Peran).toLowerCase() === "entri") return "entri";
+    if (record.Jenis_Petugas && String(record.Jenis_Petugas).toLowerCase().includes("entri")) return "entri";
+    if (record.No_BAST_ENTRI_SM) return "entri";
     if (record.No_BAST_PPL_PML || record.No_BAST_PPL_SM) return "ppl";
     const stored = sessionStorage.getItem("preview_target_tab") || "";
     if (stored === "sm-ppk") return "sm_ppk";
     if (stored === "pml-sm") return "pml";
+    if (stored === "entri-sm") return "entri";
     return "ppl";
   }
 
@@ -178,10 +183,12 @@
       record.No_BAST_PPL_PML ||
       record.No_BAST_PPL_SM ||
       record.No_BAST_PML_SM ||
+      record.No_BAST_ENTRI_SM ||
       record.No_BAST_SM_PPK ||
       record.Tanggal_BAST_PPL_PML ||
       record.Tanggal_BAST_PPL_SM ||
       record.Tanggal_BAST_PML_SM ||
+      record.Tanggal_BAST_ENTRI_SM ||
       isStandaloneBast
     );
     const tabs = [];
@@ -207,6 +214,31 @@
           key:"pml-sm",
           icon:"🔒",
           title:"BAST PML → SM",
+          desc:"BAST belum dibuat (Buat di Form BAST)",
+          badge:"Belum Dibuat",
+          badgeClass:"badge-gray",
+          enabled:false
+        });
+      }
+    } else if (peran === "entri") {
+      if (!isStandaloneBast) {
+        tabs.push({ key:"spk", icon:"📝", title:"SPK / Perjanjian Kerja", desc:"Perjanjian Kerja + Lampiran", badge:null, enabled:true });
+      }
+      if (hasBast) {
+        tabs.push({
+          key:"entri-sm",
+          icon:"📋",
+          title:"BAST Entri → SM",
+          desc:"Petugas Entri serahkan ke Ketua Tim",
+          badge:"Mitra",
+          badgeClass:"badge-mitra",
+          enabled:true
+        });
+      } else {
+        tabs.push({
+          key:"entri-sm",
+          icon:"🔒",
+          title:"BAST Entri → SM",
           desc:"BAST belum dibuat (Buat di Form BAST)",
           badge:"Belum Dibuat",
           badgeClass:"badge-gray",
@@ -288,10 +320,11 @@
   function buildTypeChips(record, isPmlMitra) {
     const peran = detectPeran(record);
     const chips = [];
-    if (peran === "ppl")      chips.push(`<span class="doc-chip chip-ppl">PPL</span>`);
-    else if (peran === "pml") chips.push(`<span class="doc-chip chip-pml">PML</span>`);
-    else                      chips.push(`<span class="doc-chip chip-sm">SM→PPK</span>`);
-    if (peran !== "sm_ppk") {
+    if (peran === "ppl")        chips.push(`<span class="doc-chip chip-ppl">PPL</span>`);
+    else if (peran === "pml")   chips.push(`<span class="doc-chip chip-pml">PML</span>`);
+    else if (peran === "entri") chips.push(`<span class="doc-chip chip-entri">ENTRI</span>`);
+    else                        chips.push(`<span class="doc-chip chip-sm">SM→PPK</span>`);
+    if (peran !== "sm_ppk" && peran !== "entri") {
       chips.push(isPmlMitra
         ? `<span class="doc-chip chip-mitra">PML Mitra</span>`
         : `<span class="doc-chip chip-organik">PML Organik</span>`);
@@ -320,105 +353,93 @@
 
   // ─── Render Utuh Pratinjau Dokumen ───────────────────────────
   async function renderPreviewContent(record, details, allMitra, allPegawai, defaultTab) {
-    _previewRecord  = record;
-    _previewDetails = details || [];
-    allMitra = allMitra || [];
-    allPegawai = allPegawai || [];
+    try {
+      _previewRecord  = record;
+      _previewDetails = details || [];
+      allMitra = allMitra || [];
+      allPegawai = allPegawai || [];
 
-    AppState.mitra   = allMitra;
-    AppState.pegawai = allPegawai;
+      if (typeof AppState !== "undefined") {
+        AppState.mitra   = allMitra;
+        AppState.pegawai = allPegawai;
+      }
 
-    _previewCtx = buildDataContext(_previewRecord, {
-      mitraArr: allMitra,
-      pegawaiArr: allPegawai,
-      detailArr: _previewDetails
-    });
-    _isPmlMitra = !!(_previewCtx?.bastPplPmlCtx?.IS_PML_MITRA || _previewCtx?.bastPplSmCtx?.IS_PML_MITRA);
+      _previewCtx = buildDataContext(_previewRecord, {
+        mitraArr: allMitra,
+        pegawaiArr: allPegawai,
+        detailArr: _previewDetails
+      });
+      _isPmlMitra = !!(_previewCtx?.bastPplPmlCtx?.IS_PML_MITRA || _previewCtx?.bastPplSmCtx?.IS_PML_MITRA);
 
-    const petugasName = _previewCtx?.spkCtx?.mitra_nama || _previewCtx?.bastPplSmCtx?.mitra_nama || _previewRecord?.ID_Mitra || "—";
-    const docTitle = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Nomor_SPK || _previewRecord.ID_Dokumen || "Dokumen SPK/BAST";
-    const t1 = document.getElementById("preview-doc-title");
-    const t2 = document.getElementById("preview-doc-title-2");
-    const idEl = document.getElementById("preview-doc-id");
-    const mn1 = document.getElementById("preview-mitra-name");
-    const mn2 = document.getElementById("preview-mitra-name-2");
+      const petugasName = _previewCtx?.spkCtx?.mitra_nama || _previewCtx?.bastPplSmCtx?.mitra_nama || _previewRecord?.ID_Mitra || "—";
+      const docTitle = _previewRecord.Judul_Pekerjaan_Dokumen || _previewRecord.Nomor_SPK || _previewRecord.ID_Dokumen || "Dokumen SPK/BAST";
+      const t1 = document.getElementById("preview-doc-title");
+      const t2 = document.getElementById("preview-doc-title-2");
+      const idEl = document.getElementById("preview-doc-id");
+      const mn1 = document.getElementById("preview-mitra-name");
+      const mn2 = document.getElementById("preview-mitra-name-2");
 
-    if (t1) t1.textContent = "Preview Dokumen";
-    if (t2) t2.textContent = docTitle;
-    if (idEl) idEl.textContent = _previewRecord.ID_Dokumen || _previewRecord.Nomor_SPK || "—";
-    if (mn1) mn1.textContent = petugasName;
-    if (mn2) mn2.textContent = petugasName;
+      if (t1) t1.textContent = "Preview Dokumen";
+      if (t2) t2.textContent = docTitle;
+      if (idEl) idEl.textContent = _previewRecord.ID_Dokumen || _previewRecord.Nomor_SPK || "—";
+      if (mn1) mn1.textContent = petugasName;
+      if (mn2) mn2.textContent = petugasName;
 
-    const elStatus = document.getElementById("preview-status");
-    if (elStatus) {
-      elStatus.textContent = _previewRecord.Status_Generate_SPK || _previewRecord.Status_Verifikasi_PPK || "Belum";
-      elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" || _previewRecord.Status_Verifikasi_PPK === "Disetujui" ? "badge-success" : "badge-warning"}`;
-    }
+      const elStatus = document.getElementById("preview-status");
+      if (elStatus) {
+        elStatus.textContent = _previewRecord.Status_Generate_SPK || _previewRecord.Status_Verifikasi_PPK || "Belum";
+        elStatus.className   = `badge ${_previewRecord.Status_Generate_SPK === "Sudah" || _previewRecord.Status_Verifikasi_PPK === "Disetujui" ? "badge-success" : "badge-warning"}`;
+      }
 
-    const editDocId = _previewRecord.ID_Dokumen || _previewRecord.ID_BAST_SM_PPK || "";
-    const btnEdit = document.getElementById("topbar-btn-edit");
-    if (btnEdit && editDocId) {
-      btnEdit.href = `form.html?id=${encodeURIComponent(editDocId)}`;
-    }
+      const editDocId = _previewRecord.ID_Dokumen || _previewRecord.ID_BAST_SM_PPK || "";
+      const btnEdit = document.getElementById("topbar-btn-edit");
+      if (btnEdit && editDocId) {
+        btnEdit.href = `form.html?id=${encodeURIComponent(editDocId)}`;
+      }
 
-    renderPpkStatusBanner(_previewRecord);
-    buildTypeChips(_previewRecord, _isPmlMitra);
+      renderPpkStatusBanner(_previewRecord);
+      buildTypeChips(_previewRecord, _isPmlMitra);
 
-    const isApproved = isDocApproved(_previewRecord);
-    const btnExportWord = document.getElementById("btn-export-word");
-    const exportNotice = document.getElementById("export-locked-notice");
-    if (btnExportWord) {
-      if (!isApproved) {
-        btnExportWord.disabled = true;
-        btnExportWord.classList.remove("btn-primary");
-        btnExportWord.classList.add("btn-secondary");
-        btnExportWord.style.opacity = "0.6";
-        btnExportWord.style.cursor = "not-allowed";
-        btnExportWord.title = "Dokumen belum disetujui (ACC) oleh PPK";
-        btnExportWord.innerHTML = "🔒 Download Word (Menunggu ACC PPK)";
-        if (exportNotice) exportNotice.style.display = "block";
-      } else {
-        btnExportWord.disabled = false;
-        btnExportWord.classList.remove("btn-secondary");
-        btnExportWord.classList.add("btn-primary");
-        btnExportWord.style.opacity = "1";
-        btnExportWord.style.cursor = "pointer";
-        btnExportWord.title = "Download Dokumen Word (.docx)";
-        btnExportWord.innerHTML = "⬇ Download Word (.docx)";
-        if (exportNotice) exportNotice.style.display = "none";
+      const isStandaloneBast = (_previewRecord.Jenis_Dokumen === "BAST");
+      const hasBast = Boolean(
+        _previewRecord.No_BAST_PPL_PML ||
+        _previewRecord.No_BAST_PPL_SM ||
+        _previewRecord.No_BAST_PML_SM ||
+        _previewRecord.No_BAST_ENTRI_SM ||
+        _previewRecord.No_BAST_SM_PPK ||
+        _previewRecord.Tanggal_BAST_PPL_PML ||
+        _previewRecord.Tanggal_BAST_PPL_SM ||
+        _previewRecord.Tanggal_BAST_PML_SM ||
+        _previewRecord.Tanggal_BAST_ENTRI_SM ||
+        isStandaloneBast
+      );
+
+      const peran = detectPeran(_previewRecord);
+      let targetTab = defaultTab;
+      if (!targetTab || (!hasBast && targetTab !== "spk")) {
+        if (isStandaloneBast) {
+          targetTab = (peran === "pml" ? "pml-sm" : (peran === "entri" ? "entri-sm" : "ppl-pml"));
+        } else if (peran === "sm_ppk") {
+          targetTab = "sm-ppk";
+        } else {
+          targetTab = "spk";
+        }
+      }
+
+      buildTabList(_previewRecord, _isPmlMitra, targetTab);
+      await switchTab(targetTab, document.querySelector(`.tab-item[data-tab="${targetTab}"]`));
+      updateExportButtonState();
+    } catch (err) {
+      console.error("[preview.html] Error in renderPreviewContent:", err);
+      const content = document.getElementById("preview-doc-content");
+      if (content) {
+        content.innerHTML = `<div class="alert alert-danger" style="margin:20px;">Gagal memuat pratinjau dokumen: ${err.message}</div>`;
       }
     }
-
-    const isStandaloneBast = (_previewRecord.Jenis_Dokumen === "BAST");
-    const hasBast = Boolean(
-      _previewRecord.No_BAST_PPL_PML ||
-      _previewRecord.No_BAST_PPL_SM ||
-      _previewRecord.No_BAST_PML_SM ||
-      _previewRecord.No_BAST_SM_PPK ||
-      _previewRecord.Tanggal_BAST_PPL_PML ||
-      _previewRecord.Tanggal_BAST_PPL_SM ||
-      _previewRecord.Tanggal_BAST_PML_SM ||
-      isStandaloneBast
-    );
-
-    const peran = detectPeran(_previewRecord);
-    let targetTab = defaultTab;
-    if (!targetTab || (!hasBast && targetTab !== "spk")) {
-      if (isStandaloneBast) {
-        targetTab = (peran === "pml" ? "pml-sm" : "ppl-pml");
-      } else if (peran === "sm_ppk") {
-        targetTab = "sm-ppk";
-      } else {
-        targetTab = "spk";
-      }
-    }
-
-    buildTabList(_previewRecord, _isPmlMitra, targetTab);
-    await switchTab(targetTab, document.querySelector(`.tab-item[data-tab="${targetTab}"]`));
   }
 
-  // ─── Init (Instan Cache-First) ───────────────────────────────
-  document.addEventListener("DOMContentLoaded", async () => {
+  // ─── Init (Instan Cache-First + Fallback Andal) ──────────────
+  async function initPreviewPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const docId = urlParams.get("id");
     let defaultTab = urlParams.get("tab") || sessionStorage.getItem("preview_target_tab");
@@ -434,23 +455,31 @@
     let instantDetails = [];
 
     if (docId) {
-      instantRecord = cachedDocs.find(r => String(r.ID_Dokumen) === String(docId));
+      instantRecord = (cachedDocs || []).find(r => r && String(r.ID_Dokumen) === String(docId));
       if (!instantRecord && cachedBastSm) {
-        instantRecord = cachedBastSm.find(r => String(r.ID_BAST_SM_PPK) === String(docId) || String(r.ID_Dokumen) === String(docId));
+        instantRecord = (cachedBastSm || []).find(r => r && (String(r.ID_BAST_SM_PPK) === String(docId) || String(r.ID_Dokumen) === String(docId)));
       }
       if (instantRecord) {
-        instantDetails = cachedDetails.filter(d => String(d.ID_Dokumen) === String(docId));
-      }
-    } else {
-      const rStr = sessionStorage.getItem("preview_record");
-      if (rStr) {
-        instantRecord = JSON.parse(rStr);
-        const dStr = sessionStorage.getItem("preview_details");
-        instantDetails = JSON.parse(dStr || "[]");
+        instantDetails = (cachedDetails || []).filter(d => d && String(d.ID_Dokumen) === String(docId));
       }
     }
 
-    // Jika ada di cache, langsung render tanpa menunggu server sama sekali (0 ms)!
+    // Fallback instan ke sessionStorage jika data belum ada di cache lokal
+    if (!instantRecord) {
+      const rStr = sessionStorage.getItem("preview_record");
+      if (rStr) {
+        try {
+          const parsed = JSON.parse(rStr);
+          if (!docId || String(parsed.ID_Dokumen) === String(docId) || String(parsed.Nomor_SPK) === String(docId)) {
+            instantRecord = parsed;
+            const dStr = sessionStorage.getItem("preview_details");
+            instantDetails = JSON.parse(dStr || "[]");
+          }
+        } catch (_) {}
+      }
+    }
+
+    // Jika ada di cache atau sessionStorage, langsung render tanpa menunggu server sama sekali (0 ms)!
     if (instantRecord) {
       const customNoSpk  = urlParams.get("no_spk");
       const customTglSpk = urlParams.get("tgl_spk");
@@ -458,6 +487,21 @@
       if (customTglSpk) { instantRecord["Tanggal SPK"] = customTglSpk; instantRecord.Tanggal_SPK = customTglSpk; }
 
       await renderPreviewContent(instantRecord, instantDetails, cachedMitra, cachedPegawai, defaultTab);
+    } else if (!docId) {
+      // Tidak ada ID di URL dan tidak ada sessionStorage
+      const content = document.getElementById("preview-doc-content");
+      if (content) {
+        content.innerHTML = `<div class="empty-state">
+          <div class="empty-icon">📄</div>
+          <p>Silakan pilih dokumen dari daftar dokumen untuk melihat pratinjau.</p>
+          <a href="dokumen.html" class="btn btn-primary mt-16">Buka Daftar Dokumen</a>
+        </div>`;
+      }
+      const t2 = document.getElementById("preview-doc-title-2");
+      if (t2) t2.textContent = "Belum Ada Dokumen";
+      const tabList = document.getElementById("tab-list");
+      if (tabList) tabList.innerHTML = `<div style="padding:16px; font-size:.8rem; color:var(--gray-400);">Pilih dokumen terlebih dahulu</div>`;
+      return;
     } else {
       // Tampilkan placeholder loading inline di dalam preview card
       const content = document.getElementById("preview-doc-content");
@@ -481,13 +525,13 @@
           getBastSmPpk().catch(() => [])
         ]);
 
-        let freshRecord = (spkBastData || []).find(r => String(r.ID_Dokumen) === String(docId)) || null;
+        let freshRecord = (spkBastData || []).find(r => r && String(r.ID_Dokumen) === String(docId)) || null;
         if (!freshRecord && smPpkData) {
-          freshRecord = smPpkData.find(r => String(r.ID_BAST_SM_PPK) === String(docId) || String(r.ID_Dokumen) === String(docId)) || null;
+          freshRecord = (smPpkData || []).find(r => r && (String(r.ID_BAST_SM_PPK) === String(docId) || String(r.ID_Dokumen) === String(docId))) || null;
           if (freshRecord && !freshRecord.ID_Dokumen) freshRecord.ID_Dokumen = freshRecord.ID_BAST_SM_PPK;
         }
 
-        const freshDetails = (detailData || []).filter(d => String(d.ID_Dokumen) === String(docId));
+        const freshDetails = (detailData || []).filter(d => d && String(d.ID_Dokumen) === String(docId));
 
         if (freshRecord) {
           const customNoSpk  = urlParams.get("no_spk");
@@ -497,14 +541,32 @@
 
           await renderPreviewContent(freshRecord, freshDetails, mitraData || [], pegawaiData || [], defaultTab);
         } else if (!instantRecord) {
+          // Cek kembali sessionStorage sebagai pertahanan terakhir
+          const rStr = sessionStorage.getItem("preview_record");
+          if (rStr) {
+            try {
+              const parsed = JSON.parse(rStr);
+              if (!docId || String(parsed.ID_Dokumen) === String(docId) || String(parsed.Nomor_SPK) === String(docId)) {
+                const dStr = sessionStorage.getItem("preview_details");
+                await renderPreviewContent(parsed, JSON.parse(dStr || "[]"), mitraData || [], pegawaiData || [], defaultTab);
+                return;
+              }
+            } catch (_) {}
+          }
           document.getElementById("preview-doc-content").innerHTML =
-            `<div class="empty-state"><div class="empty-icon">❌</div><p>Dokumen tidak ditemukan.</p><a href="form.html" class="btn btn-primary mt-16">Buat Dokumen Baru</a></div>`;
+            `<div class="empty-state"><div class="empty-icon">❌</div><p>Dokumen tidak ditemukan.</p><a href="dokumen.html" class="btn btn-primary mt-16">Daftar Dokumen</a></div>`;
         }
       }
     } catch (err) {
       console.warn("Silent background preview revalidation:", err.message);
     }
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPreviewPage);
+  } else {
+    initPreviewPage();
+  }
 
   // ─── Tab Switch (Instan 0 ms Tanpa Spinner) ──────────────────
   async function switchTab(tabKey, btnEl) {
@@ -522,7 +584,7 @@
           Uraian_Tugas:    _previewRecord.Uraian_Tugas || _previewRecord.Judul_Pekerjaan_Dokumen || "",
           PPK:             _previewRecord.PPK || "",
           Ketua_Tim:       _previewRecord.Ketua_Tim || "",
-          Tanggal_BAST_SM_PPK: _previewRecord.Tanggal_BAST_SM_PPK || _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_Selesai || _previewRecord.Tanggal,
+          Tanggal_BAST_SM_PPK: _previewRecord.Tanggal_BAST_SM_PPK || _previewRecord.Tanggal_BAST_PML_SM || _previewRecord.Tanggal_BAST_ENTRI_SM || _previewRecord.Tanggal_Selesai || _previewRecord.Tanggal,
           Total_Honor:     _previewRecord.Total_Honor,
           Subround:        _previewRecord.Subround,
           Semester:        _previewRecord.Semester,
@@ -532,8 +594,8 @@
 
         if (!_previewRecord.No_BAST_SM_PPK && AppState.bastSmPpk) {
           const matched = AppState.bastSmPpk.find(b =>
-            (b.ID_Dokumen && b.ID_Dokumen === _previewRecord.ID_Dokumen) ||
-            (b.Judul_Pekerjaan_Dokumen === _previewRecord.Judul_Pekerjaan_Dokumen && String(b.Bulan) === String(_previewRecord.Bulan) && String(b.Tahun) === String(_previewRecord.Tahun))
+            b && ((b.ID_Dokumen && b.ID_Dokumen === _previewRecord.ID_Dokumen) ||
+            (b.Judul_Pekerjaan_Dokumen === _previewRecord.Judul_Pekerjaan_Dokumen && String(b.Bulan) === String(_previewRecord.Bulan) && String(b.Tahun) === String(_previewRecord.Tahun)))
           );
           if (matched) {
             bastRec.No_BAST_SM_PPK = matched.No_BAST_SM_PPK || bastRec.No_BAST_SM_PPK;
@@ -559,6 +621,10 @@
           tpl: _isPmlMitra ? "template-bast-pml-sm-mitra.html" : "template-bast-pml-sm-organik.html",
           ctx: _previewCtx.bastPmlSmCtx,
         },
+        "entri-sm": {
+          tpl: "template-bast-entri-sm-mitra.html",
+          ctx: _previewCtx.bastEntriSmCtx || _previewCtx.bastPplSmCtx,
+        },
       };
 
       const entry = tplMap[tabKey];
@@ -567,18 +633,62 @@
       content.innerHTML = renderTemplate(tpl, entry.ctx);
     } catch(e) {
       content.innerHTML = `<div class="alert alert-danger">Gagal memuat template: ${e.message}</div>`;
+    } finally {
+      updateExportButtonState();
     }
   }
 
-  function isDocApproved(record) {
+  function updateExportButtonState() {
+    const isApproved = isDocApproved(_previewRecord, _currentTab);
+    const btnExportWord = document.getElementById("btn-export-word");
+    const exportNotice = document.getElementById("export-locked-notice");
+    if (btnExportWord) {
+      if (!isApproved) {
+        btnExportWord.disabled = true;
+        btnExportWord.classList.remove("btn-primary");
+        btnExportWord.classList.add("btn-secondary");
+        btnExportWord.style.opacity = "0.6";
+        btnExportWord.style.cursor = "not-allowed";
+        btnExportWord.title = "Dokumen belum disetujui (ACC) oleh PPK";
+        btnExportWord.innerHTML = "🔒 Download Word (Menunggu ACC PPK)";
+        if (exportNotice) exportNotice.style.display = "block";
+      } else {
+        btnExportWord.disabled = false;
+        btnExportWord.classList.remove("btn-secondary");
+        btnExportWord.classList.add("btn-primary");
+        btnExportWord.style.opacity = "1";
+        btnExportWord.style.cursor = "pointer";
+        btnExportWord.title = "Download Dokumen Word (.docx)";
+        btnExportWord.innerHTML = "⬇ Download Word (.docx)";
+        if (exportNotice) exportNotice.style.display = "none";
+      }
+    }
+  }
+
+  function isDocApproved(record, tabKey) {
     if (!record) return false;
-    const raw = record.Status_Generate_SPK || record.Status_Generate_BAST_SM_PPK || record.Status_Verifikasi_PPK || "Belum";
-    const v = String(raw).toLowerCase().trim();
-    return (v === "disetujui" || v === "approved" || v === "sudah");
+    const activeTab = tabKey || _currentTab || "spk";
+    // Dokumen SPK (Perjanjian Kerja) selalu dapat diunduh & dicetak setelah dibuat!
+    if (activeTab === "spk" || (!tabKey && record.Jenis_Dokumen === "SPK")) {
+      return true;
+    }
+    // Admin dan Katim yang berwenang selalu dapat mengunduh / mencetak
+    if (typeof Auth !== "undefined" && (Auth.isAdmin() || Auth.isKatim())) {
+      return true;
+    }
+    const vStatus = String(record.Status_Verifikasi_PPK || "").toLowerCase().trim();
+    if (vStatus === "disetujui" || vStatus === "approved" || vStatus === "tidak_perlu" || vStatus === "tidak perlu") {
+      return true;
+    }
+    const genStatus = String(record.Status_Generate_SPK || record.Status_Generate_BAST_SM_PPK || "").toLowerCase().trim();
+    if (genStatus === "sudah" || genStatus === "disetujui") {
+      return true;
+    }
+    return false;
   }
 
   function handlePrintDoc() {
-    if (!isDocApproved(_previewRecord)) {
+    if (!isDocApproved(_previewRecord, _currentTab)) {
       showToast("🔒 Dokumen belum disetujui (ACC) oleh PPK! Pencetakan dokumen resmi hanya dapat dilakukan setelah disetujui PPK.", "warning", 6000);
       return;
     }
@@ -586,29 +696,29 @@
   }
 
   async function exportCurrentWord() {
-    if (!isDocApproved(_previewRecord)) {
+    if (!isDocApproved(_previewRecord, _currentTab)) {
       showToast("🔒 Dokumen belum disetujui (ACC) oleh PPK! Dokumen hanya dapat diunduh setelah diverifikasi dan disetujui oleh PPK.", "warning", 6000);
       return;
     }
 
-    // Cek library docx, tunggu maksimal 5 detik jika sedang loading
-    if (typeof docx === "undefined") {
+    // Cek library Word (JSZip)
+    if (typeof JSZip === "undefined") {
       setLoading(true);
       let waited = 0;
       await new Promise(resolve => {
         const check = setInterval(() => {
-          waited += 300;
-          if (typeof docx !== "undefined" || waited >= 5000) {
+          waited += 200;
+          if (typeof JSZip !== "undefined" || waited >= 4000) {
             clearInterval(check);
             resolve();
           }
-        }, 300);
+        }, 200);
       });
       setLoading(false);
     }
 
-    if (typeof docx === "undefined") {
-      showToast("❌ Library Word (docx.js) gagal dimuat. Periksa koneksi internet, lalu refresh halaman.", "danger", 6000);
+    if (typeof JSZip === "undefined") {
+      showToast("❌ Library Word (JSZip) gagal dimuat. Periksa koneksi internet, lalu refresh halaman.", "danger", 6000);
       return;
     }
     if (typeof generateAndDownloadWord === "undefined") {

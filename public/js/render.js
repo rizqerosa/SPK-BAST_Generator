@@ -429,12 +429,13 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   // Standar BPS:
   // - Petugas Pendataan Lapangan (untuk peran PPL)
   // - Petugas Pengawas Lapangan (untuk peran PML)
-  const isPmlRole = Boolean(
-    (record.No_BAST_PML_SM && !record.No_BAST_PPL_PML && !record.No_BAST_PPL_SM) ||
-    (record.Peran && String(record.Peran).toLowerCase() === "pml") ||
-    (record.Jenis_Petugas && String(record.Jenis_Petugas).toLowerCase().includes("pml"))
+  // - Petugas Entri (untuk peran Petugas Entri)
+  const isEntriRole = Boolean(
+    (record.Peran && String(record.Peran).toLowerCase() === "entri") ||
+    (record.Jenis_Petugas && String(record.Jenis_Petugas).toLowerCase().includes("entri")) ||
+    Boolean(record.No_BAST_ENTRI_SM)
   );
-  const jabatanPetugasLapangan = isPmlRole ? "Petugas Pengawas Lapangan" : "Petugas Pendataan Lapangan";
+  const jabatanPetugasLapangan = isPmlRole ? "Petugas Pengawas Lapangan" : (isEntriRole ? "Petugas Entri" : "Petugas Pendataan Lapangan");
   const jabatanPmlBast = "Petugas Pengawas Lapangan";
 
   // === Helper: Hitung H+5 Batas Penyerahan jika kosong ===
@@ -591,7 +592,7 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
   if (record.PML && String(record.PML).trim() !== String(record.ID_Mitra).trim() && typeof AppState !== "undefined" && Array.isArray(AppState.spkBast)) {
     const rawPml = String(record.PML).trim();
     const pmlDoc = AppState.spkBast.find(d =>
-      (d.ID_Mitra === rawPml || d.Nama_Mitra === rawPml || d.PML === rawPml) &&
+      d && (d.ID_Mitra === rawPml || d.Nama_Mitra === rawPml || d.PML === rawPml) &&
       (d.Peran === "pml" || (d.No_BAST_PML_SM && !d.No_BAST_PPL_PML)) &&
       (d.Tahun === record.Tahun || d.Bulan === record.Bulan)
     );
@@ -631,9 +632,41 @@ function buildDataContext(record, { mitraArr, pegawaiArr, detailArr }) {
     IS_PML_MITRA:             isPmlMitra,
   };
 
+  // BAST ENTRI-SM context (Petugas Entri Mitra serahkan ke SM / Ketua Tim)
+  const tBAST_ENTRI_SM = tanggalTerbilang(record.Tanggal_BAST_ENTRI_SM || record.Tanggal_BAST_PML_SM || record.Tanggal_Selesai);
+  const bastEntriSmDateParts = _parseDateComponents(tBAST_ENTRI_SM);
+  const bastEntriSmCtx = {
+    ...bastPplSmCtx,
+    NO_BAST_ENTRI_SM:         record.No_BAST_ENTRI_SM || record.No_BAST_PML_SM || "",
+    "NO_BAST_ENTRI-SM":       record.No_BAST_ENTRI_SM || record.No_BAST_PML_SM || "",
+    HARI_TERBILANG:           tBAST_ENTRI_SM.hari,
+    TANGGAL_TERBILANG:        tBAST_ENTRI_SM.tanggal,
+    BULAN_TERBILANG:          tBAST_ENTRI_SM.bulan,
+    TAHUN_TERBILANG:          tBAST_ENTRI_SM.tahun,
+    TANGGAL_BAST:             tBAST_ENTRI_SM.tanggalFormat,
+    TANGGAL_BAST_SM_PPK:      tBAST_ENTRI_SM.tanggalFormat,
+    TANGGAL_ANGKA:            bastEntriSmDateParts.angka,
+    BULAN_NAMA:               bastEntriSmDateParts.bulanNama,
+    TAHUN_ANGKA:              bastEntriSmDateParts.tahunAngka,
+    // Pihak Pertama = Petugas Entri (Mitra)
+    NAMA_PIHAK_PERTAMA:       mitra.Nama_Mitra || "",
+    NIK_PIHAK_PERTAMA:        mitra.NIK || "",
+    JABATAN_PIHAK_PERTAMA:    "Petugas Entri",
+    // Pihak Kedua = Ketua Tim/SM
+    NAMA_KETUA_TIM:           ketuaTim.Nama_Pegawai || "",
+    NIP_KETUA_TIM:            ketuaTim.NIP || "",
+    "GOLONGAN/PANGKAT_KETUA_TIM": `${ketuaTim.Pangkat || ""} ${ketuaTim.Golongan || ""}`.trim(),
+    JABATAN_KETUA_TIM:        ketuaTim.Jabatan || "",
+    NOMOR_KEPKA:              (record.Nomor_Kepka || "").replace(/^\s*nomor\s+/i, "").trim(),
+    TANGGAL_KEPKA:            formatTanggal(record.Tanggal_Kepka),
+    TANGGAL:                  spkDateParts.angka,
+    BULAN:                    spkDateParts.bulanNama,
+    TAHUN:                    spkDateParts.tahunAngka,
+  };
+
   const smPpkCtx = buildBastSmPpkContext(record, pegawaiArr);
 
-  return { spkCtx, bastPplPmlCtx, bastPplSmCtx, bastPmlSmCtx, smPpkCtx, details, totalHonor, terbilangHonor };
+  return { spkCtx, bastPplPmlCtx, bastPplSmCtx, bastPmlSmCtx, bastEntriSmCtx, smPpkCtx, details, totalHonor, terbilangHonor };
 }
 
 /**
